@@ -80,10 +80,9 @@ void initialize_symplectic(int n, vector<double> &x, vector<double> &y, vector<d
 
 //Functions for read ----------------------------------------------------------------------------
 
-inline bool fileexists (const std::string& name) {
-    if (FILE *file = fopen(name.c_str(), "r")) {
+inline bool fileexists (const string& name) {
+    if (fstream file = fopen(name.c_str(), "r")) {
         fclose(file);
-        free(file);
         return true;
     } else {
         return false;
@@ -92,8 +91,6 @@ inline bool fileexists (const std::string& name) {
 
 void read_file(vector<string> &v, string &filename, string &str){
     //read complete file and store to vector v
-    using namespace std;
-
     //create vector s
     fstream s;
     char cstring[256];
@@ -106,19 +103,20 @@ void read_file(vector<string> &v, string &filename, string &str){
 
     while (!s.eof())
     {
-        tmp = "";
+        //tmp = "";
         s.getline(cstring, sizeof(cstring));
-        tmp1 = cstring;
-        for(int i=0; i<tmp1.length();i++){
-            tmpascii = tmp1[i];
-            //ascii-sign 015 is some sort of newline command in CCLI or songbeamer files
-            if (tmpascii != 015) tmp += cstring[i];
-        }
-        v.push_back(tmp);
+        //tmp1 = cstring;
+        //for(int i=0; i<tmp1.length();i++){
+        //    tmpascii = tmp1[i];
+        //    //ascii-sign 015 is some sort of newline command in CCLI or songbeamer files
+        //    if (tmpascii != 015) tmp += cstring[i];
+        //}
+        //v.push_back(tmp);
+        v.push_back(cstring);
     }
 
     //set breaking command for printing and line counting functions
-    v.push_back(str);
+    //v.push_back(str);
     s.close();
 }
 
