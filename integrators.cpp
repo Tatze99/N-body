@@ -16,6 +16,7 @@
 //for global "short-hand" notation - need not to write 'std::' in front of most things
 using namespace std;
 
+typedef void (* Step_function)(double, double, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>&, void* (*)(double, vector<double>, vector<double>&, int), int);
 //const double PI = 4.*atan(1.);
 
 void initialize(int n, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz){
@@ -42,7 +43,7 @@ void initialize(int n, vector<double> &x, vector<double> &y, vector<double> &z, 
     vy[1] = 0.;
     vz[0] = 0.;
     vz[1] = 0.;
-    
+
     //mabye initialize natural constants
 }
 
@@ -70,7 +71,7 @@ void initialize_symplectic(int n, vector<double> &x, vector<double> &y, vector<d
     vy[1] = 0.;
     vz[0] = 0.;
     vz[1] = 0.;
-    
+
     //mabye initialize natural constants
 }
 
@@ -204,12 +205,12 @@ void lf_step(double t, double dt, vector<double> &x, vector<double> &y, vector<d
     for(int i=0; i<n; i++) kvz1.push_back(0.);
 
     //lf step - calculate derivative of v
-    rhs(t, x, kvx1, n);         
+    rhs(t, x, kvx1, n);
     rhs(t, y, kvy1, n);
     rhs(t, z, kvz1, n);
 
     //calculate n+1/2 value of v
-    for(int i=0; i<n; i++) vx[i] += dt * kvx1[i];  
+    for(int i=0; i<n; i++) vx[i] += dt * kvx1[i];
     for(int i=0; i<n; i++) vy[i] += dt * kvy1[i];
     for(int i=0; i<n; i++) vz[i] += dt * kvz1[i];
 
@@ -219,6 +220,7 @@ void lf_step(double t, double dt, vector<double> &x, vector<double> &y, vector<d
     for(int i=0; i<n; i++) z[i] += dt * vz[i];
 }
 
+/*
 void driver_fwd(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n){
     //Create and open output file
     fstream file;
@@ -265,7 +267,8 @@ void driver_rk4(double t, double t_end, double dt, vector<double> &x, vector<dou
             for(int i=0; i<n; i++) file << z[i] << "; ";
             for(int i=0; i<n; i++) file << vx[i] << "; ";
             for(int i=0; i<n; i++) file << vy[i] << "; ";
-            for(int i=0; i<n; i++) file << vz[i] << "; ";
+            // for(int i=0; i<n; i++) file << vz[i] << "; ";  // kein Semicolon am Ende der Zeile, sonst kann Python die Daten nicht einlesen.
+            for(int i=0; i<n; i++) file << vz[i];
         file << endl;
 
         //Calculate next timestep
@@ -276,7 +279,7 @@ void driver_rk4(double t, double t_end, double dt, vector<double> &x, vector<dou
     }
 
     //close the output file after the iterations are done
-    file.close();   
+    file.close();
 }
 
 void driver_lf(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n){
@@ -308,6 +311,37 @@ void driver_lf(double t, double t_end, double dt, vector<double> &x, vector<doub
     //close the output file after the iterations are done
     file.close();
 }
+*/
+
+void driver(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, Step_function step){
+
+    //Create and open output file
+    fstream file;
+    file.open("rk4-solution.csv", ios::out);
+    file.precision(10);
+
+    //loop that iterates up to a certain chosen time (end)
+    while((t_end - t) > DBL_EPSILON){
+        //Output current values to file - "; " is needed as delimiter for cells
+        //Iterations are needed to generally output for n objects without adjusting anything
+        file << t << "; ";
+            for(int i=0; i<n; i++) file << x[i] << "; ";
+            for(int i=0; i<n; i++) file << y[i] << "; ";
+            for(int i=0; i<n; i++) file << z[i] << "; ";
+            for(int i=0; i<n; i++) file << vx[i] << "; ";
+            for(int i=0; i<n; i++) file << vy[i] << "; ";
+            for(int i=0; i<n-1; i++) file << vz[i] << "; ";
+            file << vz[n-1] << endl;
+
+        //Calculate next timestep
+        step(t, dt, x, y, z, vx, vy, vz, testfunction, n);
+
+        //update time - so the loop will have a chance to end
+        t += dt;
+    }
+    //close the output file after the iterations are done
+    file.close();
+}
 
 void programmteil(string command, vector<string> &commands, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz){
     commands.resize(3);
@@ -318,23 +352,27 @@ void programmteil(string command, vector<string> &commands, vector<double> &x, v
     int n = 2;              //Number of particles
     double t_end = 10*M_PI;
     //double t_end = 10*PI;
-    double dt = pow(10,-7);
+    double dt = pow(10,-3);
     double t = 0.;
 
     if (command == commands[0]){
         initialize(n, x, y, z, vx, vy, vz);
-        driver_fwd(t, t_end, dt, x, y, z, vx, vy, vz, n);
+        driver(t, t_end, dt, x, y, z, vx, vy, vz, n, fwd_step);
+        // driver_fwd(t, t_end, dt, x, y, z, vx, vy, vz, n);
     }
 
     if (command == commands[1]){
         initialize(n, x, y, z, vx, vy, vz);
-        driver_rk4(t, t_end, dt, x, y, z, vx, vy, vz, n);
+        driver(t, t_end, dt, x, y, z, vx, vy, vz, n, rk4_step);
+        // driver_rk4(t, t_end, dt, x, y, z, vx, vy, vz, n);
     }
 
     if (command == commands[2]){
         initialize_symplectic(n, x, y, z, vx, vy, vz);
-        driver_lf(t, t_end, dt, x, y, z, vx, vy, vz, n);
+        driver(t, t_end, dt, x, y, z, vx, vy, vz, n, lf_step);
+        // driver_lf(t, t_end, dt, x, y, z, vx, vy, vz, n);
     }
+
 
     if ( (command != commands[0]) && (command != commands[1]) && (command != commands[2])) cout << "Wrong parameter!" << endl;
 }
@@ -368,7 +406,7 @@ int main(int argc, char** argv){
         auto time = chrono::duration<float>(t2-t1).count();
         cout << "Reached end of main." << endl;
         cout << "Die Berechnung hat " << time << " Sekunden gedauert." << endl;
-        
+
         return 0;
     }
 }
