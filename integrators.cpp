@@ -78,6 +78,81 @@ void initialize_symplectic(int n, vector<double> &x, vector<double> &y, vector<d
     //mabye initialize natural constants
 }
 
+//Functions for read ----------------------------------------------------------------------------
+
+inline bool fileexists (const std::string& name) {
+    if (FILE *file = fopen(name.c_str(), "r")) {
+        fclose(file);
+        free(file);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+void read_file(vector<string> &v, string &filename, string &str){
+    //read complete file and store to vector v
+    using namespace std;
+
+    //create vector s
+    fstream s;
+    char cstring[256];
+    string tmp;
+    string tmp1;
+    int tmpascii;
+
+    //open file and read data
+    s.open(filename, ios::in);
+
+    while (!s.eof())
+    {
+        tmp = "";
+        s.getline(cstring, sizeof(cstring));
+        tmp1 = cstring;
+        for(int i=0; i<tmp1.length();i++){
+            tmpascii = tmp1[i];
+            //ascii-sign 015 is some sort of newline command in CCLI or songbeamer files
+            if (tmpascii != 015) tmp += cstring[i];
+        }
+        v.push_back(tmp);
+    }
+
+    //set breaking command for printing and line counting functions
+    v.push_back(str);
+    s.close();
+}
+
+void seperate_to_files(vector<string> &file, vector<string> &sngspecific, vector<string> &data, string &s){
+   //create from vector (file) with whole file two seperate files containing songbeamber specific information (sngspecific) or song data (data)
+   using namespace std;
+   
+   int i = 0;
+   string sngtag = "#";
+   string snginfo;
+
+    //go through all lines of file and sort them
+    while (file[i].compare(s) != 0){
+        snginfo = file[i];
+
+        //sort songbeamer specific information to sngspecific
+        if (snginfo[0] == sngtag[0]){
+            sngspecific.push_back(file[i]);
+            i++;
+            continue;
+        }
+
+        //sort song data to data
+        data.push_back(file[i]);
+        i++;
+    }
+
+    //set breaking command for printing and line counting functions
+    sngspecific.push_back(s);
+    data.push_back(s);
+}
+
+//Functions for read ----------------------------------------------------------------------------
+
 void *testfunction(double t, vector<double> x, vector<double> &u_rhs, int n){
     int i;
     u_rhs.resize(n);
