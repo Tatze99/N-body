@@ -16,9 +16,6 @@
 //for global "short-hand" notation - need not to write 'std::' in front of most things
 using namespace std;
 
-//global variables
-//const int n = 2;
-
 typedef void (* Step_function)(double, double, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>&, void* (*)(double, vector<double>, vector<double>&, int), int);
 //const double PI = 4.*atan(1.);
 
@@ -375,6 +372,7 @@ void programmteil(string command, vector<string> &commands, vector<double> &x, v
         driver(t, t_end, dt, x, y, z, vx, vy, vz, n, lf_step);
         // driver_lf(t, t_end, dt, x, y, z, vx, vy, vz, n);
     }
+
 
     if ( (command != commands[0]) && (command != commands[1]) && (command != commands[2])) cout << "Wrong parameter!" << endl;
 }
