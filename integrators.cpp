@@ -25,8 +25,10 @@ void acceleration(vector<double> &x, vector<double> &y, vector<double> &z, int n
   for(int i=0; i<n; i++){
     for(int j=0; j<i; j++) MatrixX[i][j] = x[i]/pow((x[i]-x[j])*(x[i]-x[j])+(y[i]-y[j])*(y[i]-y[j])+(z[i]-z[j])*(z[i]-z[j]),3);
     for(int j=i; j<n; j++) MatrixX[i][j] = MatrixX[j][i];
+    if (i==j) MatrixX[i][j] = 0;
   }
 
+  vector<double> a = {};
   double a = -4 * pow(M_PI, 2) * x / pow(hypot(x,y), 3);
   return a;
 }
