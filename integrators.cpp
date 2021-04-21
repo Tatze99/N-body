@@ -394,11 +394,11 @@ void driver_lf(double t, double t_end, double dt, vector<double> &x, vector<doub
 }
 */
 
-void driver(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, vector Step_function step){
+void driver(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, vector Step_function step, string command){
 
     //Create and open output file
     fstream file;
-    file.open("rk4-solution.csv", ios::out);
+    file.open(command+"-solution.csv", ios::out);
     file.precision(10);
 
     double e_kin, e_pot, e_tot;
@@ -445,19 +445,19 @@ void programmteil(string command, vector<string> &commands, vector<double> &x, v
 
     if (command == commands[0]){
         initialize(n, x, y, z, vx, vy, vz, m);
-        driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, fwd_step);
+        driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, fwd_step, command);
         // driver_fwd(t, t_end, dt, x, y, z, vx, vy, vz, n);
     }
 
     if (command == commands[1]){
         initialize(n, x, y, z, vx, vy, vz, m);
-        driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, rk4_step);
+        driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, rk4_step, command);
         // driver_rk4(t, t_end, dt, x, y, z, vx, vy, vz, n);
     }
 
     if (command == commands[2]){
         initialize_symplectic(n, x, y, z, vx, vy, vz, m);
-        driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, lf_step);
+        driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, lf_step, command);
         // driver_lf(t, t_end, dt, x, y, z, vx, vy, vz, n);
     }
 
