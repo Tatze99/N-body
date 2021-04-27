@@ -26,7 +26,7 @@ void *acceleration(double t, vector<double> x, vector<double> y, vector<double> 
 
   for(int i=0; i<n; i++){
     for(int j=0; j<i; j++) {
-      Matrix[i][j] = x[i]/pow((x[i]-x[j])*(x[i]-x[j])+(y[i]-y[j])*(y[i]-y[j])+(z[i]-z[j])*(z[i]-z[j]),1.5);
+      Matrix[i][j] = (x[i]-x[j])/pow((x[i]-x[j])*(x[i]-x[j])+(y[i]-y[j])*(y[i]-y[j])+(z[i]-z[j])*(z[i]-z[j]),1.5);
     }
   }
 
@@ -52,7 +52,7 @@ void initialize(int n, vector<double>&m, vector<double> &x, vector<double> &y, v
 
     //set startvalues
     x[0] = 0.;
-    x[1] = 1;
+    x[1] = 1.;
     y[0] = 0.;
     y[1] = 0.;
     z[0] = 0.;
@@ -62,13 +62,13 @@ void initialize(int n, vector<double>&m, vector<double> &x, vector<double> &y, v
     vx[0] = 0.;
     vx[1] = 0.;
     vy[0] = 0.;
-    vy[1] = 20;
+    vy[1] = 2*M_PI;
     vz[0] = 0.;
     vz[1] = 0.;
 
-    //mabye initialize natural constants
-    m[0] = 10.;
-    m[1] = 0.1;
+    //mass [in units of the mass of the sun]
+    m[0] = 1.;
+    m[1] = 1/333000.;
 }
 
 void initialize_symplectic(int n, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz){
@@ -412,9 +412,9 @@ void programmteil(string command, vector<string> &commands, vector<double> &x, v
 
     int n = 2;              //Number of particles
     vector<double> m = {};
-    double t_end = 0.5;
+    double t_end = 1;
     //double t_end = 10*PI;
-    double dt = pow(10,-5);
+    double dt = pow(10,-4);
     double t = 0.;
 
     if (command == commands[0]){
