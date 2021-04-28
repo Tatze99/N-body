@@ -12,15 +12,98 @@
 #include <chrono>
 #include <cfloat>
 
+//#include<boost/python.hpp>
+
 
 //for global "short-hand" notation - need not to write 'std::' in front of most things
 using namespace std;
 
-//global variables
-//const int n = 2;
-
-typedef void (* Step_function)(double, double, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>, void* (*)(double, vector<double>, vector<double>&, int), int);
+typedef void (*Step_function)(double, double, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>, void* (*)(double, vector<double>, vector<double>, vector<double>&, int), int);
 //const double PI = 4.*atan(1.);
+
+//Functions for read ----------------------------------------------------------------------------
+
+inline bool fileexists (const string& name) {
+    //fstream file;
+    //file.open(name.c_str(), ios::in)
+    if (FILE* file = fopen(name.c_str(), "r")) {
+        fclose(file);
+        free(file);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+//void read_file(vector<string> &v, string &filename, string &str){
+void read_file(vector<string> &v, string &filename){
+    //read complete file and store to auxiliary vector v
+    //create file s
+    fstream s;
+    char cstring[256];
+
+    //open file and read data
+    s.open(filename, ios::in);
+
+    while (!s.eof()){
+        s.getline(cstring, sizeof(cstring));
+        v.push_back(cstring);
+    }
+
+    s.close();
+}
+
+//void seperate_to_files(vector<string> &file, vector<string> &sngspecific, vector<string> &data, string &s){
+void seperate_to_files(int n, vector<string> help, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, vector<double> &m){
+   //create from vector (file) with whole file two seperate files containing songbeamber specific information (sngspecific) or song data (data)
+   int counter;
+   string s, tmp_s;
+   //s = "012;3456789";
+   string semi = ";"; 
+ //int i = 0;
+   //iterate over auxiliary vector
+    for(int i=0; i<n; i++){
+        s = help[i];
+
+        for(int l=0; l<7; l++){
+            //iterate over each line --- mabye replace by find_first_of (see cppreference)
+            for(int j=0; j<s.length(); j++){
+                //cout << s[j];
+                if(s[j] == semi[0]){
+                    counter = j;
+                    break;
+                }
+            }
+            cout << "l = " << l << "; counter = " << counter << endl;
+            //cut off the first part of s 
+            tmp_s = s.substr(0, counter);
+
+            //set s to the remaining string
+            if ((counter-2) < (s.length()-1)) s = s.substr(counter+2, s.length()-1);
+
+            //set values
+            switch (l)
+            {
+                case 0: x[i] = stod(tmp_s);
+                        break;
+                case 1: y[i] = stod(tmp_s);
+                        break;
+                case 2: z[i] = stod(tmp_s);
+                        break;
+                case 3: vx[i] = stod(tmp_s);
+                        break;
+                case 4: vy[i] = stod(tmp_s);
+                        break;
+                case 5: vz[i] = stod(tmp_s);
+                        break;
+                case 6: m[i] = stod(tmp_s);
+            }  
+            cout << "Test " << l << endl;         
+        }
+    }
+}
+
+//Functions for read ----------------------------------------------------------------------------
 
 void initialize(int n, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, vector<double> &m){
     //Change size of vectors
@@ -47,7 +130,19 @@ void initialize(int n, vector<double> &x, vector<double> &y, vector<double> &z, 
     vy[1] = 0.;
     vz[0] = 0.;
     vz[1] = 0.;
+    string name = "Input.csv";
+    vector<string> help = {};
 
+    read_file(help, name);
+
+    seperate_to_files(n, help, x, y, z, vx, vy, vz, m);
+
+    for(double i : x) cout << i << "; ";
+    cout << endl;
+    for(double i : y) cout << i << "; ";
+    cout << endl;
+
+    //cout << x[0] << "; " << y[0] << endl;
     //mabye initialize natural constants
 }
 
@@ -79,82 +174,6 @@ void initialize_symplectic(int n, vector<double> &x, vector<double> &y, vector<d
 
     //mabye initialize natural constants
 }
-
-//Functions for read ----------------------------------------------------------------------------
-
-inline bool fileexists (const string& name) {
-    if (fstream file = fopen(name.c_str(), "r")) {
-        fclose(file);
-        return true;
-    } else {
-        return false;
-    }
-}
-
-void read_file(vector<string> &v, string &filename, string &str){
-    //read complete file and store to vector v
-    //create vector s
-    fstream s;
-    char cstring[256];
-    string tmp;
-    string tmp1;
-    int tmpascii;
-
-    //open file and read data
-    s.open(filename, ios::in);
-
-    while (!s.eof())
-    {
-        //tmp = "";
-        s.getline(cstring, sizeof(cstring));
-        //tmp1 = cstring;
-        //for(int i=0; i<tmp1.length();i++){
-        //    tmpascii = tmp1[i];
-        //    //ascii-sign 015 is some sort of newline command in CCLI or songbeamer files
-        //    if (tmpascii != 015) tmp += cstring[i];
-        //}
-        //v.push_back(tmp);
-        v.push_back(cstring);
-    }
-
-    //set breaking command for printing and line counting functions
-    //v.push_back(str);
-    s.close();
-}
-
-void seperate_to_files(vector<string> &file, vector<string> &sngspecific, vector<string> &data, string &s){
-   //create from vector (file) with whole file two seperate files containing songbeamber specific information (sngspecific) or song data (data)
-   
-   /*
-   int i = 0;
-   string sngtag = "#";
-   string snginfo;
-
-    //go through all lines of file and sort them
-    while (file[i].compare(s) != 0){
-        snginfo = file[i];
-
-        //sort songbeamer specific information to sngspecific
-        if (snginfo[0] == sngtag[0]){
-            sngspecific.push_back(file[i]);
-            i++;
-            continue;
-        }
-
-        //sort song data to data
-        data.push_back(file[i]);
-        i++;
-    }
-    */
-
-   //Set
-
-    //set breaking command for printing and line counting functions
-    sngspecific.push_back(s);
-    data.push_back(s);
-}
-
-//Functions for read ----------------------------------------------------------------------------
 
 void *testfunction(double t, vector<double> x, vector<double> m, vector<double> &u_rhs, int n){
     int i;
@@ -394,7 +413,7 @@ void driver_lf(double t, double t_end, double dt, vector<double> &x, vector<doub
 }
 */
 
-void driver(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, vector Step_function step, string command){
+void driver(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, Step_function step, string command){
 
     //Create and open output file
     fstream file;
@@ -403,31 +422,65 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
 
     double e_kin, e_pot, e_tot;
 
-    //loop that iterates up to a certain chosen time (end)
-    while((t_end - t) > DBL_EPSILON){
-        e_kin = 0.;
-        e_pot = 0.;
-        for(int i; i<n; i++) e_kin += 0.5 * m[i] * (pow(vx[i],2) + pow(vy[i],2) + pow(vz[i],2));
-        for(int i; i<n; i++) e_pot -= m[i] * acceleration[i] * sqrt(pow(x[i],2) + pow(y[i],2) + pow(z[i],2));
-        e_tot = e_kin + e_pot;
-        
-        //Output current values to file - "; " is needed as delimiter for cells
-        //Iterations are needed to generally output for n objects without adjusting anything
-        file << t << "; ";
-            for(int i=0; i<n; i++) file << x[i] << "; ";
-            for(int i=0; i<n; i++) file << y[i] << "; ";
-            for(int i=0; i<n; i++) file << z[i] << "; ";
-            for(int i=0; i<n; i++) file << vx[i] << "; ";
-            for(int i=0; i<n; i++) file << vy[i] << "; ";
-            for(int i=0; i<n; i++) file << vz[i] << "; ";
+    //For the LF integrator we will possibly end up with another
+    //function to integrate than for the fwd and rk4 method
+    //Wrong function was a problem for the integrator scheme
+    //Problem is resolved by the following if-construction
+    if(command=="lf"){
+        //loop that iterates up to a certain chosen time (end)
+        while((t_end - t) > DBL_EPSILON){
+            e_kin = 0.;
+            e_pot = 0.;
+            for(int i; i<n; i++) e_kin += 0.5 * m[i] * (pow(vx[i],2) + pow(vy[i],2) + pow(vz[i],2));
+            //for(int i; i<n; i++) e_pot -= m[i] * acceleration[i] * sqrt(pow(x[i],2) + pow(y[i],2) + pow(z[i],2));
+            e_tot = e_kin + e_pot;
+            
+            //Output current values to file - "; " is needed as delimiter for cells
+            //Iterations are needed to generally output for n objects without adjusting anything
+            file << t << "; ";
+                for(int i=0; i<n; i++) file << x[i] << "; ";
+                for(int i=0; i<n; i++) file << y[i] << "; ";
+                for(int i=0; i<n; i++) file << z[i] << "; ";
+                for(int i=0; i<n; i++) file << vx[i] << "; ";
+                for(int i=0; i<n; i++) file << vy[i] << "; ";
+                for(int i=0; i<n; i++) file << vz[i] << "; ";
             file << e_kin << "; " << e_pot << "; " << e_tot << endl;
 
-        //Calculate next timestep
-        step(t, dt, x, y, z, vx, vy, vz, m, testfunction, n);
+            //Calculate next timestep
+            step(t, dt, x, y, z, vx, vy, vz, m, testsymplectic, n);
 
-        //update time - so the loop will have a chance to end
-        t += dt;
+            //update time - so the loop will have a chance to end
+            t += dt;
+        }
     }
+    else{
+        //loop that iterates up to a certain chosen time (end)
+        while((t_end - t) > DBL_EPSILON){
+            e_kin = 0.;
+            e_pot = 0.;
+            for(int i; i<n; i++) e_kin += 0.5 * m[i] * (pow(vx[i],2) + pow(vy[i],2) + pow(vz[i],2));
+            //for(int i; i<n; i++) e_pot -= m[i] * acceleration[i] * sqrt(pow(x[i],2) + pow(y[i],2) + pow(z[i],2));
+            e_tot = e_kin + e_pot;
+            
+            //Output current values to file - "; " is needed as delimiter for cells
+            //Iterations are needed to generally output for n objects without adjusting anything
+            file << t << "; ";
+                for(int i=0; i<n; i++) file << x[i] << "; ";
+                for(int i=0; i<n; i++) file << y[i] << "; ";
+                for(int i=0; i<n; i++) file << z[i] << "; ";
+                for(int i=0; i<n; i++) file << vx[i] << "; ";
+                for(int i=0; i<n; i++) file << vy[i] << "; ";
+                for(int i=0; i<n; i++) file << vz[i] << "; ";
+            file << e_kin << "; " << e_pot << "; " << e_tot << endl;
+
+            //Calculate next timestep
+            step(t, dt, x, y, z, vx, vy, vz, m, testfunction, n);
+
+            //update time - so the loop will have a chance to end
+            t += dt;
+        }
+    }
+ 
     //close the output file after the iterations are done
     file.close();
 }
@@ -439,13 +492,13 @@ void programmteil(string command, vector<string> &commands, vector<double> &x, v
     commands[2] = "lf";     //leapfrog
 
     int n = 2;              //Number of particles
-    double t_end = 10*M_PI;
-    double dt = pow(10,-3);
+    double t_end = 2*M_PI;
+    double dt = pow(10,-2);
     double t = 0.;
 
     if (command == commands[0]){
         initialize(n, x, y, z, vx, vy, vz, m);
-        driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, fwd_step, command);
+        //driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, fwd_step, command);
         // driver_fwd(t, t_end, dt, x, y, z, vx, vy, vz, n);
     }
 
