@@ -146,7 +146,7 @@ void read_file(vector<string> &v, string &filename, string &str){
 
 void seperate_to_files(vector<string> &file, vector<string> &sngspecific, vector<string> &data, string &s){
    //create from vector (file) with whole file two seperate files containing songbeamber specific information (sngspecific) or song data (data)
-   
+
    /*
    int i = 0;
    string sngtag = "#";
@@ -475,7 +475,7 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
             for(int i; i<n; i++) e_kin += 0.5 * m[i] * (pow(vx[i],2) + pow(vy[i],2) + pow(vz[i],2));
             //for(int i; i<n; i++) e_pot -= m[i] * acceleration[i] * sqrt(pow(x[i],2) + pow(y[i],2) + pow(z[i],2));
             e_tot = e_kin + e_pot;
-            
+
             //Output current values to file - "; " is needed as delimiter for cells
             //Iterations are needed to generally output for n objects without adjusting anything
             file << t << "; ";
@@ -502,7 +502,7 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
             for(int i; i<n; i++) e_kin += 0.5 * m[i] * (pow(vx[i],2) + pow(vy[i],2) + pow(vz[i],2));
             //for(int i; i<n; i++) e_pot -= m[i] * acceleration[i] * sqrt(pow(x[i],2) + pow(y[i],2) + pow(z[i],2));
             e_tot = e_kin + e_pot;
-            
+
             //Output current values to file - "; " is needed as delimiter for cells
             //Iterations are needed to generally output for n objects without adjusting anything
             file << t << "; ";
@@ -521,7 +521,7 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
             t += dt;
         }
     }
- 
+
     //close the output file after the iterations are done
     file.close();
 }
@@ -539,7 +539,7 @@ void programmteil(string command, vector<string> &commands, vector<double> &x, v
     double t = 0.;
 
     if (command == commands[0]){
-        initialize(n, m, x, y, z, vx, vy, vz, m);
+        initialize(n, x, y, z, vx, vy, vz, m);
         // driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, fwd_step, command);
         // driver_fwd(t, t_end, dt, x, y, z, vx, vy, vz, n);
     }
