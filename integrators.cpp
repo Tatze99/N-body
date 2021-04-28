@@ -16,13 +16,32 @@
 //for global "short-hand" notation - need not to write 'std::' in front of most things
 using namespace std;
 
-//global variables
-//const int n = 2;
+typedef void (* Step_function)(double, double, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>&, void* (*)(double, vector<double>, vector<double>, vector<double>, vector<double>&, int, vector<double>), int, vector<double>);
 
-typedef void (*Step_function)(double, double, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>, void* (*)(double, vector<double>, vector<double>, vector<double>&, int), int);
-//const double PI = 4.*atan(1.);
+void *acceleration(double t, vector<double> x, vector<double> y, vector<double> z, vector<double> &a, int n, vector<double> m){
+  double Matrix[n][n];
+
+  a.resize(n);
+  for(int i=0; i<n; i++) a.push_back(0.);
+
+  for(int i=0; i<n; i++){
+    for(int j=0; j<i; j++) {
+      Matrix[i][j] = (x[i]-x[j])/pow((x[i]-x[j])*(x[i]-x[j])+(y[i]-y[j])*(y[i]-y[j])+(z[i]-z[j])*(z[i]-z[j]),1.5);
+    }
+  }
+
+  for(int i=0; i<n; i++){
+    Matrix[i][i] = 0.;
+    for(int j=i+1; j<n; j++) Matrix[i][j] = -Matrix[j][i];
+    for(int j=0; j<n; j++) {
+      a[i] += Matrix[i][j]*m[j];
+    }
+    a[i] *= -4*M_PI*M_PI;
+  }
+}
 
 void initialize(int n, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, vector<double> &m){
+
     //Change size of vectors
     x.resize(n);
     y.resize(n);
@@ -34,7 +53,7 @@ void initialize(int n, vector<double> &x, vector<double> &y, vector<double> &z, 
 
     //set startvalues
     x[0] = 0.;
-    x[1] = 0.5;
+    x[1] = 1.;
     y[0] = 0.;
     y[1] = 0.;
     z[0] = 0.;
@@ -44,11 +63,13 @@ void initialize(int n, vector<double> &x, vector<double> &y, vector<double> &z, 
     vx[0] = 0.;
     vx[1] = 0.;
     vy[0] = 0.;
-    vy[1] = 0.;
+    vy[1] = 2*M_PI;
     vz[0] = 0.;
     vz[1] = 0.;
 
-    //mabye initialize natural constants
+    //mass [in units of the mass of the sun]
+    m[0] = 1.;
+    m[1] = 1/333000.;
 }
 
 void initialize_symplectic(int n, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, vector<double> &m){
@@ -220,11 +241,15 @@ void fwd_step(double t, double dt, vector<double> &x, vector<double> &y, vector<
     //for(int i=0; i<n; i++) vz[i] += dt * kvz;
 }
 
-void rk4_step(double t, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, vector<double> m, void* rhs(double t, vector<double> x, vector<double> m, vector<double> &u_rhs, int n), int n){
+void rk4_step(double t, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, void* rhs(double t, vector<double> x, vector<double> y, vector<double> z, vector<double> &u_rhs, int n, vector<double> m), int n, vector<double> m){
+
     //Initialize vectors for the steps - only one step here!
     vector<double> kx1, kx2, kx3, kx4, tmpx;
     vector<double> ky1, ky2, ky3, ky4, tmpy;
     vector<double> kz1, kz2, kz3, kz4, tmpz;
+    vector<double> vx1, vx2, vx3, vx4;
+    vector<double> vy1, vy2, vy3, vy4;
+    vector<double> vz1, vz2, vz3, vz4;
 
     for(int i=0; i<n; i++) kx1.push_back(0.);
     for(int i=0; i<n; i++) kx2.push_back(0.);
@@ -239,43 +264,77 @@ void rk4_step(double t, double dt, vector<double> &x, vector<double> &y, vector<
     for(int i=0; i<n; i++) kz3.push_back(0.);
     for(int i=0; i<n; i++) kz4.push_back(0.);
 
+    for(int i=0; i<n; i++) vx1.push_back(0.);
+    for(int i=0; i<n; i++) vx2.push_back(0.);
+    for(int i=0; i<n; i++) vx3.push_back(0.);
+    for(int i=0; i<n; i++) vx4.push_back(0.);
+    for(int i=0; i<n; i++) vy1.push_back(0.);
+    for(int i=0; i<n; i++) vy2.push_back(0.);
+    for(int i=0; i<n; i++) vy3.push_back(0.);
+    for(int i=0; i<n; i++) vy4.push_back(0.);
+    for(int i=0; i<n; i++) vz1.push_back(0.);
+    for(int i=0; i<n; i++) vz2.push_back(0.);
+    for(int i=0; i<n; i++) vz3.push_back(0.);
+    for(int i=0; i<n; i++) vz4.push_back(0.);
+
     for(int i=0; i<n; i++) tmpx.push_back(0.);
     for(int i=0; i<n; i++) tmpy.push_back(0.);
     for(int i=0; i<n; i++) tmpz.push_back(0.);
 
     //first rk4 step
-    rhs(t, x, m, kx1, n);
-    rhs(t, y, m, ky1, n);
-    rhs(t, z, m, kz1, n);
-    for(int i=0; i<n; i++) tmpx[i] = x[i] + (dt/2.) * kx1[i];
-    for(int i=0; i<n; i++) tmpy[i] = y[i] + (dt/2.) * ky1[i];
-    for(int i=0; i<n; i++) tmpz[i] = z[i] + (dt/2.) * kz1[i];
-
+    for(int i=0; i<n; i++) vx1[i] = vx[i];
+    for(int i=0; i<n; i++) vy1[i] = vy[i];
+    for(int i=0; i<n; i++) vz1[i] = vz[i];
+    rhs(t, x, y, z, kx1, n, m);
+    rhs(t, y, z, x, ky1, n, m);
+    rhs(t, z, x, y, kz1, n, m);
     //second rk4 step
-    rhs(t+dt/2., tmpx, m, kx2, n);
-    rhs(t+dt/2., tmpy, m, ky2, n);
-    rhs(t+dt/2., tmpz, m, kz2, n);
-    for(int i=0; i<n; i++) tmpx[i] = x[i] + (dt/2.) * kx2[i];
-    for(int i=0; i<n; i++) tmpy[i] = y[i] + (dt/2.) * ky2[i];
-    for(int i=0; i<n; i++) tmpz[i] = z[i] + (dt/2.) * kz2[i];
+    for(int i=0; i<n; i++) vx2[i] = vx[i] + (dt/2.) * kx1[i];
+    for(int i=0; i<n; i++) vy2[i] = vy[i] + (dt/2.) * ky1[i];
+    for(int i=0; i<n; i++) vz2[i] = vz[i] + (dt/2.) * kz1[i];
 
+    for(int i=0; i<n; i++) tmpx[i] = x[i] + (dt/2.) * vx1[i];
+    for(int i=0; i<n; i++) tmpy[i] = y[i] + (dt/2.) * vy1[i];
+    for(int i=0; i<n; i++) tmpz[i] = z[i] + (dt/2.) * vz1[i];
+    rhs(t+dt/2., tmpx, tmpy, tmpz, kx2, n, m);
+    rhs(t+dt/2., tmpy, tmpz, tmpx, ky2, n, m);
+    rhs(t+dt/2., tmpz, tmpx, tmpy, kz2, n, m);
     //third rk4 step
-    rhs(t+dt/2., tmpx, m, kx3, n);
-    rhs(t+dt/2., tmpy, m, ky3, n);
-    rhs(t+dt/2., tmpz, m, kz3, n);
-    for(int i=0; i<n; i++) tmpx[i] = x[i] + dt * kx3[i];
-    for(int i=0; i<n; i++) tmpy[i] = y[i] + dt * ky3[i];
-    for(int i=0; i<n; i++) tmpz[i] = z[i] + dt * kz3[i];
+    for(int i=0; i<n; i++) vx3[i] = vx[i] + (dt/2.) * kx2[i];
+    for(int i=0; i<n; i++) vy3[i] = vy[i] + (dt/2.) * ky2[i];
+    for(int i=0; i<n; i++) vz3[i] = vz[i] + (dt/2.) * kz2[i];
 
+    for(int i=0; i<n; i++) tmpx[i] = x[i] + (dt/2.) * vx2[i];
+    for(int i=0; i<n; i++) tmpy[i] = y[i] + (dt/2.) * vy2[i];
+    for(int i=0; i<n; i++) tmpz[i] = z[i] + (dt/2.) * vz2[i];
+    rhs(t+dt/2., tmpx, tmpy, tmpz, kx3, n, m);
+    rhs(t+dt/2., tmpy, tmpz, tmpx, ky3, n, m);
+    rhs(t+dt/2., tmpz, tmpx, tmpy, kz3, n, m);
     //fourth rk4 step
-    rhs(t+dt, tmpx, m, kx4, n);
-    rhs(t+dt, tmpy, m, ky4, n);
-    rhs(t+dt, tmpz, m, kz4, n);
+    for(int i=0; i<n; i++) vx4[i] = vx[i] + dt * kx3[i];
+    for(int i=0; i<n; i++) vy4[i] = vy[i] + dt * ky3[i];
+    for(int i=0; i<n; i++) vz4[i] = vz[i] + dt * kz3[i];
+
+    for(int i=0; i<n; i++) tmpx[i] = x[i] + dt * vx3[i];
+    for(int i=0; i<n; i++) tmpy[i] = y[i] + dt * vy3[i];
+    for(int i=0; i<n; i++) tmpz[i] = z[i] + dt * vz3[i];
+    rhs(t+dt, tmpx, tmpy, tmpz, kx4, n, m);
+    rhs(t+dt, tmpy, tmpz, tmpx, ky4, n, m);
+    rhs(t+dt, tmpz, tmpx, tmpy, kz4, n, m);
+
+    // cout << kx1[0] << " ; " << kx1[1] << endl;
+    // cout << kx2[0] << " ; " << kx2[1] << endl;
+    // cout << kx3[0] << " ; " << kx3[1] << endl;
+    // cout << kx4[0] << " ; " << kx4[1] << endl << endl;
 
     //do the iteration step (update the positions)
-    for(int i=0; i<n; i++) x[i] += (dt/6.) * (kx1[i] + 2.*kx2[i] + 2.*kx3[i] + kx4[i]);
-    for(int i=0; i<n; i++) y[i] += (dt/6.) * (ky1[i] + 2.*ky2[i] + 2.*ky3[i] + ky4[i]);
-    for(int i=0; i<n; i++) z[i] += (dt/6.) * (kz1[i] + 2.*kz2[i] + 2.*kz3[i] + kz4[i]);
+    for(int i=0; i<n; i++) vx[i] += (dt/6.) * (kx1[i] + 2.*kx2[i] + 2.*kx3[i] + kx4[i]);
+    for(int i=0; i<n; i++) vy[i] += (dt/6.) * (ky1[i] + 2.*ky2[i] + 2.*ky3[i] + ky4[i]);
+    for(int i=0; i<n; i++) vz[i] += (dt/6.) * (kz1[i] + 2.*kz2[i] + 2.*kz3[i] + kz4[i]);
+    for(int i=0; i<n; i++)  x[i] += (dt/6.) * (vx1[i] + 2.*vx2[i] + 2.*vx3[i] + vx4[i]);
+    for(int i=0; i<n; i++)  y[i] += (dt/6.) * (vy1[i] + 2.*vy2[i] + 2.*vy3[i] + vy4[i]);
+    for(int i=0; i<n; i++)  z[i] += (dt/6.) * (vz1[i] + 2.*vz2[i] + 2.*vz3[i] + vz4[i]);
+
 }
 
 void lf_step(double t, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, vector<double> m, void* rhs(double t, vector<double> x, vector<double> m, vector<double> &u_rhs, int n), int n){
@@ -429,7 +488,7 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
             file << e_kin << "; " << e_pot << "; " << e_tot << endl;
 
             //Calculate next timestep
-            step(t, dt, x, y, z, vx, vy, vz, m, testsymplectic, n);
+            step(t, dt, x, y, z, vx, vy, vz, acceleration, n, m);
 
             //update time - so the loop will have a chance to end
             t += dt;
@@ -456,7 +515,7 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
             file << e_kin << "; " << e_pot << "; " << e_tot << endl;
 
             //Calculate next timestep
-            step(t, dt, x, y, z, vx, vy, vz, m, testfunction, n);
+            step(t, dt, x, y, z, vx, vy, vz, acceleration, n, m);
 
             //update time - so the loop will have a chance to end
             t += dt;
@@ -474,13 +533,14 @@ void programmteil(string command, vector<string> &commands, vector<double> &x, v
     commands[2] = "lf";     //leapfrog
 
     int n = 2;              //Number of particles
-    double t_end = 2*M_PI;
-    double dt = pow(10,-2);
+
+    double t_end = 1;
+    double dt = pow(10,-4);
     double t = 0.;
 
     if (command == commands[0]){
-        initialize(n, x, y, z, vx, vy, vz, m);
-        driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, fwd_step, command);
+        initialize(n, m, x, y, z, vx, vy, vz, m);
+        // driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, fwd_step, command);
         // driver_fwd(t, t_end, dt, x, y, z, vx, vy, vz, n);
     }
 
@@ -492,7 +552,7 @@ void programmteil(string command, vector<string> &commands, vector<double> &x, v
 
     if (command == commands[2]){
         initialize_symplectic(n, x, y, z, vx, vy, vz, m);
-        driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, lf_step, command);
+        // driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, lf_step, command);
         // driver_lf(t, t_end, dt, x, y, z, vx, vy, vz, n);
     }
 
