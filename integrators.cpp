@@ -20,11 +20,11 @@ typedef void (* Step_function)(double, double, vector<double>&, vector<double>&,
 
 typedef vector<double> (DGL)(double t, vector<double> x, vector<double> y, vector<double> z, int n, vector<double> m);
 
-// Testfunctions ----------------------------------------------------------------------------
+//Testfunctions ----------------------------------------------------------------------------
 vector<double> acceleration(double t, vector<double> x, vector<double> y, vector<double> z, int n, vector<double> m){
   double Matrix[n][n];
 
-  vector<double> a(n,0.0);
+  vector<double> a(n,0.);
   for(int i=0; i<n; i++) a.push_back(0.);
 
   for(int i=0; i<n; i++){
@@ -54,9 +54,97 @@ vector<double> testsymplectic(double t, vector<double> x, vector<double> y, vect
   for(int i=0; i<n; i++) u_rhs[i] = -sin(t);
 }
 
-// Initialize variables ----------------------------------------------------------------------------
-void initialize(int n, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, vector<double> &m){
+//Functions to read input -------------------------------------------------------------------
+inline bool fileexists(const string& name){
+    if (FILE* file = fopen(name.c_str(), "r")){
+        fclose(file);
+        free(file);
+        return true;
+    }else{
+        return false;
+    }
+}
 
+void read_file(vector<string> &v, string &filename){
+    //read complete file and store to auxiliary vector v
+    fstream s;
+    char cstring[256];
+
+    //open file and read data
+    s.open(filename, ios::in);
+
+    while (!s.eof()){
+        s.getline(cstring, sizeof(cstring));
+        v.push_back(cstring);
+    }
+
+    s.close();
+}
+
+void set_startvalues(int n, vector<string> help, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, vector<double> &m){
+   int counter;
+   string s, tmp_s;
+   string semi = ";";  //define delimiter which shall be searched for
+ 
+   //iterate over auxiliary vector
+    for(int i=0; i<n; i++){
+        s = help[i];
+        //iterate over each double in one line
+        for(int l=0; l<7; l++){
+            //iterate over each line --- mabye replace by find_first_of (see cppreference)
+            for(int j=0; j<s.length(); j++){
+                if(s[j] == semi[0]){
+                    counter = j;
+                    break;
+                }
+            }
+            
+            //cut off the first part of s 
+            tmp_s = s.substr(0, counter);
+
+            //set s to the remaining string
+            if ((counter-2) < (s.length()-1)) s = s.substr(counter+2, s.length()-1);
+
+            //set values
+            switch (l)
+            {
+                case 0: x[i] = stod(tmp_s);
+                        break;
+                case 1: y[i] = stod(tmp_s);
+                        break;
+                case 2: z[i] = stod(tmp_s);
+                        break;
+                case 3: vx[i] = stod(tmp_s);
+                        break;
+                case 4: vy[i] = stod(tmp_s);
+                        break;
+                case 5: vz[i] = stod(tmp_s);
+                        break;
+                case 6: m[i] = stod(tmp_s);
+            }
+        }
+    }
+}
+
+// Initialize variables ----------------------------------------------------------------------------
+void n_init(int n, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, vector<double> &m, string name){
+    //auxiliary vector
+    vector<string> help = {};
+    
+    //Change size of vectors
+    x.resize(n);
+    y.resize(n);
+    z.resize(n);
+    vx.resize(n);
+    vy.resize(n);
+    vz.resize(n);
+    m.resize(n);
+
+    read_file(help, name);
+    set_startvalues(n, help, x, y, z, vx, vy, vz, m);
+}
+
+void initialize(int n, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, vector<double> &m){
     //Change size of vectors
     x.resize(n);
     y.resize(n);
@@ -119,105 +207,30 @@ void initialize_symplectic(int n, vector<double> &x, vector<double> &y, vector<d
     m[1] = 1/333000.;
 }
 
-//Functions for read ----------------------------------------------------------------------------
-inline bool fileexists (const std::string& name) {
-    if (FILE* file = fopen(name.c_str(), "r")) {
-        fclose(file);
-        free(file);
-        return true;
-    } else {
-        return false;
-    }
-}
-
-void read_file(vector<string> &v, string &filename, string &str){
-    //read complete file and store to vector v
-    //create vector s
-    fstream s;
-    char cstring[256];
-    string tmp;
-    string tmp1;
-    int tmpascii;
-
-    //open file and read data
-    s.open(filename, ios::in);
-
-    while (!s.eof())
-    {
-        //tmp = "";
-        s.getline(cstring, sizeof(cstring));
-        //tmp1 = cstring;
-        //for(int i=0; i<tmp1.length();i++){
-        //    tmpascii = tmp1[i];
-        //    //ascii-sign 015 is some sort of newline command in CCLI or songbeamer files
-        //    if (tmpascii != 015) tmp += cstring[i];
-        //}
-        //v.push_back(tmp);
-        v.push_back(cstring);
-    }
-
-    //set breaking command for printing and line counting functions
-    //v.push_back(str);
-    s.close();
-}
-
-void seperate_to_files(vector<string> &file, vector<string> &sngspecific, vector<string> &data, string &s){
-   //create from vector (file) with whole file two seperate files containing songbeamber specific information (sngspecific) or song data (data)
-
-   /*
-   int i = 0;
-   string sngtag = "#";
-   string snginfo;
-
-    //go through all lines of file and sort them
-    while (file[i].compare(s) != 0){
-        snginfo = file[i];
-
-        //sort songbeamer specific information to sngspecific
-        if (snginfo[0] == sngtag[0]){
-            sngspecific.push_back(file[i]);
-            i++;
-            continue;
-        }
-
-        //sort song data to data
-        data.push_back(file[i]);
-        i++;
-    }
-    */
-
-   //Set
-
-    //set breaking command for printing and line counting functions
-    sngspecific.push_back(s);
-    data.push_back(s);
-}
-
 //Step functions ----------------------------------------------------------------------------
 void fwd_step(double t, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, DGL rhs, int n, vector<double> m){
     //Initialize vectors for the steps - only one step here!
-    vector<double> kx(n), ky(n), kz(n);
+    vector<double> ax(n), ay(n), az(n);
 
-    //determine the derivative in every direction (calculate kx, ky, kz)
-    kx = rhs(t, x, y, z, n, m);
-    ky = rhs(t, y, z, x, n, m);
-    kz = rhs(t, z, x, y, n, m);
+    //determine the acceleration
+    ax = rhs(t, x, y, z, n, m);
+    ay = rhs(t, y, z, x, n, m);
+    az = rhs(t, z, x, y, n, m);
 
     //do the iteration step (update the positions)
     for(int i=0; i<n; i++) x[i] += dt * vx[i];
     for(int i=0; i<n; i++) y[i] += dt * vy[i];
     for(int i=0; i<n; i++) z[i] += dt * vz[i];
-    for(int i=0; i<n; i++) vx[i] += dt * kx[i];
-    for(int i=0; i<n; i++) vy[i] += dt * ky[i];
-    for(int i=0; i<n; i++) vz[i] += dt * kz[i];
+    for(int i=0; i<n; i++) vx[i] += dt * ax[i];
+    for(int i=0; i<n; i++) vy[i] += dt * ay[i];
+    for(int i=0; i<n; i++) vz[i] += dt * az[i];
 }
 
 void rk4_step(double t, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, DGL rhs, int n, vector<double> m){
-
     //Initialize vectors for the steps - only one step here!
-    vector<double> kx1(n), kx2(n), kx3(n), kx4(n), tmpx(n);
-    vector<double> ky1(n), ky2(n), ky3(n), ky4(n), tmpy(n);
-    vector<double> kz1(n), kz2(n), kz3(n), kz4(n), tmpz(n);
+    vector<double> ax1(n), ax2(n), ax3(n), ax4(n), tmpx(n);
+    vector<double> ay1(n), ay2(n), ay3(n), ay4(n), tmpy(n);
+    vector<double> az1(n), az2(n), az3(n), az4(n), tmpz(n);
     vector<double> vx1(n), vx2(n), vx3(n), vx4(n);
     vector<double> vy1(n), vy2(n), vy3(n), vy4(n);
     vector<double> vz1(n), vz2(n), vz3(n), vz4(n);
@@ -226,47 +239,51 @@ void rk4_step(double t, double dt, vector<double> &x, vector<double> &y, vector<
     for(int i=0; i<n; i++) vx1[i] = vx[i];
     for(int i=0; i<n; i++) vy1[i] = vy[i];
     for(int i=0; i<n; i++) vz1[i] = vz[i];
-    kx1 = rhs(t, x, y, z, n, m);
-    ky1 = rhs(t, y, z, x, n, m);
-    kz1 = rhs(t, z, x, y, n, m);
-    //second rk4 step
-    for(int i=0; i<n; i++) vx2[i] = vx[i] + (dt/2.) * kx1[i];
-    for(int i=0; i<n; i++) vy2[i] = vy[i] + (dt/2.) * ky1[i];
-    for(int i=0; i<n; i++) vz2[i] = vz[i] + (dt/2.) * kz1[i];
 
+    ax1 = rhs(t, x, y, z, n, m);
+    ay1 = rhs(t, y, z, x, n, m);
+    az1 = rhs(t, z, x, y, n, m);
+
+    //second rk4 step
+    for(int i=0; i<n; i++) vx2[i] = vx[i] + (dt/2.) * ax1[i];
+    for(int i=0; i<n; i++) vy2[i] = vy[i] + (dt/2.) * ay1[i];
+    for(int i=0; i<n; i++) vz2[i] = vz[i] + (dt/2.) * az1[i];
     for(int i=0; i<n; i++) tmpx[i] = x[i] + (dt/2.) * vx1[i];
     for(int i=0; i<n; i++) tmpy[i] = y[i] + (dt/2.) * vy1[i];
     for(int i=0; i<n; i++) tmpz[i] = z[i] + (dt/2.) * vz1[i];
-    kx2 = rhs(t+dt/2., tmpx, tmpy, tmpz, n, m);
-    ky2 = rhs(t+dt/2., tmpy, tmpz, tmpx, n, m);
-    kz2 = rhs(t+dt/2., tmpz, tmpx, tmpy, n, m);
-    //third rk4 step
-    for(int i=0; i<n; i++) vx3[i] = vx[i] + (dt/2.) * kx2[i];
-    for(int i=0; i<n; i++) vy3[i] = vy[i] + (dt/2.) * ky2[i];
-    for(int i=0; i<n; i++) vz3[i] = vz[i] + (dt/2.) * kz2[i];
 
+    ax2 = rhs(t+dt/2., tmpx, tmpy, tmpz, n, m);
+    ay2 = rhs(t+dt/2., tmpy, tmpz, tmpx, n, m);
+    az2 = rhs(t+dt/2., tmpz, tmpx, tmpy, n, m);
+
+    //third rk4 step
+    for(int i=0; i<n; i++) vx3[i] = vx[i] + (dt/2.) * ax2[i];
+    for(int i=0; i<n; i++) vy3[i] = vy[i] + (dt/2.) * ay2[i];
+    for(int i=0; i<n; i++) vz3[i] = vz[i] + (dt/2.) * az2[i];
     for(int i=0; i<n; i++) tmpx[i] = x[i] + (dt/2.) * vx2[i];
     for(int i=0; i<n; i++) tmpy[i] = y[i] + (dt/2.) * vy2[i];
     for(int i=0; i<n; i++) tmpz[i] = z[i] + (dt/2.) * vz2[i];
-    kx3 = rhs(t+dt/2., tmpx, tmpy, tmpz, n, m);
-    ky3 = rhs(t+dt/2., tmpy, tmpz, tmpx, n, m);
-    kz3 = rhs(t+dt/2., tmpz, tmpx, tmpy, n, m);
-    //fourth rk4 step
-    for(int i=0; i<n; i++) vx4[i] = vx[i] + dt * kx3[i];
-    for(int i=0; i<n; i++) vy4[i] = vy[i] + dt * ky3[i];
-    for(int i=0; i<n; i++) vz4[i] = vz[i] + dt * kz3[i];
 
+    ax3 = rhs(t+dt/2., tmpx, tmpy, tmpz, n, m);
+    ay3 = rhs(t+dt/2., tmpy, tmpz, tmpx, n, m);
+    az3 = rhs(t+dt/2., tmpz, tmpx, tmpy, n, m);
+
+    //fourth rk4 step
+    for(int i=0; i<n; i++) vx4[i] = vx[i] + dt * ax3[i];
+    for(int i=0; i<n; i++) vy4[i] = vy[i] + dt * ay3[i];
+    for(int i=0; i<n; i++) vz4[i] = vz[i] + dt * az3[i];
     for(int i=0; i<n; i++) tmpx[i] = x[i] + dt * vx3[i];
     for(int i=0; i<n; i++) tmpy[i] = y[i] + dt * vy3[i];
     for(int i=0; i<n; i++) tmpz[i] = z[i] + dt * vz3[i];
-    kx4 = rhs(t+dt, tmpx, tmpy, tmpz, n, m);
-    ky4 = rhs(t+dt, tmpy, tmpz, tmpx, n, m);
-    kz4 = rhs(t+dt, tmpz, tmpx, tmpy, n, m);
+
+    ax4 = rhs(t+dt, tmpx, tmpy, tmpz, n, m);
+    ay4 = rhs(t+dt, tmpy, tmpz, tmpx, n, m);
+    az4 = rhs(t+dt, tmpz, tmpx, tmpy, n, m);
 
     //do the iteration step (update the positions)
-    for(int i=0; i<n; i++) vx[i] += (dt/6.) * (kx1[i] + 2.*kx2[i] + 2.*kx3[i] + kx4[i]);
-    for(int i=0; i<n; i++) vy[i] += (dt/6.) * (ky1[i] + 2.*ky2[i] + 2.*ky3[i] + ky4[i]);
-    for(int i=0; i<n; i++) vz[i] += (dt/6.) * (kz1[i] + 2.*kz2[i] + 2.*kz3[i] + kz4[i]);
+    for(int i=0; i<n; i++) vx[i] += (dt/6.) * (ax1[i] + 2.*ax2[i] + 2.*ax3[i] + ax4[i]);
+    for(int i=0; i<n; i++) vy[i] += (dt/6.) * (ay1[i] + 2.*ay2[i] + 2.*ay3[i] + ay4[i]);
+    for(int i=0; i<n; i++) vz[i] += (dt/6.) * (az1[i] + 2.*az2[i] + 2.*az3[i] + az4[i]);
     for(int i=0; i<n; i++)  x[i] += (dt/6.) * (vx1[i] + 2.*vx2[i] + 2.*vx3[i] + vx4[i]);
     for(int i=0; i<n; i++)  y[i] += (dt/6.) * (vy1[i] + 2.*vy2[i] + 2.*vy3[i] + vy4[i]);
     for(int i=0; i<n; i++)  z[i] += (dt/6.) * (vz1[i] + 2.*vz2[i] + 2.*vz3[i] + vz4[i]);
@@ -275,17 +292,18 @@ void rk4_step(double t, double dt, vector<double> &x, vector<double> &y, vector<
 
 void lf_step(double t, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, DGL rhs, int n, vector<double> m){
     //Initialize vectors for the steps - only one step here!
-    vector<double> kx(n), ky(n), kz(n);
+    vector<double> ax(n), ay(n), az(n);
 
-    //lf step - calculate derivative of v
-    kx = rhs(t, x, y, z, n, m);
-    ky = rhs(t, y, z, x, n, m);
-    kz = rhs(t, z, x, y, n, m);
+    //lf step - calculate derivative of v at n-th position
+    ax = rhs(t, x, y, z, n, m);
+    ay = rhs(t, y, z, x, n, m);
+    az = rhs(t, z, x, y, n, m);
 
     //calculate n+1/2 value of v
-    for(int i=0; i<n; i++) vx[i] += dt * kx[i];
-    for(int i=0; i<n; i++) vy[i] += dt * ky[i];
-    for(int i=0; i<n; i++) vz[i] += dt * kz[i];
+    for(int i=0; i<n; i++) vx[i] += dt * ax[i];
+    for(int i=0; i<n; i++) vy[i] += dt * ay[i];
+    for(int i=0; i<n; i++) vz[i] += dt * az[i];
+
     //do the iteration step (update the positions (n+1))
     for(int i=0; i<n; i++) x[i] += dt * vx[i];
     for(int i=0; i<n; i++) y[i] += dt * vy[i];
@@ -293,96 +311,80 @@ void lf_step(double t, double dt, vector<double> &x, vector<double> &y, vector<d
 }
 
 void driver(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, Step_function step, string command){
-
     //Create and open output file
     fstream file;
     file.open(command+"-solution.csv", ios::out);
-    file.precision(10);
+    file.precision(16);
 
     double e_kin, e_pot, e_tot;
+ 
+    //loop that iterates up to a certain chosen time (end)
+    while((t_end - t) > DBL_EPSILON){
+        e_kin = 0.;
+        e_pot = 0.;
+        for(int i=0; i<n; i++) e_kin += 0.5 * m[i] * (pow(vx[i],2) + pow(vy[i],2) + pow(vz[i],2));
+        //for(int i; i<n; i++) e_pot -= m[i] * acceleration[i] * sqrt(pow(x[i],2) + pow(y[i],2) + pow(z[i],2));
+        e_tot = e_kin + e_pot;
 
-    //For the LF integrator we will possibly end up with another
-    //function to integrate than for the fwd and rk4 method
-    //Wrong function was a problem for the integrator scheme
-    //Problem is resolved by the following if-construction
-    if(command=="lf"){
-        //loop that iterates up to a certain chosen time (end)
-        while((t_end - t) > DBL_EPSILON){
-            e_kin = 0.;
-            e_pot = 0.;
-            for(int i; i<n; i++) e_kin += 0.5 * m[i] * (pow(vx[i],2) + pow(vy[i],2) + pow(vz[i],2));
-            //for(int i; i<n; i++) e_pot -= m[i] * acceleration[i] * sqrt(pow(x[i],2) + pow(y[i],2) + pow(z[i],2));
-            e_tot = e_kin + e_pot;
+        //Output current values to file - "; " is needed as delimiter for cells
+        //Iterations are needed to generally output for n objects without adjusting anything
+        file << t << "; ";
+            for(int i=0; i<n; i++) file << x[i] << "; ";
+            for(int i=0; i<n; i++) file << y[i] << "; ";
+            for(int i=0; i<n; i++) file << z[i] << "; ";
+            for(int i=0; i<n; i++) file << vx[i] << "; ";
+            for(int i=0; i<n; i++) file << vy[i] << "; ";
+            for(int i=0; i<n; i++) file << vz[i] << "; ";
+        file << e_kin << "; " << e_pot << "; " << e_tot << endl;
 
-            //Output current values to file - "; " is needed as delimiter for cells
-            //Iterations are needed to generally output for n objects without adjusting anything
-            file << t << "; ";
-                for(int i=0; i<n; i++) file << x[i] << "; ";
-                for(int i=0; i<n; i++) file << y[i] << "; ";
-                for(int i=0; i<n; i++) file << z[i] << "; ";
-                for(int i=0; i<n; i++) file << vx[i] << "; ";
-                for(int i=0; i<n; i++) file << vy[i] << "; ";
-                for(int i=0; i<n; i++) file << vz[i] << "; ";
-            file << e_kin << "; " << e_pot << "; " << e_tot << endl;
+        //Calculate next timestep
+        step(t, dt, x, y, z, vx, vy, vz, acceleration, n, m);
 
-            //Calculate next timestep
-            step(t, dt, x, y, z, vx, vy, vz, acceleration, n, m);
-
-            //update time - so the loop will have a chance to end
-            t += dt;
-        }
-    }
-    else{
-        //loop that iterates up to a certain chosen time (end)
-        while((t_end - t) > DBL_EPSILON){
-            e_kin = 0.;
-            e_pot = 0.;
-            for(int i; i<n; i++) e_kin += 0.5 * m[i] * (pow(vx[i],2) + pow(vy[i],2) + pow(vz[i],2));
-            //for(int i; i<n; i++) e_pot -= m[i] * acceleration[i] * sqrt(pow(x[i],2) + pow(y[i],2) + pow(z[i],2));
-            e_tot = e_kin + e_pot;
-
-            //Output current values to file - "; " is needed as delimiter for cells
-            //Iterations are needed to generally output for n objects without adjusting anything
-            file << t << "; ";
-                for(int i=0; i<n; i++) file << x[i] << "; ";
-                for(int i=0; i<n; i++) file << y[i] << "; ";
-                for(int i=0; i<n; i++) file << z[i] << "; ";
-                for(int i=0; i<n; i++) file << vx[i] << "; ";
-                for(int i=0; i<n; i++) file << vy[i] << "; ";
-                for(int i=0; i<n; i++) file << vz[i] << "; ";
-            file << e_kin << "; " << e_pot << "; " << e_tot << endl;
-
-            //Calculate next timestep
-            step(t, dt, x, y, z, vx, vy, vz, acceleration, n, m);
-
-            //update time - so the loop will have a chance to end
-            t += dt;
-        }
+        //update time - so the loop will have a chance to end
+        t += dt;
     }
 
     //close the output file after the iterations are done
     file.close();
 }
 
-void programmteil(string command, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, vector<double> &m){
-    int n = 2;              //Number of particles
-    double t_end = 1;       //final time
-    double dt = pow(10,-4); //time steps
+void programmteil(string command){
+    //vectors chosen such that n-particles can be realized
+    //Only current values are stored and after the output overridden with the new ones
+    vector<double> x = {};
+    vector<double> y = {};
+    vector<double> z = {};
+    vector<double> vx = {};
+    vector<double> vy = {};
+    vector<double> vz = {};
+    vector<double> m = {};
+    
+    int n = 2;                   //Number of objects
+    double t_end = 1.;           //final time
+    double dt = pow(2.,-13);     //time steps
     double t = 0.;
 
-    if (command == "fwd"){  // forward euler
-        initialize(n, x, y, z, vx, vy, vz, m);
-        driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, fwd_step, command);
+    string name = "Input.csv";
+
+    if(fileexists(name)){
+        if (command == "fwd"){  // forward euler
+            //n_init(n, x, y, z, vx, vy, vz, m, name);
+            initialize(n, x, y, z, vx, vy, vz, m);
+            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, fwd_step, command);
+        }
+        else if (command == "rk4"){ // Runge Kutta 4
+            //n_init(n, x, y, z, vx, vy, vz, m, name);
+            initialize(n, x, y, z, vx, vy, vz, m);
+            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, rk4_step, command);
+        }
+        else if (command == "lf"){ // leap frog
+            initialize_symplectic(n, x, y, z, vx, vy, vz, dt, m);
+            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, lf_step, command);
+        }
+        else cout << "Wrong parameter!" << endl;
+    }else{
+        cout << "Input file not found!" << endl;
     }
-    else if (command == "rk4"){ // Runge Kutta 4
-        initialize(n, x, y, z, vx, vy, vz, m);
-        driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, rk4_step, command);
-    }
-    else if (command == "lf"){ // leap frog
-        initialize_symplectic(n, x, y, z, vx, vy, vz, dt, m);
-        driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, fwd_step, command);
-    }
-    else cout << "Wrong parameter!" << endl;
 }
 
 int main(int argc, char** argv){
@@ -392,29 +394,16 @@ int main(int argc, char** argv){
     if(argc != 2) {
         cout << "usage:\n" << argv[0] << " <parameter> || possible parameters: 'fwd', 'rk4' or 'lf' " << endl;
         return -1;
-    }
-    else{
+    }else{
         stringstream input{argv[1]};
         string command;
-        input >> command;
+        input >> command;        
 
-        //vectors chosen such that n-particles can be realized
-        //Only current values are stored and after the output overridden with the new ones
-        vector<double> x = {};
-        vector<double> y = {};
-        vector<double> z = {};
+        programmteil(command);
 
-        vector<double> vx = {};
-        vector<double> vy = {};
-        vector<double> vz = {};
-
-        vector<double> m = {};
-
-        programmteil(command, x, y, z, vx, vy, vz, m);
         auto t2 = chrono::high_resolution_clock::now();
         auto time = chrono::duration<float>(t2-t1).count();
-        cout << "Reached end of main." << endl;
-        cout << "Die Berechnung hat " << time << " Sekunden gedauert." << endl;
+        cout << "Reached end of main after " << time << " seconds." << endl;
 
         return 0;
     }
