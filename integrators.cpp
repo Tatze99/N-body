@@ -244,42 +244,18 @@ void fwd_step(double t, double dt, vector<double> &x, vector<double> &y, vector<
 void rk4_step(double t, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, void* rhs(double t, vector<double> x, vector<double> y, vector<double> z, vector<double> &u_rhs, int n, vector<double> m), int n, vector<double> m){
 
     //Initialize vectors for the steps - only one step here!
-    vector<double> kx1, kx2, kx3, kx4, tmpx;
-    vector<double> ky1, ky2, ky3, ky4, tmpy;
-    vector<double> kz1, kz2, kz3, kz4, tmpz;
-    vector<double> vx1, vx2, vx3, vx4;
-    vector<double> vy1, vy2, vy3, vy4;
-    vector<double> vz1, vz2, vz3, vz4;
-
-    for(int i=0; i<n; i++) kx1.push_back(0.);
-    for(int i=0; i<n; i++) kx2.push_back(0.);
-    for(int i=0; i<n; i++) kx3.push_back(0.);
-    for(int i=0; i<n; i++) kx4.push_back(0.);
-    for(int i=0; i<n; i++) ky1.push_back(0.);
-    for(int i=0; i<n; i++) ky2.push_back(0.);
-    for(int i=0; i<n; i++) ky3.push_back(0.);
-    for(int i=0; i<n; i++) ky4.push_back(0.);
-    for(int i=0; i<n; i++) kz1.push_back(0.);
-    for(int i=0; i<n; i++) kz2.push_back(0.);
-    for(int i=0; i<n; i++) kz3.push_back(0.);
-    for(int i=0; i<n; i++) kz4.push_back(0.);
-
-    for(int i=0; i<n; i++) vx1.push_back(0.);
-    for(int i=0; i<n; i++) vx2.push_back(0.);
-    for(int i=0; i<n; i++) vx3.push_back(0.);
-    for(int i=0; i<n; i++) vx4.push_back(0.);
-    for(int i=0; i<n; i++) vy1.push_back(0.);
-    for(int i=0; i<n; i++) vy2.push_back(0.);
-    for(int i=0; i<n; i++) vy3.push_back(0.);
-    for(int i=0; i<n; i++) vy4.push_back(0.);
-    for(int i=0; i<n; i++) vz1.push_back(0.);
-    for(int i=0; i<n; i++) vz2.push_back(0.);
-    for(int i=0; i<n; i++) vz3.push_back(0.);
-    for(int i=0; i<n; i++) vz4.push_back(0.);
-
-    for(int i=0; i<n; i++) tmpx.push_back(0.);
-    for(int i=0; i<n; i++) tmpy.push_back(0.);
-    for(int i=0; i<n; i++) tmpz.push_back(0.);
+    vector<double> kx1(n,0.0), kx2(n,0.0), kx3(n,0.0), kx4(n,0.0), tmpx(n,0.0);
+    vector<double> ky1(n,0.0), ky2(n,0.0), ky3(n,0.0), ky4(n,0.0), tmpy(n,0.0);
+    vector<double> kz1(n,0.0), kz2(n,0.0), kz3(n,0.0), kz4(n,0.0), tmpz(n,0.0);
+    vector<double> vx1(n,0.0), vx2(n,0.0), vx3(n,0.0), vx4(n,0.0);
+    vector<double> vy1(n,0.0), vy2(n,0.0), vy3(n,0.0), vy4(n,0.0);
+    vector<double> vz1(n,0.0), vz2(n,0.0), vz3(n,0.0), vz4(n,0.0);
+    // vector<double> kx1, kx2, kx3, kx4, tmpx;
+    // vector<double> ky1, ky2, ky3, ky4, tmpy;
+    // vector<double> kz1, kz2, kz3, kz4, tmpz;
+    // vector<double> vx1, vx2, vx3, vx4;
+    // vector<double> vy1, vy2, vy3, vy4;
+    // vector<double> vz1, vz2, vz3, vz4;
 
     //first rk4 step
     for(int i=0; i<n; i++) vx1[i] = vx[i];
