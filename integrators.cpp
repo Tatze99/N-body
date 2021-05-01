@@ -85,7 +85,7 @@ void set_startvalues(int n, vector<string> help, vector<double> &x, vector<doubl
    int counter;
    string s, tmp_s;
    string semi = ";";  //define delimiter which shall be searched for
- 
+
    //iterate over auxiliary vector
     for(int i=0; i<n; i++){
         s = help[i];
@@ -98,8 +98,8 @@ void set_startvalues(int n, vector<string> help, vector<double> &x, vector<doubl
                     break;
                 }
             }
-            
-            //cut off the first part of s 
+
+            //cut off the first part of s
             tmp_s = s.substr(0, counter);
 
             //set s to the remaining string
@@ -114,11 +114,11 @@ void set_startvalues(int n, vector<string> help, vector<double> &x, vector<doubl
                         break;
                 case 2: z[i] = stod(tmp_s);
                         break;
-                case 3: vx[i] = stod(tmp_s);
+                case 3: vx[i] = 365.245*stod(tmp_s);
                         break;
-                case 4: vy[i] = stod(tmp_s);
+                case 4: vy[i] = 365.245*stod(tmp_s);
                         break;
-                case 5: vz[i] = stod(tmp_s);
+                case 5: vz[i] = 365.245*stod(tmp_s);
                         break;
                 case 6: m[i] = stod(tmp_s);
             }
@@ -130,7 +130,7 @@ void set_startvalues(int n, vector<string> help, vector<double> &x, vector<doubl
 void n_init(int n, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, vector<double> &m, string name){
     //auxiliary vector
     vector<string> help = {};
-    
+
     //Change size of vectors
     x.resize(n);
     y.resize(n);
@@ -192,7 +192,7 @@ void initialize_symplectic(int n, vector<double> &x, vector<double> &y, vector<d
     y[1] = 0.;
     z[0] = 0.;
     z[1] = 0.;
-    
+
     //contrary the lf method needs initialisation of v a half timestep before the first timestep of x
     //fwd and rk4 method need initialisation of v at the same timestep as x
     vx[0] = 0.;
@@ -317,7 +317,7 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
     file.precision(16);
 
     double e_kin, e_pot, e_tot;
- 
+    int count  = 0;
     //loop that iterates up to a certain chosen time (end)
     while((t_end - t) > DBL_EPSILON){
         e_kin = 0.;
@@ -328,20 +328,25 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
 
         //Output current values to file - "; " is needed as delimiter for cells
         //Iterations are needed to generally output for n objects without adjusting anything
-        file << t << "; ";
-            for(int i=0; i<n; i++) file << x[i] << "; ";
-            for(int i=0; i<n; i++) file << y[i] << "; ";
-            for(int i=0; i<n; i++) file << z[i] << "; ";
-            for(int i=0; i<n; i++) file << vx[i] << "; ";
-            for(int i=0; i<n; i++) file << vy[i] << "; ";
-            for(int i=0; i<n; i++) file << vz[i] << "; ";
-        file << e_kin << "; " << e_pot << "; " << e_tot << endl;
+
+        int timestep = round(t_end/(dt*500));
+        if(count % timestep == 0){
+          file << t << "; ";
+              for(int i=0; i<n; i++) file << x[i] << "; ";
+              for(int i=0; i<n; i++) file << y[i] << "; ";
+              for(int i=0; i<n; i++) file << z[i] << "; ";
+              for(int i=0; i<n; i++) file << vx[i] << "; ";
+              for(int i=0; i<n; i++) file << vy[i] << "; ";
+              for(int i=0; i<n; i++) file << vz[i] << "; ";
+          file << e_kin << "; " << e_pot << "; " << e_tot << endl;
+        }
 
         //Calculate next timestep
         step(t, dt, x, y, z, vx, vy, vz, acceleration, n, m);
 
         //update time - so the loop will have a chance to end
         t += dt;
+        count ++;
     }
 
     //close the output file after the iterations are done
@@ -358,10 +363,10 @@ void programmteil(string command){
     vector<double> vy = {};
     vector<double> vz = {};
     vector<double> m = {};
-    
-    int n = 2;                   //Number of objects
-    double t_end = 1.;           //final time
-    double dt = pow(2.,-13);     //time steps
+
+    int n = 10;                   //Number of objects
+    double t_end = 25.;           //final time
+    double dt = pow(2.,-11);     //time steps
     double t = 0.;
 
     string name = "Input.csv";
@@ -374,7 +379,7 @@ void programmteil(string command){
         }
         else if (command == "rk4"){ // Runge Kutta 4
             //n_init(n, x, y, z, vx, vy, vz, m, name);
-            initialize(n, x, y, z, vx, vy, vz, m);
+            n_init(n, x, y, z, vx, vy, vz, m, name);
             driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, rk4_step, command);
         }
         else if (command == "lf"){ // leap frog
@@ -397,7 +402,7 @@ int main(int argc, char** argv){
     }else{
         stringstream input{argv[1]};
         string command;
-        input >> command;        
+        input >> command;
 
         programmteil(command);
 

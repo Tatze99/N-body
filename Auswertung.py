@@ -25,11 +25,14 @@ def potential_energy(x, y, z, m):
 
 command = "rk4"
 Daten = np.loadtxt(command+"-solution.csv",delimiter=';')
+mass = np.loadtxt("Input.csv",delimiter=';',usecols=[6])
+Namen = ['Sun', 'Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptun', 'Pluto']
 
 steps = len(Daten[:,0])
-m = [1,0.000003003]
-n = 2
-
+number = 10
+n = 10
+m = mass[0:n]
+names = Namen[0:n]
 t  = Daten[:,0]
 x  = Daten[:,0*n+1:1*n+1]
 y  = Daten[:,1*n+1:2*n+1]
@@ -41,9 +44,9 @@ vz = Daten[:,5*n+1:6*n+1]
 #%%
 # Plot the trajectories
 plt.figure(dpi=300)
-plt.plot(x, y, label=['Sonne', 'Erde'])
+plt.plot(x[:,0:number], y[:,0:number], label=names[0:number])
 plt.legend()
-# plt.savefig("0421_Integration_"+command+".pdf")
+plt.savefig("0421_Integration_"+command+".pdf")
 
 #%%
 # Plot the energy
