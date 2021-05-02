@@ -1,5 +1,8 @@
 /*  Dies ist ein Programm zur Implementierung des forward-euler,
     rk4 und des leapfrog-Verfahrens.
+    C://Users/Martin/Documents/GitHub/N-body
+    g++ integrators.cpp -o integrators
+    ./integrators rk4
 */
 
 //pre-processor instructions
@@ -323,13 +326,13 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
         e_kin = 0.;
         e_pot = 0.;
         for(int i=0; i<n; i++) e_kin += 0.5 * m[i] * (pow(vx[i],2) + pow(vy[i],2) + pow(vz[i],2));
-        //for(int i; i<n; i++) e_pot -= m[i] * acceleration[i] * sqrt(pow(x[i],2) + pow(y[i],2) + pow(z[i],2));
+        for(int i=0; i<n; i++) e_pot -= m[i] * acceleration[i] * sqrt(pow(x[i],2) + pow(y[i],2) + pow(z[i],2));
         e_tot = e_kin + e_pot;
 
         //Output current values to file - "; " is needed as delimiter for cells
         //Iterations are needed to generally output for n objects without adjusting anything
 
-        int timestep = round(t_end/(dt*500));
+        int timestep = round(t_end/(dt*5000));
         if(count % timestep == 0){
           file << t << "; ";
               for(int i=0; i<n; i++) file << x[i] << "; ";
@@ -365,7 +368,7 @@ void programmteil(string command){
     vector<double> m = {};
 
     int n = 10;                   //Number of objects
-    double t_end = 25.;           //final time
+    double t_end = 248.;           //final time
     double dt = pow(2.,-11);     //time steps
     double t = 0.;
 
@@ -373,13 +376,13 @@ void programmteil(string command){
 
     if(fileexists(name)){
         if (command == "fwd"){  // forward euler
-            //n_init(n, x, y, z, vx, vy, vz, m, name);
-            initialize(n, x, y, z, vx, vy, vz, m);
+            n_init(n, x, y, z, vx, vy, vz, m, name);
+            // initialize(n, x, y, z, vx, vy, vz, m);
             driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, fwd_step, command);
         }
         else if (command == "rk4"){ // Runge Kutta 4
-            //n_init(n, x, y, z, vx, vy, vz, m, name);
             n_init(n, x, y, z, vx, vy, vz, m, name);
+            // initialize(n, x, y, z, vx, vy, vz, m);
             driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, rk4_step, command);
         }
         else if (command == "lf"){ // leap frog
