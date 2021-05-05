@@ -36,11 +36,13 @@
     -how to call c++ programms / functions from a python script
     -how to unify the plotting python scrips to a complete script that does programm execution, numerical analysis and plotting
     -how to handle auxiliary functions of symplectic integrators if they appear in the output at all, since they are off by 0.5 time step
-    -machine leaning approach
+    -machine leaning approach to achieve initial values from ending position
 
 
   Test:
     -Unbeteiligte Planeten an/aus
-    
+    -Satellit losschicken und bei pluto ankommen
+
+
   
 */
