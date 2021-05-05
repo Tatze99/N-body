@@ -411,3 +411,45 @@ int main(int argc, char** argv) {
         return 0;
     }
 }
+
+/* To do:
+ Programming part:
+    -Write .csv/.txt -file with initialvalues for ~ 20-30 objects we want to consider with lines like: x, y, z, vx, vy, vz, m;
+    -Write function that reads the initialvalue file and uses n objects (first n lines)
+    -Test 1d integrators for different functions and determine order of convergence with log-log-plot
+    -update testfunctions to newtons grav. law
+    -update stepfunctions to deal with d > 2 dimensions
+    -mass-vector in main
+    -calculate E_tot, E_pot, E_kin in driver functions and output them for conservation plot
+    -calculate L_tot in driver functions and output it for conservation plot
+    -calculate Laplace integral in driver functions and output it for conservation plot
+    -implement adaptive stepsize control in the driver functions
+    -Write a script for plots:
+        -Energy
+        -L
+        -Laplace integral
+        -trajectories in position space
+        -trajectories in phase space
+        (-trajectories in momentum space)
+    -mabye unify the driver functions, since they are pretty much the same
+
+ Theoretical foundations:
+    -datatypes and their representation
+    -numerical errors: their occurances and reduction
+    -idea of integrator schemes: from taylor-expansion to final formulas
+    -representation of formulas in butcher tables and how to implement code from there
+    -determining order of convergence (power laws) from log-log-plots
+
+    -from newtons law / keplers law to final functions for acceleration calculations
+    (-post-newtonian/relativistic corrections)
+    -transformation of data/initial data in order to avoid poorly scaling prefactors like G (pow(10,-11))
+
+ Other challenges:
+    -how to call c++ programms / functions from a python script
+    -how to unify the plotting python scrips to a complete script that does programm execution, numerical analysis and plotting
+    -how to handle auxiliary functions of symplectic integrators if they appear in the output at all, since they are off by 0.5 time step
+
+ Questions:
+    -can we reduce calculations and ensure that the 3 Quantities are conserved by calculating them and adopt one planet
+    otherwise we had some redundant information.
+    -if we can, would this or a similar procedure be stable since small deviations from all n-1 objects summed up and put to one object could mabye cause problems.
