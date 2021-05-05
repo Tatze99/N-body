@@ -326,7 +326,7 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
         e_kin = 0.;
         e_pot = 0.;
         for(int i=0; i<n; i++) e_kin += 0.5 * m[i] * (pow(vx[i],2) + pow(vy[i],2) + pow(vz[i],2));
-        for(int i=0; i<n; i++) e_pot -= m[i] * acceleration[i] * sqrt(pow(x[i],2) + pow(y[i],2) + pow(z[i],2));
+        // for(int i=0; i<n; i++) e_pot -= m[i] * acceleration[i] * sqrt(pow(x[i],2) + pow(y[i],2) + pow(z[i],2));
         e_tot = e_kin + e_pot;
 
         //Output current values to file - "; " is needed as delimiter for cells

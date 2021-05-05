@@ -30,7 +30,7 @@ Namen = ['Sun', 'Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranu
 
 steps = len(Daten[:,0])
 time  = Daten[:,0]
-number = 5          # number of planets to display
+number = 10          # number of planets to display
 n = len(mass)-1     # total number of planets
 
 
@@ -44,7 +44,7 @@ for i,name in enumerate(var_names):
 plt.figure(dpi=300)
 plt.plot(x[:,0:number], y[:,0:number],'-',linewidth=1, label=Namen[0:number])
 plt.legend()
-plt.savefig("0421_Integration_"+command+".pdf")
+# plt.savefig("0421_Integration_"+command+".pdf")
 
 #%%
 # Plot the energy
@@ -55,6 +55,63 @@ pot = potential_energy(x, y, z, mass)
 
 plt.figure(dpi=300)
 legend = ['kinetic energy', 'potential energy', 'total energy']
-for i,y in enumerate([kin, pot, kin+pot]):
-    plt.plot(time,y,label=legend[i])
+for i,energy in enumerate([kin, pot, kin+pot]):
+    plt.plot(time,energy,label=legend[i])
 plt.legend()
+
+#%%
+# Plot in 3D
+fig = plt.figure(figsize=(15, 6))
+ax = plt.axes(projection='3d')
+
+for i,name in enumerate(Namen):
+    ax.plot(x[:,i], y[:,i], z[:,i], label=Namen[i])
+
+ax.set_title('Trajectories of all planets')
+ax.set_xlabel('$x$ in a.u.')
+ax.set_ylabel('$y$ in a.u.')
+ax.set_zlabel('$z$ in a.u.')
+ax.legend()
+
+
+#%%
+from matplotlib import animation
+Writer = animation.writers['ffmpeg']
+writer = Writer(fps=120, metadata=dict(artist='Martin Beyer'), bitrate=-1)
+
+fig = plt.figure(figsize=(6,3))
+ax1 = plt.axes()
+line, = ax1.plot([], [], lw=2)
+plt.xlabel('$x$ in a.u.')
+plt.ylabel('$y$ in a.u.')
+
+ax1.plot(x[:,9],y[:,9],c='white')  # Cheap trick to get the plot dimensions right
+
+lines = []
+x2 = x[:,:number]
+y2 = y[:,:number]
+for index in range(number):
+    lobj = ax1.plot(x[:1,index],y[:1,index],lw=2, label=Namen[index])[0]
+    lines.append(lobj)
+plt.legend(loc='right')
+plt.xlim(-35,70)
+
+def init():
+    for line in lines:
+        line.set_data([],[])
+    return lines
+
+def animate(i):
+    for lnum,line in enumerate(lines):
+        index = round(-0.012*lnum**6)
+        if(i+index > 0):
+            line.set_data(x[i+index:i,lnum], y[i+index:i,lnum]) # set data for each line separately.
+        else:
+            line.set_data(x[:i,lnum], y[:i,lnum])
+
+    return lines
+
+# call the animator.  blit=True means only re-draw the parts that have changed.
+anim = animation.FuncAnimation(fig, animate, init_func=init,frames=len(x), interval=1, blit=True)
+plt.show()
+# anim.save('Test.mp4', writer=writer, dpi=400)
