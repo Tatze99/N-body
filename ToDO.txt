@@ -1,6 +1,6 @@
 /* To do:
  Programming part:
-    -Write .csv/.txt -file with initialvalues for ~ 20-30 objects we want to consider with lines like: x, y, z, vx, vy, vz, m;
+    -Write .csv/.txt -file with initialvalues for ~ 20-30 objects we want to consider with lines like: x, y, z, vx, vy, vz, m, r;
     -include massless (0.0) test object in Input.csv
     -Test 1d integrators for different functions and determine order of convergence with log-log-plot
     -calculate E_tot, E_pot, E_kin in driver functions and output them for conservation plot
@@ -15,11 +15,7 @@
         -trajectories in position space
         -trajectories in phase space
         (-trajectories in momentum space)
-    -mabye unify the driver functions, since they are pretty much the same
     -Annäherungs effekte
-    -Planetenradius
-
-
 
  Theoretical foundations:
     -datatypes and their representation
@@ -27,22 +23,15 @@
     -idea of integrator schemes: from taylor-expansion to final formulas
     -representation of formulas in butcher tables and how to implement code from there
     -determining order of convergence (power laws) from log-log-plots
-
-    -from newtons law / keplers law to final functions for acceleration calculations
     (-post-newtonian/relativistic corrections)
-    -transformation of data/initial data in order to avoid poorly scaling prefactors like G (pow(10,-11))
 
  Other challenges:
-    -how to call c++ programms / functions from a python script
-    -how to unify the plotting python scrips to a complete script that does programm execution, numerical analysis and plotting
-    -how to handle auxiliary functions of symplectic integrators if they appear in the output at all, since they are off by 0.5 time step
+    (-how to call c++ programms / functions from a python script)
+    (-how to unify the plotting python scrips to a complete script that does programm execution, numerical analysis and plotting)
     -machine leaning approach to achieve initial values from ending position
 
 
   Test:
     -Unbeteiligte Planeten an/aus
-    -Satellit losschicken und bei pluto ankommen
-
-
-  
+    -Satellit losschicken und bei pluto ankommen  
 */
