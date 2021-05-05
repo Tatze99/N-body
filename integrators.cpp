@@ -114,11 +114,11 @@ void set_startvalues(int n, vector<string> help, vector<double> &x, vector<doubl
                         break;
                 case 2: z[i] = stod(tmp_s);
                         break;
-                case 3: vx[i] = stod(tmp_s);
+                case 3: vx[i] = 365.245*stod(tmp_s);
                         break;
-                case 4: vy[i] = stod(tmp_s);
+                case 4: vy[i] = 365.245*stod(tmp_s);
                         break;
-                case 5: vz[i] = stod(tmp_s);
+                case 5: vz[i] = 365.245*stod(tmp_s);
                         break;
                 case 6: m[i] = stod(tmp_s);
             }
