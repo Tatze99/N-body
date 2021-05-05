@@ -1,6 +1,7 @@
 /* To do:
  Programming part:
     -Write .csv/.txt -file with initialvalues for ~ 20-30 objects we want to consider with lines like: x, y, z, vx, vy, vz, m;
+    -include massless (0.0) test object in Input.csv
     -Test 1d integrators for different functions and determine order of convergence with log-log-plot
     -calculate E_tot, E_pot, E_kin in driver functions and output them for conservation plot
     -calculate L_tot in driver functions and output it for conservation plot
@@ -15,6 +16,10 @@
         -trajectories in phase space
         (-trajectories in momentum space)
     -mabye unify the driver functions, since they are pretty much the same
+    -Annäherungs effekte
+    -Planetenradius
+
+
 
  Theoretical foundations:
     -datatypes and their representation
@@ -32,4 +37,10 @@
     -how to unify the plotting python scrips to a complete script that does programm execution, numerical analysis and plotting
     -how to handle auxiliary functions of symplectic integrators if they appear in the output at all, since they are off by 0.5 time step
     -machine leaning approach
+
+
+  Test:
+    -Unbeteiligte Planeten an/aus
+    
+  
 */
