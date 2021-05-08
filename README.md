@@ -1,5 +1,5 @@
 # N-body
-Rheienfolge der Inputobjekte:
+Rheienfolge der Inputobjekte: (x,y,z,vx,vy,vz,m,r)
 1.Sonne
 2.Merkur
 3.Venus
@@ -11,3 +11,7 @@ Rheienfolge der Inputobjekte:
 9.Neptun
 10.Pluto
 11.Mond
+12.Ganymed(Jupiter)
+13.Io(Jupiter)
+14.Europa(Jupiter)
+15.Titania(Uranus)
