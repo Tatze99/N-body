@@ -1,5 +1,7 @@
 # N-body
-Rheienfolge der Inputobjekte: (x,y,z,vx,vy,vz,m,r)
+Input.csv:(x,y,z,vx,vy,vz,m)
+Input2.csv:(x,y,z,vx,vy,vz,m,r) enthält Planeten und Monde
+Rheienfolge der Inputobjekte:
 1.Sonne
 2.Merkur
 3.Venus
