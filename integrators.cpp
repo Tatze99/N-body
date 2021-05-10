@@ -121,6 +121,9 @@ void set_startvalues(int n, vector<string> help, vector<double> &x, vector<doubl
                 case 5: vz[i] = 365.245*stod(tmp_s);
                         break;
                 case 6: m[i] = stod(tmp_s);
+                        break;
+                case 7: r[i] = stod(tmp_s);
+                
             }
         }
     }
@@ -358,13 +361,14 @@ void programmteil(string command){
     vector<double> vy = {};
     vector<double> vz = {};
     vector<double> m = {};
+    vector<double> r = {};
     
     int n = 2;                   //Number of objects
     double t_end = 1.;           //final time
     double dt = pow(2.,-13);     //time steps
     double t = 0.;
 
-    string name = "Input.csv";
+    string name = "Input2.csv";
 
     if(fileexists(name)){
         if (command == "fwd"){  // forward euler
