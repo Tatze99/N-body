@@ -81,6 +81,7 @@ void read_file(vector<string> &v, string &filename){
     s.close();
 }
 
+
 void set_startvalues(int n, vector<string> help, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, vector<double> &m, vector<double> &r){
    int counter;
    string s, tmp_s;
@@ -123,7 +124,6 @@ void set_startvalues(int n, vector<string> help, vector<double> &x, vector<doubl
                 case 6: m[i] = stod(tmp_s);
                         break;
                 case 7: r[i] = stod(tmp_s);
-                
             }
         }
     }
@@ -362,12 +362,13 @@ void programmteil(string command){
     vector<double> vz = {};
     vector<double> m = {};
     vector<double> r = {};
+
     
     int n = 2;                   //Number of objects
     double t_end = 1.;           //final time
     double dt = pow(2.,-13);     //time steps
     double t = 0.;
-
+  
     string name = "Input2.csv";
 
     if(fileexists(name)){
