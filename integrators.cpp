@@ -329,6 +329,16 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
         //for(int i; i<n; i++) e_pot -= m[i] * acceleration[i] * sqrt(pow(x[i],2) + pow(y[i],2) + pow(z[i],2));
         e_tot = e_kin + e_pot;
 
+        //prüfen der Position auf Kollision
+        for(int i=0; i<n-1; i++){
+            DPlanet=sqrt(pow(x[i]-xs,2)+pow(y[i]-ys,2)+pow(z[i]-zs,2));
+            if(DPlanet<=r[i]){
+            cout << "Der Sattelit ist mit einem Planeten kollidiert! Die letzte Position des Sateliten war: " << endl;
+            cout << xs + "; " + ys + "; " + zs + ";" << endl;
+            break;
+            }
+        }
+
         //Output current values to file - "; " is needed as delimiter for cells
         //Iterations are needed to generally output for n objects without adjusting anything
         file << t << "; ";
