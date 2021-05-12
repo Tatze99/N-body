@@ -81,7 +81,8 @@ void read_file(vector<string> &v, string &filename){
     s.close();
 }
 
-void set_startvalues(int n, vector<string> help, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, vector<double> &m){
+
+void set_startvalues(int n, vector<string> help, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, vector<double> &m, vector<double> &r){
    int counter;
    string s, tmp_s;
    string semi = ";";  //define delimiter which shall be searched for
@@ -90,7 +91,7 @@ void set_startvalues(int n, vector<string> help, vector<double> &x, vector<doubl
     for(int i=0; i<n; i++){
         s = help[i];
         //iterate over each double in one line
-        for(int l=0; l<7; l++){
+        for(int l=0; l<8; l++){
             //iterate over each line --- mabye replace by find_first_of (see cppreference)
             for(int j=0; j<s.length(); j++){
                 if(s[j] == semi[0]){
@@ -121,6 +122,8 @@ void set_startvalues(int n, vector<string> help, vector<double> &x, vector<doubl
                 case 5: vz[i] = 365.245*stod(tmp_s);
                         break;
                 case 6: m[i] = stod(tmp_s);
+                        break;
+                case 7: r[i] = stod(tmp_s);
             }
         }
     }
@@ -358,13 +361,15 @@ void programmteil(string command){
     vector<double> vy = {};
     vector<double> vz = {};
     vector<double> m = {};
+    vector<double> r = {};
+
     
     int n = 2;                   //Number of objects
     double t_end = 1.;           //final time
     double dt = pow(2.,-13);     //time steps
     double t = 0.;
-
-    string name = "Input.csv";
+  
+    string name = "Input2.csv";
 
     if(fileexists(name)){
         if (command == "fwd"){  // forward euler
