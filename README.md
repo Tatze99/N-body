@@ -12,8 +12,8 @@ Rheienfolge der Inputobjekte:
 8.Uranus
 9.Neptun
 10.Pluto
-11.Mond
-12.Ganymed(Jupiter)
-13.Io(Jupiter)
-14.Europa(Jupiter)
-15.Titania(Uranus)
+11.Mond			!Position bezieht sich auf den zugehörigen Planeten!
+12.Ganymed(Jupiter)	!Position bezieht sich auf den zugehörigen Planeten!
+13.Io(Jupiter)		!Position bezieht sich auf den zugehörigen Planeten!
+14.Europa(Jupiter)	!Position bezieht sich auf den zugehörigen Planeten!
+15.Titania(Uranus)	!Position bezieht sich auf den zugehörigen Planeten!
