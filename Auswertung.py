@@ -25,6 +25,14 @@ def potential_energy(x, y, z, m, n):
             energy[:] += G*m[j]*m[i]/np.sqrt((x[:,i]-x[:,j])**2+(y[:,i]-y[:,j])**2+(z[:,i]-z[:,j])**2)
     return energy
 
+def angular_momentum(x, y, z, vx, vy, vz, m, n):
+    energy = np.zeros(steps)
+    Matrix = np.zeros((n,n))
+    for i in range(n):
+        for j in range(i):
+            energy[:] += G*m[j]*m[i]/np.sqrt((x[:,i]-x[:,j])**2+(y[:,i]-y[:,j])**2+(z[:,i]-z[:,j])**2)
+    return energy
+
 command = "rk4"
 Daten = np.loadtxt(command+"-solution.csv",delimiter=';')
 mass = np.loadtxt("Input.csv",delimiter=';',usecols=[6])
