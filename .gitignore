@@ -1,2 +1,7 @@
 *.exe
 *.csv
+*.pdf
+*.jpeg
+*.png
+!Input2.csv
+!Orbits.csv
