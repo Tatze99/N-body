@@ -8,6 +8,7 @@ Auswertung des N-body Problems
 import numpy as np
 import matplotlib.pyplot as plt
 
+%matplotlib inline
 G = 4*np.pi**2
 
 def kinetic_energy(vx, vy, vz, m, n):
@@ -26,13 +27,28 @@ def potential_energy(x, y, z, m, n):
     return energy
 
 def angular_momentum(x, y, z, vx, vy, vz, m, n):
-    energy = np.zeros(steps)
-    Matrix = np.zeros((n,n))
+    ang = np.zeros((steps, 3))
     for i in range(n):
-        for j in range(i):
-            energy[:] += G*m[j]*m[i]/np.sqrt((x[:,i]-x[:,j])**2+(y[:,i]-y[:,j])**2+(z[:,i]-z[:,j])**2)
-    return energy
+        ang[:,0] += m[i]*(y[:,i]*vz[:,i]-z[:,i]*vy[:,i])
+        ang[:,1] += m[i]*(z[:,i]*vx[:,i]-x[:,i]*vz[:,i])
+        ang[:,2] += m[i]*(x[:,i]*vy[:,i]-y[:,i]*vx[:,i])
+    return ang
 
+def Laplace_Integral(x,y,z,vx,vy,vz,m,n):
+    Laplace = np.zeros((steps, 3))
+    cx = y*vz-z*vy 
+    cy = z*vx-x*vz
+    cz = x*vy-y*vx
+    r = np.sqrt(x**2+y**2+z**2)
+    
+    for i in range(n):
+        Laplace[:,0] += cy[:,i]*vz[:,i]-cz[:,i]*vy[:,i]+G*m[i]*x[:,i]/r[:,i]
+        Laplace[:,1] += cz[:,i]*vx[:,i]-cx[:,i]*vz[:,i]+G*m[i]*y[:,i]/r[:,i]
+        Laplace[:,2] += cx[:,i]*vy[:,i]-cy[:,i]*vx[:,i]+G*m[i]*z[:,i]/r[:,i]
+    return Laplace
+    
+
+#%%
 command = "rk4"
 Daten = np.loadtxt(command+"-solution.csv",delimiter=';')
 mass = np.loadtxt("Input.csv",delimiter=';',usecols=[6])
@@ -40,7 +56,7 @@ Namen = ['Sun', 'Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranu
 
 steps = len(Daten[:,0])
 time  = Daten[:,0]
-number = 10         # number of planets to display
+number = 5         # number of planets to display
 n = len(mass)-1     # total number of planets
 
 # create the variables and assign them their values via a loop
@@ -71,6 +87,25 @@ plt.legend()
 
 for i in range(n):
     print(0.5*mass[i]*(vx[-1,i]**2+vy[-1,i]**2+vz[-1,i]**2))
+    
+#%%
+# Plot the angular momentum 
+ang = angular_momentum(x,y,z,vx,vy,vz,mass,n)
+Lap = Laplace_Integral(x,y,z,vx,vy,vz,mass,n)
+
+plt.figure(dpi=300)
+legend = ['$L_x$', '$L_y$', '$L_z$']
+for i,energy in enumerate(legend):
+    plt.plot(time,ang[:,i],label=legend[i])
+plt.legend()
+
+plt.figure(dpi=300)
+legend = ['Laplacian $x$', 'Laplacian $y$', 'Laplacian $z$']
+for i,energy in enumerate(legend):
+    plt.plot(time,Lap[:,i],label=legend[i])
+plt.legend()
+
+
 #%%
 # Plot in 3D
 fig = plt.figure(figsize=(15, 6))
@@ -87,6 +122,7 @@ ax.legend()
 
 
 #%%
+%matplotlib auto
 from matplotlib import animation
 Writer = animation.writers['ffmpeg']
 writer = Writer(fps=120, metadata=dict(artist='Martin Beyer'), bitrate=-1)
@@ -97,7 +133,7 @@ line, = ax1.plot([], [], lw=2)
 plt.xlabel('$x$ in a.u.')
 plt.ylabel('$y$ in a.u.')
 
-for i in range(number):# Cheap trick to get the plot dimensions right
+for i in range(number):
     ax1.plot(x[:,i],y[:,i],'-')  
 
 lines = []
