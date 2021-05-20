@@ -70,15 +70,16 @@ def Laplace_Integral(x,y,z,vx,vy,vz,m,n):
 
 #%%
 command = "rk4"
+# Input = np.loadtxt("Input.csv",delimiter=';')
 Daten = np.loadtxt(command+"-solution.csv",delimiter=';')
 mass = np.loadtxt("Input.csv",delimiter=';',usecols=[6])
-Namen = ['Sun', 'Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptun', 'Pluto']
+Namen = ['Sun', 'Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptun', 'Pluto', 'Sonde']
 
 steps = len(Daten[:,0])
 time  = Daten[:,0]
 
-number = 10        # number of planets to display
-n = len(mass)-1     # total number of planets
+n = int((len(Daten[0,:])-1)/6)    # total number of planets
+number = 11       # number of planets to display
 
 # create the variables and assign them their values via a loop
 var_names = ["x", "y", "z","vx", "vy", "vz"]
@@ -89,26 +90,36 @@ for i,name in enumerate(var_names):
 # Calculate starting velocity of satellite
 r0 = 6.685e-6
 ve = np.sqrt(vx[0,3]**2+vy[0,3]**2+vz[0,3]**2)
-re = 4.2644e-5
+scale_radius = 50
+re = 4.2644e-5*scale_radius
 
 xsat = x[0,3]+vx[0,3]*re/ve
 ysat = y[0,3]+vy[0,3]*re/ve
 zsat = z[0,3]+vz[0,3]*re/ve
 
 vsat = 0
-for i in range(n-1):
+for i in range(9): # without satellite
     vsat += abs(mass[i]*(1/distance(xsat,x[0,i], ysat, y[0,i], zsat, z[0,i])-1/distance(x[0,i],x[0,9], y[0,i], y[0,9], z[0,i], z[0,9])))
 
 vsat += mass[9]/(2*r0)
-vsat = np.sqrt(vsat)*np.sqrt(2*G)
-print(vsat)
+scale = 1
+vsat = np.sqrt(vsat)*np.sqrt(2*G)*scale
+vxsat = vx[0,3]*vsat/ve/365.24
+vysat = vy[0,3]*vsat/ve/365.24
+vzsat = vz[0,3]*vsat/ve/365.24
+
+probe_params = [xsat, ysat, zsat, vxsat, vysat, vzsat, 0]
+Input[10,:] = probe_params
+np.savetxt("Input.csv", Input, fmt='%1.20f', delimiter=';')
+print(xsat, ysat, zsat, vxsat, vysat, vzsat)
 #%%
 # Plot the trajectories
+%matplotlib inline
 plt.figure(dpi=300)
 # plt.figure(dpi=300, figsize=(2.5,3))
 plt.plot(x[:,0:number], y[:,0:number],'.',markersize=1, label=Namen[0:number])
 plt.xlim(-33,70)
-# plt.ylim(-3.99,3.99)
+plt.ylim(-40,40)
 # plt.xlim(-4,4)
 plt.legend(title='Planets')
 plt.xlabel('$x$ in AU')

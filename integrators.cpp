@@ -100,13 +100,18 @@ void set_startvalues(int n, vector<string> help, vector<double> &x, vector<doubl
                     counter = j;
                     break;
                 }
+                // if the end of line has no ";"
+                if(j == s.length()-1){
+                    counter = j-1;
+                    break;
+                }
             }
 
             //cut off the first part of s
             tmp_s = s.substr(0, counter);
 
-            //set s to the remaining string
-            if ((counter-2) < (s.length()-1)) s = s.substr(counter+2, s.length()-1);
+            //set s to the remaining string, counter +1 means a character between two numbers (no space)
+            if ((counter-2) < (s.length()-1)) s = s.substr(counter+1, s.length()-1);
 
             //set values
             switch (l)
@@ -318,17 +323,9 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
     fstream file;
     file.open(command+"-solution.csv", ios::out);
     file.precision(16);
-
-    double e_kin, e_pot, e_tot;
     int count  = 0;
     //loop that iterates up to a certain chosen time (end)
     while((t_end - t) > DBL_EPSILON){
-        e_kin = 0.;
-        e_pot = 0.;
-        for(int i=0; i<n; i++) e_kin += 0.5 * m[i] * (pow(vx[i],2) + pow(vy[i],2) + pow(vz[i],2));
-        // for(int i=0; i<n; i++) e_pot -= m[i] * acceleration[i] * sqrt(pow(x[i],2) + pow(y[i],2) + pow(z[i],2));
-        e_tot = e_kin + e_pot;
-
         //Output current values to file - "; " is needed as delimiter for cells
         //Iterations are needed to generally output for n objects without adjusting anything
 
@@ -340,8 +337,8 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
               for(int i=0; i<n; i++) file << z[i] << "; ";
               for(int i=0; i<n; i++) file << vx[i] << "; ";
               for(int i=0; i<n; i++) file << vy[i] << "; ";
-              for(int i=0; i<n; i++) file << vz[i] << "; ";
-          file << e_kin << "; " << e_pot << "; " << e_tot << endl;
+              for(int i=0; i<n-1; i++) file << vz[i] << "; ";
+          file << vz[n-1] << endl;
         }
 
         //Calculate next timestep
@@ -367,9 +364,9 @@ void programmteil(string command){
     vector<double> vz = {};
     vector<double> m = {};
 
-    int n = 10;                   //Number of objects
-    double t_end = 248.;           //final time
-    double dt = pow(2.,-11);     //time steps
+    int n = 11;                   //Number of objects
+    double t_end = 20.;           //final time
+    double dt = pow(2.,-13);     //time steps
     double t = 0.;
 
     string name = "Input.csv";
