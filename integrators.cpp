@@ -28,12 +28,12 @@ tuple<vector<double>,vector<double>,vector<double>> acceleration(double t, vecto
     //cout << "execute acc" << endl;
   double Matrix[n][n];
 
-  vector<double> ax(n);
-  vector<double> ay(n);
-  vector<double> az(n);
-  for(int i=0; i<n; i++) ax.push_back(0.);
-  for(int i=0; i<n; i++) ay.push_back(0.);
-  for(int i=0; i<n; i++) az.push_back(0.);
+  vector<double> ax(n, 0.);
+  vector<double> ay(n, 0.);
+  vector<double> az(n, 0.);
+  //for(int i=0; i<n; i++) ax.push_back(0.);
+  //for(int i=0; i<n; i++) ay.push_back(0.);
+  //for(int i=0; i<n; i++) az.push_back(0.);
 
   for(int i=0; i<n; i++){
     for(int j=0; j<i; j++) {
@@ -61,12 +61,12 @@ tuple<vector<double>,vector<double>,vector<double>> sat_acceleration(double t, v
   //cout << "execute sat_acc" << endl;
   double Matrix[sat][n];
 
-  vector<double> ax(sat);
-  vector<double> ay(sat);
-  vector<double> az(sat);
-  for(int i=0; i<sat; i++) ax.push_back(0.);
-  for(int i=0; i<sat; i++) ay.push_back(0.);
-  for(int i=0; i<sat; i++) az.push_back(0.);
+  vector<double> ax(sat, 0.);
+  vector<double> ay(sat, 0.);
+  vector<double> az(sat, 0.);
+  //for(int i=0; i<sat; i++) ax.push_back(0.);
+  //for(int i=0; i<sat; i++) ay.push_back(0.);
+  //for(int i=0; i<sat; i++) az.push_back(0.);
 
   for(int i=0; i<sat; i++){
     for(int j=0; j<n; j++) {
