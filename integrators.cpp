@@ -492,6 +492,61 @@ void rk4_step(double t, double dt, vector<double> &x, vector<double> &y, vector<
     for(int i=0; i<n; i++)  z[i] += (dt/6.) * (vz1[i] + 2.*vz2[i] + 2.*vz3[i] + vz4[i]);
 }
 
+void rk5_step(double t, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, DGL rhs, int n, vector<double> m){
+    //Initialize vectors for the steps - only one step here!
+    vector<double> ax1(n), ax2(n), ax3(n), ax4(n), ax5(n), tmpx(n);
+    vector<double> ay1(n), ay2(n), ay3(n), ay4(n), ay5(n), tmpy(n);
+    vector<double> az1(n), az2(n), az3(n), az4(n), az5(n), tmpz(n);
+    vector<double> vx1(n), vx2(n), vx3(n), vx4(n), vx5(n);
+    vector<double> vy1(n), vy2(n), vy3(n), vy4(n), vy5(n);
+    vector<double> vz1(n), vz2(n), vz3(n), vz4(n), vz5(n);
+
+    //first rk4 step
+    for(int i=0; i<n; i++) vx1[i] = vx[i];
+    for(int i=0; i<n; i++) vy1[i] = vy[i];
+    for(int i=0; i<n; i++) vz1[i] = vz[i];
+
+    tie(ax1, ay1, az1) = rhs(t, x, y, z, n, m);
+
+    //second rk4 step
+    for(int i=0; i<n; i++) vx2[i] = vx[i] + (dt/5.) * ax1[i];
+    for(int i=0; i<n; i++) vy2[i] = vy[i] + (dt/5.) * ay1[i];
+    for(int i=0; i<n; i++) vz2[i] = vz[i] + (dt/5.) * az1[i];
+    for(int i=0; i<n; i++) tmpx[i] = x[i] + (dt/5.) * vx1[i];
+    for(int i=0; i<n; i++) tmpy[i] = y[i] + (dt/5.) * vy1[i];
+    for(int i=0; i<n; i++) tmpz[i] = z[i] + (dt/5.) * vz1[i];
+
+    tie(ax2, ay2, az2) = rhs(t+dt/5., tmpx, tmpy, tmpz, n, m);
+
+    //third rk4 step
+    for(int i=0; i<n; i++) vx3[i] = vx[i] + dt/(3./40.) * ax1[i];
+    for(int i=0; i<n; i++) vy3[i] = vy[i] + dt/(3./40.) * ay1[i];
+    for(int i=0; i<n; i++) vz3[i] = vz[i] + dt/(3./40.) * az1[i];
+    for(int i=0; i<n; i++) tmpx[i] = x[i] + dt/(3./40.) * vx1[i];
+    for(int i=0; i<n; i++) tmpy[i] = y[i] + dt/(3./40.) * vy1[i];
+    for(int i=0; i<n; i++) tmpz[i] = z[i] + dt/(3./40.) * vz1[i];
+
+    tie(ax3, ay3, az3) = rhs(t+dt/(3./10.), tmpx, tmpy, tmpz, n, m);
+
+    //fourth rk4 step
+    for(int i=0; i<n; i++) vx4[i] = vx[i] + dt * ax3[i];
+    for(int i=0; i<n; i++) vy4[i] = vy[i] + dt * ay3[i];
+    for(int i=0; i<n; i++) vz4[i] = vz[i] + dt * az3[i];
+    for(int i=0; i<n; i++) tmpx[i] = x[i] + dt * vx3[i];
+    for(int i=0; i<n; i++) tmpy[i] = y[i] + dt * vy3[i];
+    for(int i=0; i<n; i++) tmpz[i] = z[i] + dt * vz3[i];
+
+    tie(ax4, ay4, az4) = rhs(t+dt, tmpx, tmpy, tmpz, n, m);
+
+    //do the iteration step (update the positions)
+    for(int i=0; i<n; i++) vx[i] += (dt/6.) * (ax1[i] + 2.*ax2[i] + 2.*ax3[i] + ax4[i]);
+    for(int i=0; i<n; i++) vy[i] += (dt/6.) * (ay1[i] + 2.*ay2[i] + 2.*ay3[i] + ay4[i]);
+    for(int i=0; i<n; i++) vz[i] += (dt/6.) * (az1[i] + 2.*az2[i] + 2.*az3[i] + az4[i]);
+    for(int i=0; i<n; i++)  x[i] += (dt/6.) * (vx1[i] + 2.*vx2[i] + 2.*vx3[i] + vx4[i]);
+    for(int i=0; i<n; i++)  y[i] += (dt/6.) * (vy1[i] + 2.*vy2[i] + 2.*vy3[i] + vy4[i]);
+    for(int i=0; i<n; i++)  z[i] += (dt/6.) * (vz1[i] + 2.*vz2[i] + 2.*vz3[i] + vz4[i]);
+}
+
 void lf_step(double t, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, DGL rhs, int n, vector<double> m){
     //Initialize vectors for the steps - only one step here!
     vector<double> ax(n), ay(n), az(n);
