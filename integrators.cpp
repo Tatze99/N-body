@@ -12,7 +12,6 @@
 #include <chrono>
 #include <cfloat>
 
-
 //for global "short-hand" notation - need not to write 'std::' in front of most things
 using namespace std;
 
@@ -81,7 +80,6 @@ void read_file(vector<string> &v, string &filename){
     s.close();
 }
 
-
 void set_startvalues(int n, vector<string> help, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, vector<double> &m, vector<double> &r){
    int counter;
    string s, tmp_s;
@@ -130,7 +128,7 @@ void set_startvalues(int n, vector<string> help, vector<double> &x, vector<doubl
 }
 
 // Initialize variables ----------------------------------------------------------------------------
-void n_init(int n, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, vector<double> &m, string name){
+void n_init(int n, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, vector<double> &m, vector<double> &r, string name){
     //auxiliary vector
     vector<string> help = {};
     
@@ -142,9 +140,10 @@ void n_init(int n, vector<double> &x, vector<double> &y, vector<double> &z, vect
     vy.resize(n);
     vz.resize(n);
     m.resize(n);
+    r.resize(n);
 
     read_file(help, name);
-    set_startvalues(n, help, x, y, z, vx, vy, vz, m);
+    set_startvalues(n, help, x, y, z, vx, vy, vz, m, r);
 }
 
 void initialize(int n, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, vector<double> &m){
@@ -313,48 +312,43 @@ void lf_step(double t, double dt, vector<double> &x, vector<double> &y, vector<d
     for(int i=0; i<n; i++) z[i] += dt * vz[i];
 }
 
-void driver(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, Step_function step, string command){
+void driver(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, vector<double> &r, Step_function step, string command){
     //Create and open output file
     fstream file;
     file.open(command+"-solution.csv", ios::out);
     file.precision(16);
 
     double e_kin, e_pot, e_tot;
- 
+    int count  = 0;
+    int timestep = 100;
     //loop that iterates up to a certain chosen time (end)
     while((t_end - t) > DBL_EPSILON){
         e_kin = 0.;
         e_pot = 0.;
         for(int i=0; i<n; i++) e_kin += 0.5 * m[i] * (pow(vx[i],2) + pow(vy[i],2) + pow(vz[i],2));
-        //for(int i; i<n; i++) e_pot -= m[i] * acceleration[i] * sqrt(pow(x[i],2) + pow(y[i],2) + pow(z[i],2));
-        e_tot = e_kin + e_pot;
+        // for(int i=0; i<n; i++) e_pot -= m[i] * acceleration[i] * sqrt(pow(x[i],2) + pow(y[i],2) + pow(z[i],2));
+        //e_tot = e_kin + e_pot;
 
-        //prüfen der Position auf Kollision
-        for(int i=0; i<n-1; i++){
-            DPlanet=sqrt(pow(x[i]-xs,2)+pow(y[i]-ys,2)+pow(z[i]-zs,2));
-            if(DPlanet<=r[i]){
-            cout << "Der Sattelit ist mit einem Planeten kollidiert! Die letzte Position des Sateliten war: " << endl;
-            cout << xs + "; " + ys + "; " + zs + ";" << endl;
-            break;
-            }
+        //int timestep = round(t_end/(dt*5000));
+
+        if(count % timestep == 0){
+          file << t << "; ";
+              for(int i=0; i<n; i++) file << x[i] << "; ";
+              for(int i=0; i<n; i++) file << y[i] << "; ";
+              for(int i=0; i<n; i++) file << z[i] << "; ";
+              for(int i=0; i<n; i++) file << vx[i] << "; ";
+              for(int i=0; i<n; i++) file << vy[i] << "; ";
+              for(int i=0; i<n; i++) file << vz[i] << "; ";
+          file << e_kin << "; " << e_pot << "; " << e_tot << endl;
+          count = 0;
         }
-
-        //Output current values to file - "; " is needed as delimiter for cells
-        //Iterations are needed to generally output for n objects without adjusting anything
-        file << t << "; ";
-            for(int i=0; i<n; i++) file << x[i] << "; ";
-            for(int i=0; i<n; i++) file << y[i] << "; ";
-            for(int i=0; i<n; i++) file << z[i] << "; ";
-            for(int i=0; i<n; i++) file << vx[i] << "; ";
-            for(int i=0; i<n; i++) file << vy[i] << "; ";
-            for(int i=0; i<n; i++) file << vz[i] << "; ";
-        file << e_kin << "; " << e_pot << "; " << e_tot << endl;
 
         //Calculate next timestep
         step(t, dt, x, y, z, vx, vy, vz, acceleration, n, m);
 
         //update time - so the loop will have a chance to end
         t += dt;
+        count ++;
     }
 
     //close the output file after the iterations are done
@@ -372,10 +366,9 @@ void programmteil(string command){
     vector<double> vz = {};
     vector<double> m = {};
     vector<double> r = {};
-
     
-    int n = 2;                   //Number of objects
-    double t_end = 1.;           //final time
+    int n = 10;                   //Number of objects
+    double t_end = 200.;           //final time
     double dt = pow(2.,-13);     //time steps
     double t = 0.;
   
@@ -383,18 +376,18 @@ void programmteil(string command){
 
     if(fileexists(name)){
         if (command == "fwd"){  // forward euler
-            //n_init(n, x, y, z, vx, vy, vz, m, name);
-            initialize(n, x, y, z, vx, vy, vz, m);
-            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, fwd_step, command);
+            n_init(n, x, y, z, vx, vy, vz, m, r, name);
+            //initialize(n, x, y, z, vx, vy, vz, m);
+            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, fwd_step, command);
         }
         else if (command == "rk4"){ // Runge Kutta 4
-            //n_init(n, x, y, z, vx, vy, vz, m, name);
-            initialize(n, x, y, z, vx, vy, vz, m);
-            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, rk4_step, command);
+            n_init(n, x, y, z, vx, vy, vz, m, r, name);
+            //initialize(n, x, y, z, vx, vy, vz, m);
+            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command);
         }
         else if (command == "lf"){ // leap frog
             initialize_symplectic(n, x, y, z, vx, vy, vz, dt, m);
-            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, lf_step, command);
+            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, lf_step, command);
         }
         else cout << "Wrong parameter!" << endl;
     }else{
