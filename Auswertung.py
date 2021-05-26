@@ -70,7 +70,7 @@ def Laplace_Integral(x,y,z,vx,vy,vz,m,n):
 
 #%%
 command = "rk4"
-# Input = np.loadtxt("Input.csv",delimiter=';')
+Input = np.loadtxt("Input.csv",delimiter=';')
 Daten = np.loadtxt(command+"-solution.csv",delimiter=';')
 mass = np.loadtxt("Input.csv",delimiter=';',usecols=[6])
 Namen = ['Sun', 'Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptun', 'Pluto', 'Sonde']
@@ -90,7 +90,7 @@ for i,name in enumerate(var_names):
 # Calculate starting velocity of satellite
 r0 = 6.685e-6
 ve = np.sqrt(vx[0,3]**2+vy[0,3]**2+vz[0,3]**2)
-scale_radius = 50
+scale_radius = 5
 re = 4.2644e-5*scale_radius
 
 xsat = x[0,3]+vx[0,3]*re/ve
