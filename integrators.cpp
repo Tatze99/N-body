@@ -12,6 +12,7 @@
 #include <chrono>
 #include <cfloat>
 #include <tuple>
+#include <omp.h>
 
 //for global "short-hand" notation - need not to write 'std::' in front of most things
 using namespace std;
@@ -35,6 +36,7 @@ tuple<vector<double>,vector<double>,vector<double>> acceleration(double t, vecto
   //for(int i=0; i<n; i++) ay.push_back(0.);
   //for(int i=0; i<n; i++) az.push_back(0.);
 
+  // #pragma omp parallel for
   for(int i=0; i<n; i++){
     for(int j=0; j<i; j++) {
       Matrix[i][j] = pow((x[i]-x[j])*(x[i]-x[j])+(y[i]-y[j])*(y[i]-y[j])+(z[i]-z[j])*(z[i]-z[j]),-1.5);
