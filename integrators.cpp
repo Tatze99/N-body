@@ -11,65 +11,81 @@
 #include <fstream>
 #include <chrono>
 #include <cfloat>
+#include <tuple>
 
 //for global "short-hand" notation - need not to write 'std::' in front of most things
 using namespace std;
 
-typedef void (* Step_function)(double, double, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>(double, vector<double>, vector<double>, vector<double>, int, vector<double>), int, vector<double>);
+typedef void (* Step_function)(double, double, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>&, tuple<vector<double>,vector<double>,vector<double>>(double, vector<double>, vector<double>, vector<double>, int, vector<double>), int, vector<double>);
 
-typedef void (* Step_satellite)(double, double, vector<double>, vector<double>, vector<double>, vector<double>, vector<double>, vector<double>, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>(double, vector<double>, vector<double>, vector<double>, vector<double>, vector<double>, vector<double>, int, int, vector<double>), int, vector<double>, int);
+typedef void (* Step_satellite)(double, double, vector<double>, vector<double>, vector<double>, vector<double>, vector<double>, vector<double>, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>&, tuple<vector<double>,vector<double>,vector<double>>(double, vector<double>, vector<double>, vector<double>, vector<double>, vector<double>, vector<double>, int, int, vector<double>), int, vector<double>, int);
 
-typedef vector<double> (DGL)(double t, vector<double> x, vector<double> y, vector<double> z, int n, vector<double> m);
+typedef void (* Step_sattest)(double, double, vector<double>, vector<double>, vector<double>, vector<double>, vector<double>, vector<double>, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>&, tuple<vector<double>,vector<double>,vector<double>>(double, vector<double>, vector<double>, vector<double>, int, vector<double>), int, vector<double>, int);
 
-typedef vector<double> (DGL_sat)(double t, vector<double> xs, vector<double> ys, vector<double> zs, vector<double> x, vector<double> y, vector<double> z, int n, int sat, vector<double> m);
+typedef tuple<vector<double>,vector<double>,vector<double>> (DGL)(double t, vector<double> x, vector<double> y, vector<double> z, int n, vector<double> m);
 
-vector<double> acceleration(double t, vector<double> x, vector<double> y, vector<double> z, int n, vector<double> m){
-    //cout << "execute acc" << endl;
+typedef tuple<vector<double>,vector<double>,vector<double>> (DGL_sat)(double t, vector<double> xs, vector<double> ys, vector<double> zs, vector<double> x, vector<double> y, vector<double> z, int n, int sat, vector<double> m);
+
+tuple<vector<double>,vector<double>,vector<double>> acceleration(double t, vector<double> x, vector<double> y, vector<double> z, int n, vector<double> m){
   double Matrix[n][n];
 
-  vector<double> a(n,0.);
-  for(int i=0; i<n; i++) a.push_back(0.);
+  vector<double> ax(n, 0.);
+  vector<double> ay(n, 0.);
+  vector<double> az(n, 0.);
 
   for(int i=0; i<n; i++){
     for(int j=0; j<i; j++) {
-      Matrix[i][j] = (x[i]-x[j])/pow((x[i]-x[j])*(x[i]-x[j])+(y[i]-y[j])*(y[i]-y[j])+(z[i]-z[j])*(z[i]-z[j]),1.5);
+      Matrix[i][j] = pow((x[i]-x[j])*(x[i]-x[j])+(y[i]-y[j])*(y[i]-y[j])+(z[i]-z[j])*(z[i]-z[j]),-1.5);
     }
   }
 
   for(int i=0; i<n; i++){
     Matrix[i][i] = 0.;
-    for(int j=i+1; j<n; j++) Matrix[i][j] = -Matrix[j][i];
+    for(int j=i+1; j<n; j++) Matrix[i][j] = Matrix[j][i];
     for(int j=0; j<n; j++) {
-      a[i] += Matrix[i][j]*m[j];
+      double c = Matrix[i][j]*m[j];
+      ax[i] += (x[i]-x[j])*c;
+      ay[i] += (y[i]-y[j])*c;
+      az[i] += (z[i]-z[j])*c;
     }
-    a[i] *= -4*M_PI*M_PI;
+    ax[i] *= -4*M_PI*M_PI;
+    ay[i] *= -4*M_PI*M_PI;
+    az[i] *= -4*M_PI*M_PI;
   }
-  return a;
+  return make_tuple(ax, ay, az);
 }
 
-vector<double> sat_acceleration(double t, vector<double> xs, vector<double> ys, vector<double> zs, vector<double> x, vector<double> y, vector<double> z, int n, int sat, vector<double> m){
-  //cout << "execute sat_acc" << endl;
+tuple<vector<double>,vector<double>,vector<double>> sat_acceleration(double t, vector<double> xs, vector<double> ys, vector<double> zs, vector<double> x, vector<double> y, vector<double> z, int n, int sat, vector<double> m){
   double Matrix[sat][n];
 
-  vector<double> a = {};
-  for(int i=0; i<sat; i++) a.push_back(0.);
+  vector<double> ax(sat, 0.);
+  vector<double> ay(sat, 0.);
+  vector<double> az(sat, 0.);
 
   for(int i=0; i<sat; i++){
     for(int j=0; j<n; j++) {
-      Matrix[i][j] = (xs[i]-x[j])/pow((xs[i]-x[j])*(xs[i]-x[j])+(ys[i]-y[j])*(ys[i]-y[j])+(zs[i]-z[j])*(zs[i]-z[j]),1.5);
+      //if(i==j){
+      //    Matrix[i][j] = 0.; // just for testing planets
+      //}
+      //else{
+          Matrix[i][j] = pow((xs[i]-x[j])*(xs[i]-x[j])+(ys[i]-y[j])*(ys[i]-y[j])+(zs[i]-z[j])*(zs[i]-z[j]),-1.5);
+      //}
     }
   }
 
   for(int i=0; i<sat; i++){
     for(int j=0; j<n; j++){
-        a[i] += Matrix[i][j]*m[j];
+        double c = Matrix[i][j]*m[j];
+        ax[i] += (xs[i]-x[j])*c;
+        ay[i] += (ys[i]-y[j])*c;
+        az[i] += (zs[i]-z[j])*c;
     }
-    a[i] *= -4.*M_PI*M_PI;
+    ax[i] *= -4*M_PI*M_PI;
+    ay[i] *= -4*M_PI*M_PI;
+    az[i] *= -4*M_PI*M_PI;
   }
-  //cout << "Matrix[2][0-5] = " << Matrix[2][0] << "; " << Matrix[2][1] << "; " << Matrix[2][2] << "; " << Matrix[2][3] << Matrix[2][4] << "; " << Matrix[2][5] << "; " << endl;
-  //value of venus and earth too large
 
-  return a;
+  return make_tuple(ax, ay, az);
 }
 
 /*
@@ -84,8 +100,8 @@ vector<double> testsymplectic(double t, vector<double> x, vector<double> y, vect
 }
 */
 
-bool crash_check(vector<double> x, vector<double> y, vector<double> z, vector<double> r, vector<double> xs, vector<double> ys, vector<double> zs, int n, int satno){
-    cout << "run crach_check" << endl;
+bool crash_check(double t, vector<double> x, vector<double> y, vector<double> z, vector<double> r, vector<double> xs, vector<double> ys, vector<double> zs, int n, int satno){
+    //cout << "do crash check" << endl;
     vector<double> dist = {};
     bool counter = false;
     vector<string> objects = {"Sun", "Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto"};
@@ -94,7 +110,7 @@ bool crash_check(vector<double> x, vector<double> y, vector<double> z, vector<do
     for(int i=0; i<n; i++) dist.push_back(sqrt(pow(x[i]-xs[satno],2) + pow(y[i]-ys[satno],2) + pow(z[i]-zs[satno],2)));
     for(int i=0; i<n; i++){
         if ((dist[i] - r[i]) < DBL_EPSILON){
-            cout << "Satellite No. " << satno << " crashed with " << objects[i] << endl;
+            cout <<"t = " << t << "; Satellite No. " << satno << " crashed with " << objects[i] << endl;
             counter = true;
         }
     }
@@ -160,8 +176,8 @@ vector<double> upperlower(vector<string> &tmp, string input, int endobject){
                 break;
             }
         }
-        
-        //cut off the first part of s 
+
+        //cut off the first part of s
         tmp_s = s.substr(0, counter);
 
         //set s to the remaining string
@@ -170,9 +186,9 @@ vector<double> upperlower(vector<string> &tmp, string input, int endobject){
         //set values
         switch (i)
         {
-            case 3: ul[0] = stod(tmp_s);
+            case 3: ul[0] = stod(tmp_s); //lower
                     break;
-            case 4: ul[1] = stod(tmp_s);
+            case 4: ul[1] = stod(tmp_s); //upper
         }
     }
     return ul;
@@ -182,7 +198,7 @@ void set_startvalues(int n, vector<string> help, vector<double> &x, vector<doubl
    int counter;
    string s, tmp_s;
    string semi = ";";  //define delimiter which shall be searched for
- 
+
    //iterate over auxiliary vector
     for(int i=0; i<n; i++){
         s = help[i];
@@ -195,12 +211,13 @@ void set_startvalues(int n, vector<string> help, vector<double> &x, vector<doubl
                     break;
                 }
             }
-            
-            //cut off the first part of s 
+
+            //cut off the first part of s
             tmp_s = s.substr(0, counter);
 
             //set s to the remaining string
-            if ((counter-2) < (s.length()-1)) s = s.substr(counter+2, s.length()-1);
+            //if ((counter-2) < (s.length()-1)) s = s.substr(counter+2, s.length()-1);
+            if ((counter+2) < s.length()) s = s.substr(counter+2, s.length()-1);
 
             //set values
             switch (l)
@@ -228,8 +245,7 @@ void set_startvalues(int n, vector<string> help, vector<double> &x, vector<doubl
 int initialize_satellites(bool final, int counter, double v_min, double v_max, vector<double> x, vector<double> y, vector<double> z, vector<double> vx, vector<double> vy, vector<double> vz, vector<double> r, vector<double> &xs, vector<double> &ys, vector<double> &zs, vector<double> &vxs, vector<double> &vys, vector<double> &vzs, vector<double> &ms, int sat, int startobject){
     //here sat satellites are initiallized given lowest and/or highest velocity and initial position
     double vso = sqrt(pow(vx[startobject],2) + pow(vy[startobject],2) + pow(vz[startobject],2));
-    double rso = 4.2644 * pow(10,-5);
-    //double rso = r[startobject];
+    double rso = r[startobject];
     int prefactor = 0;
 
     //erase all previous values of satellites to only append current ones
@@ -251,7 +267,7 @@ int initialize_satellites(bool final, int counter, double v_min, double v_max, v
                 for(int i=0; i<sat; i++) ys.push_back(y[startobject] + vy[startobject] / vso * rso);
                 for(int i=0; i<sat; i++) zs.push_back(z[startobject] + vz[startobject] / vso * rso);
 
-                //since velocity will nor be an int
+                //since velocity will not be an int
                 for(int i=0; i<sat; i++) vxs.push_back((v_min - i*pow(10.,-counter)) * vx[startobject] / vso);
                 for(int i=0; i<sat; i++) vys.push_back((v_min - i*pow(10.,-counter)) * vy[startobject] / vso);
                 for(int i=0; i<sat; i++) vzs.push_back((v_min - i*pow(10.,-counter)) * vz[startobject] / vso);
@@ -327,7 +343,8 @@ void initialize_objects(int n, vector<double> &x, vector<double> &y, vector<doub
     vy.erase(vy.begin(), vy.end());
     vz.erase(vz.begin(), vz.end());
     m.erase(m.begin(), m.end());
-    
+    r.erase(r.begin(), r.end());
+
     //Change size of vectors
     x.resize(n);
     y.resize(n);
@@ -347,9 +364,9 @@ void fwd_step(double t, double dt, vector<double> &x, vector<double> &y, vector<
     vector<double> ax(n), ay(n), az(n);
 
     //determine the acceleration
-    ax = rhs(t, x, y, z, n, m);
-    ay = rhs(t, y, z, x, n, m);
-    az = rhs(t, z, x, y, n, m);
+    tie(ax, ay, az) = rhs(t, x, y, z, n, m);
+    // ay = rhs(t, y, z, x, n, m);
+    // az = rhs(t, z, x, y, n, m);
 
     //do the iteration step (update the positions)
     for(int i=0; i<n; i++) x[i] += dt * vx[i];
@@ -374,13 +391,8 @@ void rk4_step_sat(double t, double dt, vector<double> x, vector<double> y, vecto
     for(int i=0; i<sat; i++) vx1[i] = vxs[i];
     for(int i=0; i<sat; i++) vy1[i] = vys[i];
     for(int i=0; i<sat; i++) vz1[i] = vzs[i];
-    
-    //cout << "run sat_acceleration here" << endl;
-    ax1 = rhs_sat(t, xs, ys, zs, x, y, z, n, sat, m);
-    //cout << "ran sa_acceleration before" << endl;
-    ay1 = rhs_sat(t, ys, zs, xs, y, z, x, n, sat, m);
-    az1 = rhs_sat(t, zs, xs, ys, z, x, y, n, sat, m);
-    //cout << "a1[2] = " << sqrt(pow(ax1[2],2) + pow(ay1[2],2) + pow(az1[2],2)) << endl;
+
+    tie(ax1, ay1, az1) = rhs_sat(t, xs, ys, zs, x, y, z, n, sat, m);
 
     //second rk4 step
     for(int i=0; i<sat; i++) vx2[i] = vxs[i] + (dt/2.) * ax1[i];
@@ -390,10 +402,7 @@ void rk4_step_sat(double t, double dt, vector<double> x, vector<double> y, vecto
     for(int i=0; i<sat; i++) tmpys[i] = ys[i] + (dt/2.) * vy1[i];
     for(int i=0; i<sat; i++) tmpzs[i] = zs[i] + (dt/2.) * vz1[i];
 
-    ax2 = rhs_sat(t+dt/2., tmpxs, tmpys, tmpzs, x, y, z, n, sat, m);
-    ay2 = rhs_sat(t+dt/2., tmpys, tmpzs, tmpxs, y, z, x, n, sat, m);
-    az2 = rhs_sat(t+dt/2., tmpzs, tmpxs, tmpys, z, x, y, n, sat, m);
-    //cout << "a2[2] = " << sqrt(pow(ax2[2],2) + pow(ay2[2],2) + pow(az2[2],2)) << endl;
+    tie(ax2, ay2, az2) = rhs_sat(t+dt/2., tmpxs, tmpys, tmpzs, x, y, z, n, sat, m);
 
     //third rk4 step
     for(int i=0; i<sat; i++) vx3[i] = vxs[i] + (dt/2.) * ax2[i];
@@ -403,10 +412,7 @@ void rk4_step_sat(double t, double dt, vector<double> x, vector<double> y, vecto
     for(int i=0; i<sat; i++) tmpys[i] = ys[i] + (dt/2.) * vy2[i];
     for(int i=0; i<sat; i++) tmpzs[i] = zs[i] + (dt/2.) * vz2[i];
 
-    ax3 = rhs_sat(t+dt/2., tmpxs, tmpys, tmpzs, x, y, z, n, sat, m);
-    ay3 = rhs_sat(t+dt/2., tmpys, tmpzs, tmpxs, y, z, x, n, sat, m);
-    az3 = rhs_sat(t+dt/2., tmpzs, tmpxs, tmpys, z, x, y, n, sat, m);
-    //cout << "a3[2] = " << sqrt(pow(ax3[2],2) + pow(ay3[2],2) + pow(az3[2],2)) << endl;
+    tie(ax3, ay3, az3) = rhs_sat(t+dt/2., tmpxs, tmpys, tmpzs, x, y, z, n, sat, m);
 
     //fourth rk4 step
     for(int i=0; i<sat; i++) vx4[i] = vxs[i] + dt * ax3[i];
@@ -416,10 +422,67 @@ void rk4_step_sat(double t, double dt, vector<double> x, vector<double> y, vecto
     for(int i=0; i<sat; i++) tmpys[i] = ys[i] + dt * vy3[i];
     for(int i=0; i<sat; i++) tmpzs[i] = zs[i] + dt * vz3[i];
 
-    ax4 = rhs_sat(t+dt, tmpxs, tmpys, tmpzs, x, y, z, n, sat, m);
-    ay4 = rhs_sat(t+dt, tmpys, tmpzs, tmpxs, y, z, x, n, sat, m);
-    az4 = rhs_sat(t+dt, tmpzs, tmpxs, tmpys, z, x, y, n, sat, m);
-    //cout << "a4[2] = " << sqrt(pow(ax4[2],2) + pow(ay4[2],2) + pow(az4[2],2)) << endl;
+    tie(ax4, ay4, az4) = rhs_sat(t+dt, tmpxs, tmpys, tmpzs, x, y, z, n, sat, m);
+
+    //do the iteration step (update the positions)
+    for(int i=0; i<sat; i++) vxs[i] += (dt/6.) * (ax1[i] + 2.*ax2[i] + 2.*ax3[i] + ax4[i]);
+    for(int i=0; i<sat; i++) vys[i] += (dt/6.) * (ay1[i] + 2.*ay2[i] + 2.*ay3[i] + ay4[i]);
+    for(int i=0; i<sat; i++) vzs[i] += (dt/6.) * (az1[i] + 2.*az2[i] + 2.*az3[i] + az4[i]);
+    for(int i=0; i<sat; i++)  xs[i] += (dt/6.) * (vx1[i] + 2.*vx2[i] + 2.*vx3[i] + vx4[i]);
+    for(int i=0; i<sat; i++)  ys[i] += (dt/6.) * (vy1[i] + 2.*vy2[i] + 2.*vy3[i] + vy4[i]);
+    for(int i=0; i<sat; i++)  zs[i] += (dt/6.) * (vz1[i] + 2.*vz2[i] + 2.*vz3[i] + vz4[i]);
+}
+
+void rk4_step_sat2(double t, double dt, vector<double> x, vector<double> y, vector<double> z, vector<double> vx, vector<double> vy, vector<double> vz, vector<double> &xs, vector<double> &ys, vector<double> &zs, vector<double> &vxs, vector<double> &vys, vector<double> &vzs, DGL_sat rhs_sat, int n, vector<double> m, int sat){
+    //Initialize vectors for the steps - only one step here!
+    vector<double> ax1(sat), ax2(sat), ax3(sat), ax4(sat), tmpxs(sat);
+    vector<double> ay1(sat), ay2(sat), ay3(sat), ay4(sat), tmpys(sat);
+    vector<double> az1(sat), az2(sat), az3(sat), az4(sat), tmpzs(sat);
+    vector<double> vx1(sat), vx2(sat), vx3(sat), vx4(sat);
+    vector<double> vy1(sat), vy2(sat), vy3(sat), vy4(sat);
+    vector<double> vz1(sat), vz2(sat), vz3(sat), vz4(sat);
+
+    //tmp vars refer to the satellite, do not update the planet positions
+    //first rk4 step
+    for(int i=0; i<sat; i++) vx1[i] = vxs[i];
+    for(int i=0; i<sat; i++) vy1[i] = vys[i];
+    for(int i=0; i<sat; i++) vz1[i] = vzs[i];
+
+    //tie(ax1, ay1, az1) = rhs(t, xs, ys, zs, n, m);
+    tie(ax1, ay1, az1) = rhs_sat(t, xs, ys, zs, x, y, z, n, sat, m);
+
+    //second rk4 step
+    for(int i=0; i<sat; i++) vx2[i] = vxs[i] + (dt/2.) * ax1[i];
+    for(int i=0; i<sat; i++) vy2[i] = vys[i] + (dt/2.) * ay1[i];
+    for(int i=0; i<sat; i++) vz2[i] = vzs[i] + (dt/2.) * az1[i];
+    for(int i=0; i<sat; i++) tmpxs[i] = xs[i] + (dt/2.) * vx1[i];
+    for(int i=0; i<sat; i++) tmpys[i] = ys[i] + (dt/2.) * vy1[i];
+    for(int i=0; i<sat; i++) tmpzs[i] = zs[i] + (dt/2.) * vz1[i];
+
+    tie(ax2, ay2, az2) = rhs_sat(t+dt/2., tmpxs, tmpys, tmpzs, x, y, z, n, sat, m);
+    //tie(ax2, ay2, az2) = rhs(t+dt/2., tmpxs, tmpys, tmpzs, n, m);
+
+    //third rk4 step
+    for(int i=0; i<sat; i++) vx3[i] = vxs[i] + (dt/2.) * ax2[i];
+    for(int i=0; i<sat; i++) vy3[i] = vys[i] + (dt/2.) * ay2[i];
+    for(int i=0; i<sat; i++) vz3[i] = vzs[i] + (dt/2.) * az2[i];
+    for(int i=0; i<sat; i++) tmpxs[i] = xs[i] + (dt/2.) * vx2[i];
+    for(int i=0; i<sat; i++) tmpys[i] = ys[i] + (dt/2.) * vy2[i];
+    for(int i=0; i<sat; i++) tmpzs[i] = zs[i] + (dt/2.) * vz2[i];
+
+    tie(ax3, ay3, az3) = rhs_sat(t+dt/2., tmpxs, tmpys, tmpzs, x, y, z, n, sat, m);
+    //tie(ax3, ay3, az3) = rhs(t+dt/2., tmpxs, tmpys, tmpzs, n, m);
+
+    //fourth rk4 step
+    for(int i=0; i<sat; i++) vx4[i] = vxs[i] + dt * ax3[i];
+    for(int i=0; i<sat; i++) vy4[i] = vys[i] + dt * ay3[i];
+    for(int i=0; i<sat; i++) vz4[i] = vzs[i] + dt * az3[i];
+    for(int i=0; i<sat; i++) tmpxs[i] = xs[i] + dt * vx3[i];
+    for(int i=0; i<sat; i++) tmpys[i] = ys[i] + dt * vy3[i];
+    for(int i=0; i<sat; i++) tmpzs[i] = zs[i] + dt * vz3[i];
+
+    tie(ax4, ay4, az4) = rhs_sat(t+dt, tmpxs, tmpys, tmpzs, x, y, z, n, sat, m);
+    //tie(ax4, ay4, az4) = rhs(t+dt, tmpxs, tmpys, tmpzs, n, m);
 
     //do the iteration step (update the positions)
     for(int i=0; i<sat; i++) vxs[i] += (dt/6.) * (ax1[i] + 2.*ax2[i] + 2.*ax3[i] + ax4[i]);
@@ -444,9 +507,7 @@ void rk4_step(double t, double dt, vector<double> &x, vector<double> &y, vector<
     for(int i=0; i<n; i++) vy1[i] = vy[i];
     for(int i=0; i<n; i++) vz1[i] = vz[i];
 
-    ax1 = rhs(t, x, y, z, n, m);
-    ay1 = rhs(t, y, z, x, n, m);
-    az1 = rhs(t, z, x, y, n, m);
+    tie(ax1, ay1, az1) = rhs(t, x, y, z, n, m);
 
     //second rk4 step
     for(int i=0; i<n; i++) vx2[i] = vx[i] + (dt/2.) * ax1[i];
@@ -456,9 +517,7 @@ void rk4_step(double t, double dt, vector<double> &x, vector<double> &y, vector<
     for(int i=0; i<n; i++) tmpy[i] = y[i] + (dt/2.) * vy1[i];
     for(int i=0; i<n; i++) tmpz[i] = z[i] + (dt/2.) * vz1[i];
 
-    ax2 = rhs(t+dt/2., tmpx, tmpy, tmpz, n, m);
-    ay2 = rhs(t+dt/2., tmpy, tmpz, tmpx, n, m);
-    az2 = rhs(t+dt/2., tmpz, tmpx, tmpy, n, m);
+    tie(ax2, ay2, az2) = rhs(t+dt/2., tmpx, tmpy, tmpz, n, m);
 
     //third rk4 step
     for(int i=0; i<n; i++) vx3[i] = vx[i] + (dt/2.) * ax2[i];
@@ -468,9 +527,7 @@ void rk4_step(double t, double dt, vector<double> &x, vector<double> &y, vector<
     for(int i=0; i<n; i++) tmpy[i] = y[i] + (dt/2.) * vy2[i];
     for(int i=0; i<n; i++) tmpz[i] = z[i] + (dt/2.) * vz2[i];
 
-    ax3 = rhs(t+dt/2., tmpx, tmpy, tmpz, n, m);
-    ay3 = rhs(t+dt/2., tmpy, tmpz, tmpx, n, m);
-    az3 = rhs(t+dt/2., tmpz, tmpx, tmpy, n, m);
+    tie(ax3, ay3, az3) = rhs(t+dt/2., tmpx, tmpy, tmpz, n, m);
 
     //fourth rk4 step
     for(int i=0; i<n; i++) vx4[i] = vx[i] + dt * ax3[i];
@@ -480,9 +537,7 @@ void rk4_step(double t, double dt, vector<double> &x, vector<double> &y, vector<
     for(int i=0; i<n; i++) tmpy[i] = y[i] + dt * vy3[i];
     for(int i=0; i<n; i++) tmpz[i] = z[i] + dt * vz3[i];
 
-    ax4 = rhs(t+dt, tmpx, tmpy, tmpz, n, m);
-    ay4 = rhs(t+dt, tmpy, tmpz, tmpx, n, m);
-    az4 = rhs(t+dt, tmpz, tmpx, tmpy, n, m);
+    tie(ax4, ay4, az4) = rhs(t+dt, tmpx, tmpy, tmpz, n, m);
 
     //do the iteration step (update the positions)
     for(int i=0; i<n; i++) vx[i] += (dt/6.) * (ax1[i] + 2.*ax2[i] + 2.*ax3[i] + ax4[i]);
@@ -498,9 +553,7 @@ void lf_step(double t, double dt, vector<double> &x, vector<double> &y, vector<d
     vector<double> ax(n), ay(n), az(n);
 
     //lf step - calculate derivative of v at n-th position
-    ax = rhs(t, x, y, z, n, m);
-    ay = rhs(t, y, z, x, n, m);
-    az = rhs(t, z, x, y, n, m);
+    tie(ax, ay, az) = rhs(t, x, y, z, n, m);
 
     //calculate n+1/2 value of v
     for(int i=0; i<n; i++) vx[i] += dt * ax[i];
@@ -513,12 +566,65 @@ void lf_step(double t, double dt, vector<double> &x, vector<double> &y, vector<d
     for(int i=0; i<n; i++) z[i] += dt * vz[i];
 }
 
-void driver(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, vector<double> &r, Step_function step, string command){
+void driver(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, vector<double> &r, Step_function step, string command, double i){
     //Create and open output file
     fstream file;
     file.open(command+"-solution.csv", ios::out);
     file.precision(16);
+    double check = sqrt(pow(vx[10],2) + pow(vy[10],2) + pow(vz[10],2));
+    vx[10] = vx[10] * i / check;
+    vy[10] = vy[10] * i / check;
+    vz[10] = vz[10] * i / check;
 
+    int count  = 0;
+    int timestep = 1000;
+    //loop that iterates up to a certain chosen time (end)
+    while((t_end - t) > DBL_EPSILON){
+        if(count % timestep == 0){
+          file << t << "; ";
+              for(int i=0; i<n; i++) file << x[i] << "; ";
+              for(int i=0; i<n; i++) file << y[i] << "; ";
+              //for(int i=0; i<n; i++) file << z[i] << "; ";
+              //for(int i=0; i<n; i++) file << vx[i] << "; ";
+              //for(int i=0; i<n; i++) file << vy[i] << "; ";
+              //for(int i=0; i<n-1; i++) file << vz[i] << "; ";
+          file << vz[n-1]<< endl;
+          count = 0;
+        }
+
+        //Calculate next timestep
+        step(t, dt, x, y, z, vx, vy, vz, acceleration, n, m);
+
+        //if the satellite collided with an object remove it from further calculations
+        if (crash_check(t, x, y, z, r, x, y, z, n-1, n-1)){
+            x.erase(x.begin()+(n-1));
+            y.erase(y.begin()+(n-1));
+            z.erase(z.begin()+(n-1));
+            vx.erase(vx.begin()+(n-1));
+            vy.erase(vy.begin()+(n-1));
+            vz.erase(vz.begin()+(n-1));
+            m.erase(m.begin()+(n-1));
+            r.erase(r.begin()+(n-1));
+
+            n -= 1;
+            break;
+        }
+
+        //update time - so the loop will have a chance to end
+        t += dt;
+        count ++;
+    }
+
+    //close the output file after the iterations are done
+    file.close();
+}
+
+void swp_driver(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, vector<double> &r, Step_satellite step, string command){
+    //Create and open output file
+    fstream file;
+    file.open(command+"-solution.csv", ios::out);
+    file.precision(16);
+    int sat = n;
     int count  = 0;
     int timestep = 100;
     //loop that iterates up to a certain chosen time (end)
@@ -527,16 +633,17 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
           file << t << "; ";
               for(int i=0; i<n; i++) file << x[i] << "; ";
               for(int i=0; i<n; i++) file << y[i] << "; ";
-              for(int i=0; i<n; i++) file << z[i] << "; ";
-              for(int i=0; i<n; i++) file << vx[i] << "; ";
-              for(int i=0; i<n; i++) file << vy[i] << "; ";
-              for(int i=0; i<n; i++) file << vz[i] << "; ";
-          file << endl;
+              //for(int i=0; i<n; i++) file << z[i] << "; ";
+              //for(int i=0; i<n; i++) file << vx[i] << "; ";
+              //for(int i=0; i<n; i++) file << vy[i] << "; ";
+              //for(int i=0; i<n-1; i++) file << vz[i] << "; ";
+          file << vz[n-1]<< endl;
           count = 0;
         }
 
         //Calculate next timestep
-        step(t, dt, x, y, z, vx, vy, vz, acceleration, n, m);
+        //step(t, dt, x, y, z, vx, vy, vz, x, y, z, vx, vy, vz, sat_acceleration, n, m, sat);
+        step(t, dt, x, y, z, vx, vy, vz, x, y, z, vx, vy, vz, sat_acceleration, n, m, sat);
 
         //update time - so the loop will have a chance to end
         t += dt;
@@ -555,15 +662,16 @@ void sat_driver(double t, double t_end, double dt, vector<double> &x, vector<dou
         file.precision(16);
     }
 
-    vector<double> dist = {}; 
+    vector<double> dist = {};
     vector<double> v_dist = {};
-
+    int testcounter = 0;
+    //cout << "# of satellites = " << sat << endl;
     //clear outputvalues in the end since the no of satellites changes
     maxdist.erase(maxdist.begin(), maxdist.end());
     v_maxdist.erase(v_maxdist.begin(), v_maxdist.end());
     t_maxdist.erase(t_maxdist.begin(), t_maxdist.end());
     v0_sat.erase(v0_sat.begin(), v0_sat.end());
-    
+
     for(int i=0; i<sat; i++) dist.push_back(0.);
     for(int i=0; i<sat; i++) v_dist.push_back(0.);
     for(int i=0; i<sat; i++) maxdist.push_back(0.);
@@ -571,21 +679,25 @@ void sat_driver(double t, double t_end, double dt, vector<double> &x, vector<dou
     for(int i=0; i<sat; i++) t_maxdist.push_back(0.);
     for(int i=0; i<sat; i++) v0_sat.push_back(sqrt(pow(vxs[i],2) + pow(vys[i],2) + pow(vzs[i],2)));
 
+    //cout << "v0_sat = ";
+    //for(double i:v0_sat) cout << i << "; ";
+    //cout << endl;
+
     int counter = 0; //counts the number of crashed satellites in each timestep
-    //cout << "entered sat driver and set startvalues; t = " << t << endl;
-    //cout << "vdist0[2] = " << v0_sat[2] << endl;
+
+    //inserted just for testing purposes
+    t_end = 5.;
+
     //loop that iterates up to a certain chosen time (end)
     while((t_end - t) > DBL_EPSILON){
-        //cout << "sat while " << t << endl;
         //since we work in ICRF2 frame the "Schwerpunkt" is an fixed point we can reference the distance to.
         //Calculate next timestep for satellites
-        //cout << "run sat_acceleration after" << endl; 
         step_sat(t, dt, x, y, z, vx, vy, vz, xs, ys, zs, vxs, vys, vzs, sat_acceleration, n, m, sat);
-        //cout << "run sat_acceleration before" << endl;
+        //Calculate next timestep for objects
+        step(t, dt, x, y, z, vx, vy, vz, acceleration, n, m);
 
         //calculate the velocities for satellites at their distances
         for(int i=0; i<sat; i++) v_dist[i] = sqrt(pow(vxs[i],2) + pow(vys[i],2) + pow(vzs[i],2));
-        //cout << "vdist[2] = " << v_dist[2] << endl;
         for(int i=0; i<sat; i++) dist[i] = sqrt(pow(xs[i],2) + pow(ys[i],2) + pow(zs[i],2));
 
         //if v at dist lower than v_maxdist: update v (since should be min at maximum distance, that we know for sure)
@@ -594,28 +706,26 @@ void sat_driver(double t, double t_end, double dt, vector<double> &x, vector<dou
                 v_maxdist[i] = v_dist[i];
                 maxdist[i] = dist[i];
                 t_maxdist[i] = t;
-                cout << "I never get here----------------------v_dist increases due to very high accelerations" << endl; //but acceleration function seems to be correct
-                //mabye sat_initialisation function that is not correct?
             }
         }
-
-        for(int i=(sat-1); i=0; i--){
+        
+        for(int i=sat; i>0; i--){
             //if a satellite collided with an object remove it from further calculations
-            if (crash_check(x, y, z, r, xs, ys, zs, n, i)){
-                xs.erase(xs.begin()+i);
-                ys.erase(ys.begin()+i);
-                zs.erase(zs.begin()+i);
-                vxs.erase(vxs.begin()+i);
-                vys.erase(vys.begin()+i);
-                vzs.erase(vzs.begin()+i);
-                ms.erase(ms.begin()+i);
+            if (crash_check(t, x, y, z, r, xs, ys, zs, n, i-1)){
+                xs.erase(xs.begin()+(i-1));
+                ys.erase(ys.begin()+(i-1));
+                zs.erase(zs.begin()+(i-1));
+                vxs.erase(vxs.begin()+(i-1));
+                vys.erase(vys.begin()+(i-1));
+                vzs.erase(vzs.begin()+(i-1));
+                ms.erase(ms.begin()+(i-1));
 
-                dist.erase(dist.begin()+i);
-                maxdist.erase(maxdist.begin()+i);
-                v_dist.erase(v_dist.begin()+i);
-                v_maxdist.erase(v_maxdist.begin()+i);
-                t_maxdist.erase(t_maxdist.begin()+i);
-                v0_sat.erase(v0_sat.begin()+i);
+                dist.erase(dist.begin()+(i-1));
+                maxdist.erase(maxdist.begin()+(i-1));
+                v_dist.erase(v_dist.begin()+(i-1));
+                v_maxdist.erase(v_maxdist.begin()+(i-1));
+                t_maxdist.erase(t_maxdist.begin()+(i-1));
+                v0_sat.erase(v0_sat.begin()+(i-1));
                 counter++;
             }
         }
@@ -623,24 +733,34 @@ void sat_driver(double t, double t_end, double dt, vector<double> &x, vector<dou
         //update number of remaining satellites
         sat -= counter;
 
-        //Calculate next timestep for objects
-        step(t, dt, x, y, z, vx, vy, vz, acceleration, n, m);
-
         //update time
         t += dt;
+        /*if((testcounter % 100) == 0){
+            file << t << "; ";
+            for(int i=0; i<sat; i++) file << xs[i] << "; " << ys[i] << "; ";
+            file << endl;
+            testcounter = 0;
+        }
+        testcounter++;*/
         counter = 0;
     }
-    cout << "exit sat while" << endl;
+    cout << "exit sat while; sat = " << sat << endl;
+    //cout << "upper = " << upper << "; lower = " << lower << endl;
+    //cout << "maxdist = ";
+    //for(double i : maxdist) cout << i << "; ";
+    //cout << endl;
 
     //delete satellites if they did not return in a suitable interval
-    for(int i=(sat-1); i=0; i--){
-        if (((upper-maxdist[i]) < DBL_EPSILON) || ((maxdist[i] - lower) < DBL_EPSILON)){
-            t_maxdist.erase(t_maxdist.begin()+i);
-            maxdist.erase(maxdist.begin()+i);
-            v_maxdist.erase(v_maxdist.begin()+i);
-            v0_sat.erase(v0_sat.begin()+i);
+    for(int i=sat; i>0; i--){
+        if (((upper-maxdist[i-1]) < DBL_EPSILON) || ((maxdist[i-1] - lower) < DBL_EPSILON)){
+            t_maxdist.erase(t_maxdist.begin()+(i-1));
+            maxdist.erase(maxdist.begin()+(i-1));
+            v_maxdist.erase(v_maxdist.begin()+(i-1));
+            v0_sat.erase(v0_sat.begin()+(i-1));
+            counter++;
         }
     }
+    sat -= counter;
 
     if (out){
         for(int i=0; i<sat; i++){
@@ -650,7 +770,7 @@ void sat_driver(double t, double t_end, double dt, vector<double> &x, vector<dou
     }
     //close the output file after the iterations are done
     file.close();
-    cout << "exit sat driver" << endl;
+    cout << "exit sat driver; sat = " << sat << endl;
 }
 
 vector<double> check_for_boundaries(int precision, int n, double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, vector<double> &m, vector<double> &r, vector<double> &xs, vector<double> &ys, vector<double> &zs, vector<double> &vxs, vector<double> &vys, vector<double> &vzs, vector<double> &ms, double upper, double lower, string name, int startobject){
@@ -667,7 +787,7 @@ vector<double> check_for_boundaries(int precision, int n, double t, double t_end
     string input = "Orbits.csv";
     vector<string> tmp = {};
     vector<double> boundary = {0., 0.};
-    
+
     int counter = 0; //keeps track of the digits after the decimal point
     int sat = 10;
     int prefactor;
@@ -678,7 +798,7 @@ vector<double> check_for_boundaries(int precision, int n, double t, double t_end
     bool final = false;
 
     //inserted for testing
-    precision = 0;
+    precision = 2;
 
     vector<double> t_maxdist = {};
     vector<double> v_maxdist = {};
@@ -689,9 +809,7 @@ vector<double> check_for_boundaries(int precision, int n, double t, double t_end
         cout << "while loop " << counter << endl;
         //Old objects and satellites are destroyed and new ones created
         initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
-        cout << "initialized objects" << endl;
         prefactor = initialize_satellites(final, counter, v_min, v_max, x, y, z, vx, vy, vz, r, xs, ys, zs, vxs, vys, vzs, ms, sat, startobject);
-        cout << "initialized satellites; t = " << t << "; dt = " << dt << endl;
 
         //run programm to the end and get t_maxdist, maxdist, v_maxdist and v0_sat of satellites that returned in suitable interval
         sat_driver(t, t_end, dt, x, y, z, vx, vy, vz, m, r, xs, ys, zs, vxs, vys, vzs, ms, n, rk4_step, lower, upper, prefactor*sat, t_maxdist, maxdist, v_maxdist, v0_sat, out, rk4_step_sat);
@@ -699,7 +817,9 @@ vector<double> check_for_boundaries(int precision, int n, double t, double t_end
         //know from satellite driver how many satellites made it and know their initial velocities
         v_min = findmin(v0_sat);
         v_max = findmax(v0_sat);
-        
+
+        cout << "vmin = " << v_min << "; vmax = " << v_max << endl;
+
         if ((v_min == infinity()) || (v_max == -infinity())){
             sat *= 10;
             v_min = v0;
@@ -720,28 +840,26 @@ vector<double> check_for_boundaries(int precision, int n, double t, double t_end
 
 void calc_sat(vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, vector<double> m, vector<double> &r, int n, Step_function step, Step_satellite step_sat, string name){
     //Create and open output file
-    fstream file;
+    //fstream file;
     string input = "Orbits.csv";
-    file.open("Satellites.csv", ios::out);
-    file.precision(16);
+    //file.open("Satellites.csv", ios::out);
+    //file.precision(16);
     bool out = true;
     bool final = true;
     double v_min, v_max;
-    //double counter = 4;
 
     double t = 0.;
-    double t_end = 50.;
-    //double dt = pow(2,-13);
-    double dt = pow(2,-7); //--just for testing purposes
-    int startobject = 2; //no. planet -1; (Earth = 2)
-    int endobject = 8;
+    double t_end = 20.;
+    double dt = pow(2,-19);
+    int startobject = 3;
+    int endobject = 3; //no. planet -1; (Pluto = 8)
     int precision = 4;
     int satdummy = 10;
     int sat; //aka prefactor at another point
 
     vector<string> tmp = {};
-    double upper = 101 * upperlower(tmp, input, endobject)[0]; //read 1% difference from max min orbit
-    double lower = 101 * upperlower(tmp, input, endobject)[1];
+    double lower = 99 * upperlower(tmp, input, endobject)[0]; //read 1% difference from max min orbit
+    double upper = 101 * upperlower(tmp, input, endobject)[1];
     cout << "calculated upper lower" << endl;
 
     vector<double> t_maxdist = {};
@@ -755,7 +873,7 @@ void calc_sat(vector<double> &x, vector<double> &y, vector<double> &z, vector<do
     vector<double> vxs = {};
     vector<double> vys = {};
     vector<double> vzs = {};
-    vector<double> ms = {};   
+    vector<double> ms = {};
 
     vector<double> boundaries = check_for_boundaries(precision, n, t, t_end, dt, x, y, z, vx, vy, vz, m, r, xs, ys, zs, vxs, vys, vzs, ms, upper, lower, name, startobject);
     v_min = boundaries[0];
@@ -779,29 +897,48 @@ void programmteil(string command){
     vector<double> vz = {};
     vector<double> m = {};
     vector<double> r = {};
-    
+
     int n = 10;                  //Number of objects
-    double t_end = 20.;           //final time
+    double t_end = 1.;           //final time
     double dt = pow(2.,-13);     //time steps
     double t = 0.;
-  
+
     string name = "Input2.csv";
 
     if(fileexists(name)){
         if (command == "fwd"){  // forward euler
             initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
-            //driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, fwd_step, command);
+            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, fwd_step, command ,t);
         }
         else if (command == "rk4"){ // Runge Kutta 4
             initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
-            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command);
+            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command, t);
         }
         else if (command == "lf"){ // leap frog
             initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
-            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, lf_step, command);
+            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, lf_step, command, t);
         }
         else if (command == "sat"){ // satellites
             calc_sat(x, y, z, vx, vy, vz, m, r, n, rk4_step, rk4_step_sat, name);
+        }
+        else if (command == "test"){ //testing suite for sat velocity boundary applied with rk4 scheme
+            n = 11;
+            name = "testinterval.csv";
+            for(double i=8.534; i<8.54;){
+                cout << "i = " << i << endl;
+                t_end = 1.;
+                dt = pow(2,-23); //~1E-6; 2-19 ~ 1e-7 ~ 3.76s -> 1e-6 ~ 37s
+                initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
+                driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command, i);
+                i += 0.01;
+            }
+        }
+        else if (command == "swp"){ //testing satellite integrator with planets
+            n = 10;
+            dt = pow(2,-13);
+            t_end = 200.;
+            initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
+            swp_driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step_sat2, command);
         }
         else cout << "Wrong parameter!" << endl;
     }else{
@@ -819,7 +956,7 @@ int main(int argc, char** argv){
     }else{
         stringstream input{argv[1]};
         string command;
-        input >> command;        
+        input >> command;
 
         programmteil(command);
 
@@ -830,3 +967,11 @@ int main(int argc, char** argv){
         return 0;
     }
 }
+
+//Problem liegt nicht an der rk4_sat routine, getestet mit planeten beschleunigung ergibt das selbe
+//Problem liegt nicht an der sat_acc routine, getestet mit planeten auf sat_acc ergibt das selbe
+//Problem: berechnet ein intervall, das von der größenordnung her richtig ist, aber unterer intervalbereich crasht beim Testen mit der Erde
+
+//Vielleicht sollten auch die planetern in der Zeit entwickelt werden, um tmpx,y,z berechnen zu können?
+//Die geschwindigkeitsdifferent zur erde is fast die fluchtgeschw. und laut programm muss satellit innerhalb der intervalls umkehren
+//-> Die Testfunktion muss fehlerhaft sein, nur was?
