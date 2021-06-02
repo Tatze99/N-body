@@ -36,17 +36,17 @@ def angular_momentum(x, y, z, vx, vy, vz, m, n):
 
 def Laplace_Integral(x,y,z,vx,vy,vz,m,n):
     Laplace = np.zeros((steps, 3))
-    cx = y*vz-z*vy 
+    cx = y*vz-z*vy
     cy = z*vx-x*vz
     cz = x*vy-y*vx
     r = np.sqrt(x**2+y**2+z**2)
-    
+
     for i in range(n):
         Laplace[:,0] += cy[:,i]*vz[:,i]-cz[:,i]*vy[:,i]+G*m[i]*x[:,i]/r[:,i]
         Laplace[:,1] += cz[:,i]*vx[:,i]-cx[:,i]*vz[:,i]+G*m[i]*y[:,i]/r[:,i]
         Laplace[:,2] += cx[:,i]*vy[:,i]-cy[:,i]*vx[:,i]+G*m[i]*z[:,i]/r[:,i]
     return Laplace
-    
+
 
 #%%
 %matplotlib inline
@@ -89,9 +89,9 @@ plt.legend()
 
 for i in range(n):
     print(0.5*mass[i]*(vx[-1,i]**2+vy[-1,i]**2+vz[-1,i]**2))
-    
+
 #%%
-# Plot the angular momentum 
+# Plot the angular momentum
 ang = angular_momentum(x,y,z,vx,vy,vz,mass,n)
 Lap = Laplace_Integral(x,y,z,vx,vy,vz,mass,n)
 
@@ -136,7 +136,7 @@ plt.xlabel('$x$ in a.u.')
 plt.ylabel('$y$ in a.u.')
 
 for i in range(number):
-    ax1.plot(x[:,i],y[:,i],'-')  
+    ax1.plot(x[:,i],y[:,i],'-')
 
 lines = []
 x2 = x[:,:number]
