@@ -899,7 +899,7 @@ void programmteil(string command){
     vector<double> r = {};
 
     int n = 10;                  //Number of objects
-    double t_end = 1.;           //final time
+    double t_end = 20.;          //final time
     double dt = pow(2.,-13);     //time steps
     double t = 0.;
 
