@@ -32,9 +32,7 @@ tuple<vector<double>,vector<double>,vector<double>> acceleration(double t, vecto
   vector<double> ax(n, 0.);
   vector<double> ay(n, 0.);
   vector<double> az(n, 0.);
-  //for(int i=0; i<n; i++) ax.push_back(0.);
-  //for(int i=0; i<n; i++) ay.push_back(0.);
-  //for(int i=0; i<n; i++) az.push_back(0.);
+
 
   // #pragma omp parallel for
   for(int i=0; i<n; i++){
@@ -47,6 +45,7 @@ tuple<vector<double>,vector<double>,vector<double>> acceleration(double t, vecto
     Matrix[i][i] = 0.;
     for(int j=i+1; j<n; j++) Matrix[i][j] = Matrix[j][i];
     for(int j=0; j<n; j++) {
+      if (isinf(Matrix[i][j]) == true) Matrix[i][j] = 0;
       double c = Matrix[i][j]*m[j];
       ax[i] += (x[i]-x[j])*c;
       ay[i] += (y[i]-y[j])*c;
@@ -456,52 +455,59 @@ void rk4_step(double t, double dt, vector<double> &x, vector<double> &y, vector<
     tie(ax1, ay1, az1) = rhs(t, x, y, z, n, m);
 
     //second rk4 step
-    for(int i=0; i<n; i++) vx2[i] = vx[i] + (dt/2.) * ax1[i];
-    for(int i=0; i<n; i++) vy2[i] = vy[i] + (dt/2.) * ay1[i];
-    for(int i=0; i<n; i++) vz2[i] = vz[i] + (dt/2.) * az1[i];
-    for(int i=0; i<n; i++) tmpx[i] = x[i] + (dt/2.) * vx1[i];
-    for(int i=0; i<n; i++) tmpy[i] = y[i] + (dt/2.) * vy1[i];
-    for(int i=0; i<n; i++) tmpz[i] = z[i] + (dt/2.) * vz1[i];
-
+    for(int i=0; i<n; i++) {
+      vx2[i] = vx[i] + (dt/2.) * ax1[i];
+      vy2[i] = vy[i] + (dt/2.) * ay1[i];
+      vz2[i] = vz[i] + (dt/2.) * az1[i];
+      tmpx[i] = x[i] + (dt/2.) * vx1[i];
+      tmpy[i] = y[i] + (dt/2.) * vy1[i];
+      tmpz[i] = z[i] + (dt/2.) * vz1[i];
+    }
     tie(ax2, ay2, az2) = rhs(t+dt/2., tmpx, tmpy, tmpz, n, m);
 
     //third rk4 step
-    for(int i=0; i<n; i++) vx3[i] = vx[i] + (dt/2.) * ax2[i];
-    for(int i=0; i<n; i++) vy3[i] = vy[i] + (dt/2.) * ay2[i];
-    for(int i=0; i<n; i++) vz3[i] = vz[i] + (dt/2.) * az2[i];
-    for(int i=0; i<n; i++) tmpx[i] = x[i] + (dt/2.) * vx2[i];
-    for(int i=0; i<n; i++) tmpy[i] = y[i] + (dt/2.) * vy2[i];
-    for(int i=0; i<n; i++) tmpz[i] = z[i] + (dt/2.) * vz2[i];
-
+    for(int i=0; i<n; i++) {
+      vx3[i] = vx[i] + (dt/2.) * ax2[i];
+      vy3[i] = vy[i] + (dt/2.) * ay2[i];
+      vz3[i] = vz[i] + (dt/2.) * az2[i];
+      tmpx[i] = x[i] + (dt/2.) * vx2[i];
+      tmpy[i] = y[i] + (dt/2.) * vy2[i];
+      tmpz[i] = z[i] + (dt/2.) * vz2[i];
+    }
     tie(ax3, ay3, az3) = rhs(t+dt/2., tmpx, tmpy, tmpz, n, m);
 
     //fourth rk4 step
-    for(int i=0; i<n; i++) vx4[i] = vx[i] + dt * ax3[i];
-    for(int i=0; i<n; i++) vy4[i] = vy[i] + dt * ay3[i];
-    for(int i=0; i<n; i++) vz4[i] = vz[i] + dt * az3[i];
-    for(int i=0; i<n; i++) tmpx[i] = x[i] + dt * vx3[i];
-    for(int i=0; i<n; i++) tmpy[i] = y[i] + dt * vy3[i];
-    for(int i=0; i<n; i++) tmpz[i] = z[i] + dt * vz3[i];
-
+    for(int i=0; i<n; i++) {
+      vx4[i] = vx[i] + dt * ax3[i];
+      vy4[i] = vy[i] + dt * ay3[i];
+      vz4[i] = vz[i] + dt * az3[i];
+      tmpx[i] = x[i] + dt * vx3[i];
+      tmpy[i] = y[i] + dt * vy3[i];
+      tmpz[i] = z[i] + dt * vz3[i];
+    }
     tie(ax4, ay4, az4) = rhs(t+dt, tmpx, tmpy, tmpz, n, m);
 
     //do the iteration step (update the positions)
-    for(int i=0; i<n; i++) vx[i] += (dt/6.) * (ax1[i] + 2.*ax2[i] + 2.*ax3[i] + ax4[i]);
-    for(int i=0; i<n; i++) vy[i] += (dt/6.) * (ay1[i] + 2.*ay2[i] + 2.*ay3[i] + ay4[i]);
-    for(int i=0; i<n; i++) vz[i] += (dt/6.) * (az1[i] + 2.*az2[i] + 2.*az3[i] + az4[i]);
-    for(int i=0; i<n; i++)  x[i] += (dt/6.) * (vx1[i] + 2.*vx2[i] + 2.*vx3[i] + vx4[i]);
-    for(int i=0; i<n; i++)  y[i] += (dt/6.) * (vy1[i] + 2.*vy2[i] + 2.*vy3[i] + vy4[i]);
-    for(int i=0; i<n; i++)  z[i] += (dt/6.) * (vz1[i] + 2.*vz2[i] + 2.*vz3[i] + vz4[i]);
+    for(int i=0; i<n; i++) {
+      vx[i] += (dt/6.) * (ax1[i] + 2.*ax2[i] + 2.*ax3[i] + ax4[i]);
+      vy[i] += (dt/6.) * (ay1[i] + 2.*ay2[i] + 2.*ay3[i] + ay4[i]);
+      vz[i] += (dt/6.) * (az1[i] + 2.*az2[i] + 2.*az3[i] + az4[i]);
+      x[i] += (dt/6.) * (vx1[i] + 2.*vx2[i] + 2.*vx3[i] + vx4[i]);
+      y[i] += (dt/6.) * (vy1[i] + 2.*vy2[i] + 2.*vy3[i] + vy4[i]);
+      z[i] += (dt/6.) * (vz1[i] + 2.*vz2[i] + 2.*vz3[i] + vz4[i]);
+    }
 }
 
 void rk5_step(double t, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, DGL rhs, int n, vector<double> m){
     //Initialize vectors for the steps - only one step here!
-    vector<double> ax1(n), ax2(n), ax3(n), ax4(n), ax5(n), tmpx(n);
-    vector<double> ay1(n), ay2(n), ay3(n), ay4(n), ay5(n), tmpy(n);
-    vector<double> az1(n), az2(n), az3(n), az4(n), az5(n), tmpz(n);
-    vector<double> vx1(n), vx2(n), vx3(n), vx4(n), vx5(n);
-    vector<double> vy1(n), vy2(n), vy3(n), vy4(n), vy5(n);
-    vector<double> vz1(n), vz2(n), vz3(n), vz4(n), vz5(n);
+    vector<double> ax1(n), ax2(n), ax3(n), ax4(n), ax5(n), ax6(n), tmpx(n);
+    vector<double> ay1(n), ay2(n), ay3(n), ay4(n), ay5(n), ay6(n), tmpy(n);
+    vector<double> az1(n), az2(n), az3(n), az4(n), az5(n), az6(n), tmpz(n);
+    vector<double> vx1(n), vx2(n), vx3(n), vx4(n), vx5(n), vx6(n);
+    vector<double> vy1(n), vy2(n), vy3(n), vy4(n), vy5(n), vy6(n);
+    vector<double> vz1(n), vz2(n), vz3(n), vz4(n), vz5(n), vz6(n);
+    vector<double> x_4(n), y_4(n), z_4(n), vx_4(n), vy_4(n), vz_4(n);
+    vector<double> x_5(n), y_5(n), z_5(n), vx_5(n), vy_5(n), vz_5(n);
 
     //first rk4 step
     for(int i=0; i<n; i++) vx1[i] = vx[i];
@@ -511,42 +517,94 @@ void rk5_step(double t, double dt, vector<double> &x, vector<double> &y, vector<
     tie(ax1, ay1, az1) = rhs(t, x, y, z, n, m);
 
     //second rk4 step
-    for(int i=0; i<n; i++) vx2[i] = vx[i] + (dt/5.) * ax1[i];
-    for(int i=0; i<n; i++) vy2[i] = vy[i] + (dt/5.) * ay1[i];
-    for(int i=0; i<n; i++) vz2[i] = vz[i] + (dt/5.) * az1[i];
-    for(int i=0; i<n; i++) tmpx[i] = x[i] + (dt/5.) * vx1[i];
-    for(int i=0; i<n; i++) tmpy[i] = y[i] + (dt/5.) * vy1[i];
-    for(int i=0; i<n; i++) tmpz[i] = z[i] + (dt/5.) * vz1[i];
+    for(int i=0; i<n; i++) {
+      vx2[i] = vx[i] + (dt/5.) * ax1[i];
+      vy2[i] = vy[i] + (dt/5.) * ay1[i];
+      vz2[i] = vz[i] + (dt/5.) * az1[i];
+      tmpx[i] = x[i] + (dt/5.) * vx[i];
+      tmpy[i] = y[i] + (dt/5.) * vy[i];
+      tmpz[i] = z[i] + (dt/5.) * vz[i];
+    }
 
     tie(ax2, ay2, az2) = rhs(t+dt/5., tmpx, tmpy, tmpz, n, m);
 
     //third rk4 step
-    for(int i=0; i<n; i++) vx3[i] = vx[i] + dt/(3./40.) * ax1[i];
-    for(int i=0; i<n; i++) vy3[i] = vy[i] + dt/(3./40.) * ay1[i];
-    for(int i=0; i<n; i++) vz3[i] = vz[i] + dt/(3./40.) * az1[i];
-    for(int i=0; i<n; i++) tmpx[i] = x[i] + dt/(3./40.) * vx1[i];
-    for(int i=0; i<n; i++) tmpy[i] = y[i] + dt/(3./40.) * vy1[i];
-    for(int i=0; i<n; i++) tmpz[i] = z[i] + dt/(3./40.) * vz1[i];
+    for(int i=0; i<n; i++) {
+      vx3[i] = vx[i] + ((3./40.) * ax1[i] + (9./40.) * ax2[i])*dt;
+      vy3[i] = vy[i] + ((3./40.) * ay1[i] + (9./40.) * ay2[i])*dt;
+      vz3[i] = vz[i] + ((3./40.) * az1[i] + (9./40.) * az2[i])*dt;
+      tmpx[i] = x[i] + ((3./40.) * vx1[i] + (9./40.) * vx2[i])*dt;
+      tmpy[i] = y[i] + ((3./40.) * vy1[i] + (9./40.) * vy2[i])*dt;
+      tmpz[i] = z[i] + ((3./40.) * vz1[i] + (9./40.) * vz2[i])*dt;
+    }
 
-    tie(ax3, ay3, az3) = rhs(t+dt/(3./10.), tmpx, tmpy, tmpz, n, m);
+    tie(ax3, ay3, az3) = rhs(t+dt*(3./10.), tmpx, tmpy, tmpz, n, m);
 
     //fourth rk4 step
-    for(int i=0; i<n; i++) vx4[i] = vx[i] + dt * ax3[i];
-    for(int i=0; i<n; i++) vy4[i] = vy[i] + dt * ay3[i];
-    for(int i=0; i<n; i++) vz4[i] = vz[i] + dt * az3[i];
-    for(int i=0; i<n; i++) tmpx[i] = x[i] + dt * vx3[i];
-    for(int i=0; i<n; i++) tmpy[i] = y[i] + dt * vy3[i];
-    for(int i=0; i<n; i++) tmpz[i] = z[i] + dt * vz3[i];
+    for(int i=0; i<n; i++) {
+      vx4[i] = vx[i] + ((3./10.) * ax1[i] - (9./10.) * ax2[i] + (6./5.) * ax3[i])*dt;
+      vy4[i] = vy[i] + ((3./10.) * ay1[i] - (9./10.) * ay2[i] + (6./5.) * ay3[i])*dt;
+      vz4[i] = vz[i] + ((3./10.) * az1[i] - (9./10.) * az2[i] + (6./5.) * az3[i])*dt;
+      tmpx[i] = x[i] + ((3./10.) * vx1[i] - (9./10.) * vx2[i] + (6./5.) * vx3[i])*dt;
+      tmpy[i] = y[i] + ((3./10.) * vy1[i] - (9./10.) * vy2[i] + (6./5.) * vy3[i])*dt;
+      tmpz[i] = z[i] + ((3./10.) * vz1[i] - (9./10.) * vz2[i] + (6./5.) * vz3[i])*dt;
+    }
 
-    tie(ax4, ay4, az4) = rhs(t+dt, tmpx, tmpy, tmpz, n, m);
+    tie(ax4, ay4, az4) = rhs(t+dt*(3./5.), tmpx, tmpy, tmpz, n, m);
+
+    //fifth rk4 step
+    for(int i=0; i<n; i++) {
+      vx5[i] = vx[i] + (-(11./54.) * ax1[i] + (5./2.) * ax2[i] - (70./27.) * ax3[i] + (35./27.) * ax4[i])*dt;
+      vy5[i] = vy[i] + (-(11./54.) * ay1[i] + (5./2.) * ay2[i] - (70./27.) * ay3[i] + (35./27.) * ay4[i])*dt;
+      vz5[i] = vz[i] + (-(11./54.) * az1[i] + (5./2.) * az2[i] - (70./27.) * az3[i] + (35./27.) * az4[i])*dt;
+      tmpx[i] = x[i] + (-(11./54.) * vx1[i] + (5./2.) * vx2[i] - (70./27.) * vx3[i] + (35./27.) * vx4[i])*dt;
+      tmpy[i] = y[i] + (-(11./54.) * vy1[i] + (5./2.) * vy2[i] - (70./27.) * vy3[i] + (35./27.) * vy4[i])*dt;
+      tmpz[i] = z[i] + (-(11./54.) * vz1[i] + (5./2.) * vz2[i] - (70./27.) * vz3[i] + (35./27.) * vz4[i])*dt;
+    }
+
+    tie(ax5, ay5, az5) = rhs(t+dt, tmpx, tmpy, tmpz, n, m);
+
+    //sixth rk4 step
+    for(int i=0; i<n; i++) {
+      vx6[i] = vx[i] + ((1631./55296.) * ax1[i] + (175./512.) * ax2[i] + (575./13824.) * ax3[i] + (44275./110592.) * ax4[i] + (253./4096.) * ax5[i])*dt;
+      vy6[i] = vy[i] + ((1631./55296.) * ay1[i] + (175./512.) * ay2[i] + (575./13824.) * ay3[i] + (44275./110592.) * ay4[i] + (253./4096.) * ay5[i])*dt;
+      vz6[i] = vz[i] + ((1631./55296.) * az1[i] + (175./512.) * az2[i] + (575./13824.) * az3[i] + (44275./110592.) * az4[i] + (253./4096.) * az5[i])*dt;
+      tmpx[i] = x[i] + ((1631./55296.) * vx1[i] + (175./512.) * vx2[i] + (575./13824.) * vx3[i] + (44275./110592.) * vx4[i] + (253./4096.) * vx5[i])*dt;
+      tmpy[i] = y[i] + ((1631./55296.) * vy1[i] + (175./512.) * vy2[i] + (575./13824.) * vy3[i] + (44275./110592.) * vy4[i] + (253./4096.) * vy5[i])*dt;
+      tmpz[i] = z[i] + ((1631./55296.) * vz1[i] + (175./512.) * vz2[i] + (575./13824.) * vz3[i] + (44275./110592.) * vz4[i] + (253./4096.) * vz5[i])*dt;
+    }
+
+    tie(ax6, ay6, az6) = rhs(t+dt*(7./8.), tmpx, tmpy, tmpz, n, m);
 
     //do the iteration step (update the positions)
-    for(int i=0; i<n; i++) vx[i] += (dt/6.) * (ax1[i] + 2.*ax2[i] + 2.*ax3[i] + ax4[i]);
-    for(int i=0; i<n; i++) vy[i] += (dt/6.) * (ay1[i] + 2.*ay2[i] + 2.*ay3[i] + ay4[i]);
-    for(int i=0; i<n; i++) vz[i] += (dt/6.) * (az1[i] + 2.*az2[i] + 2.*az3[i] + az4[i]);
-    for(int i=0; i<n; i++)  x[i] += (dt/6.) * (vx1[i] + 2.*vx2[i] + 2.*vx3[i] + vx4[i]);
-    for(int i=0; i<n; i++)  y[i] += (dt/6.) * (vy1[i] + 2.*vy2[i] + 2.*vy3[i] + vy4[i]);
-    for(int i=0; i<n; i++)  z[i] += (dt/6.) * (vz1[i] + 2.*vz2[i] + 2.*vz3[i] + vz4[i]);
+    for(int i=0; i<n; i++) {
+      vx_5[i] = ((37./378.) * ax1[i] + (250./621.) * ax3[i] + (125./594.) * ax4[i] + (512./1771.) * ax6[i])*dt;
+      vy_5[i] = ((37./378.) * ay1[i] + (250./621.) * ay3[i] + (125./594.) * ay4[i] + (512./1771.) * ay6[i])*dt;
+      vz_5[i] = ((37./378.) * az1[i] + (250./621.) * az3[i] + (125./594.) * az4[i] + (512./1771.) * az6[i])*dt;
+      x_5[i]  = ((37./378.) * vx1[i] + (250./621.) * vx3[i] + (125./594.) * vx4[i] + (512./1771.) * vx6[i])*dt;
+      y_5[i]  = ((37./378.) * vy1[i] + (250./621.) * vy3[i] + (125./594.) * vy4[i] + (512./1771.) * vy6[i])*dt;
+      z_5[i]  = ((37./378.) * vz1[i] + (250./621.) * vz3[i] + (125./594.) * vz4[i] + (512./1771.) * vz6[i])*dt;
+    }
+
+    // rk4 scheme
+    for(int i=0; i<n; i++) {
+      vx_4[i] = ((2825./27648.) * ax1[i] + (18575./48384.) * ax3[i] + (13525./55296.) * ax4[i] + (277./14336.) * ax5[i] + (1./4.) * ax6[i])*dt;
+      vy_4[i] = ((2825./27648.) * ay1[i] + (18575./48384.) * ay3[i] + (13525./55296.) * ay4[i] + (277./14336.) * ay5[i] + (1./4.) * ay6[i])*dt;
+      vz_4[i] = ((2825./27648.) * az1[i] + (18575./48384.) * az3[i] + (13525./55296.) * az4[i] + (277./14336.) * az5[i] + (1./4.) * az6[i])*dt;
+      x_4[i]  = ((2825./27648.) * vx1[i] + (18575./48384.) * vx3[i] + (13525./55296.) * vx4[i] + (277./14336.) * vx5[i] + (1./4.) * vx6[i])*dt;
+      y_4[i]  = ((2825./27648.) * vy1[i] + (18575./48384.) * vy3[i] + (13525./55296.) * vy4[i] + (277./14336.) * vy5[i] + (1./4.) * vy6[i])*dt;
+      z_4[i]  = ((2825./27648.) * vz1[i] + (18575./48384.) * vz3[i] + (13525./55296.) * vz4[i] + (277./14336.) * vz5[i] + (1./4.) * vz6[i])*dt;
+    }
+
+    for(int i=0; i<n; i++) {
+      vx[i] = abs(vx_5[i] - vx_4[i]);
+      vy[i] = abs(vy_5[i] - vy_4[i]);
+      vz[i] = abs(vz_5[i] - vz_4[i]);
+      x[i]  = abs(x_5[i]  - x_4[i]);
+      y[i]  = abs(y_5[i]  - y_4[i]);
+      z[i]  = abs(z_5[i]  - z_4[i]);
+    }
+
 }
 
 void lf_step(double t, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, DGL rhs, int n, vector<double> m){
@@ -598,6 +656,57 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
     }
 
     //close the output file after the iterations are done
+    file.close();
+}
+
+void driver_cashcarp(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, vector<double> &r, Step_function step, string command){
+    //Create and open output file
+    fstream file;
+    file.open(command+"-solution.csv", ios::out);
+    file.precision(16);
+
+    vector<double> x_old, y_old, z_old, vx_old, vy_old, vz_old;
+
+    double Delta = 0.;
+    double Delta_aim = 1e-16;
+    double stepsize = 0;
+    int count  = 0;
+    int timestep = 100;
+    //loop that iterates up to a certain chosen time (end)
+    while((t_end - t) > DBL_EPSILON){
+        if(count % timestep == 0){
+          file << t << "; ";
+              for(int i=0; i<n; i++) file << x[i] << "; ";
+              for(int i=0; i<n; i++) file << y[i] << "; ";
+              for(int i=0; i<n; i++) file << z[i] << "; ";
+              for(int i=0; i<n; i++) file << vx[i] << "; ";
+              for(int i=0; i<n; i++) file << vy[i] << "; ";
+              for(int i=0; i<n-1; i++) file << vz[i] << "; ";
+          file << vz[n-1]<< endl;
+          count = 0;
+          // cout << "Fehler" << Delta << endl;
+        }
+
+        x_old = x;
+        y_old = y;
+        z_old = z;
+        vx_old = vx;
+        vy_old = vy;
+        vz_old = vz;
+
+        //Calculate next timestep
+        rk5_step(t, dt, x_old, y_old, z_old, vx_old, vy_old, vz_old, acceleration, n, m);
+
+        Delta = 0;
+        for(int i=0; i<n; i++) {
+            Delta += x_old[i]+y_old[i]+z_old[i];
+        }
+
+        dt *= pow(Delta_aim/Delta, 1./5.);
+        step(t, dt, x, y, z, vx, vy, vz, acceleration, n, m);
+        t += dt;
+        count ++; //Count  the number of time steps for saving only every 100th value.
+    }
     file.close();
 }
 
@@ -849,6 +958,10 @@ void programmteil(string command){
         else if (command == "rk4"){ // Runge Kutta 4
             initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
             driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command);
+        }
+        else if (command == "rk5"){ // Runge Kutta 4
+            initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
+            driver_cashcarp(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command);
         }
         else if (command == "lf"){ // leap frog
             initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);

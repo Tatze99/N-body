@@ -50,7 +50,7 @@ def Laplace_Integral(x,y,z,vx,vy,vz,m,n):
 
 #%%
 %matplotlib inline
-command = "rk4"
+command = "rk5"
 Daten = np.loadtxt(command+"-solution.csv",delimiter=';')
 mass = np.loadtxt("Input2.csv",delimiter=';',usecols=[6])
 Namen = ['Sun', 'Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptun', 'Pluto', 'Sonde']
@@ -67,8 +67,9 @@ for i,name in enumerate(var_names):
 
 #%%
 # Plot the trajectories
+# %matplotlib auto
 plt.figure(dpi=300)
-plt.plot(x[:,0:number], y[:,0:number],'-',lw=0.5, label=Namen[0:number])
+plt.plot(x[:,0:number], y[:,0:number],'-',lw=1, label=Namen[0:number])
 plt.legend()
 # plt.savefig("0421_Integration_"+command+".pdf")
 
