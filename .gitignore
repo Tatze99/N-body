@@ -1,4 +1,5 @@
 *.exe
 *.csv
+*.pdf
 !Input.csv
 !Input2.csv
