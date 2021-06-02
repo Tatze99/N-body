@@ -18,7 +18,6 @@
 using namespace std;
 
 typedef void (* Step_function)(double, double, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>&, vector<double>&, tuple<vector<double>,vector<double>,vector<double>>(double, vector<double>, vector<double>, vector<double>, int, vector<double>), int, vector<double>);
-
 typedef tuple<vector<double>,vector<double>,vector<double>> (DGL)(double t, vector<double> x, vector<double> y, vector<double> z, int n, vector<double> m);
 
 tuple<vector<double>,vector<double>,vector<double>> acceleration(double t, vector<double> x, vector<double> y, vector<double> z, int n, vector<double> m){
@@ -147,6 +146,68 @@ vector<double> upperlower(vector<string> &tmp, string input, int endobject){
     return ul;
 }
 
+vector<double> all_from_target(vector<string> &tmp, string input, double objdist, double time){
+    string s, tmp_s;
+    string semi = ";";
+    int counter;
+    vector<double> t_max, r_max, v_max, v_0;
+    vector<double> all = {0., 0., 0., 0., 0.};
+    t_max.resize(tmp.size());
+    r_max.resize(tmp.size());
+    v_max.resize(tmp.size());
+    v_0.resize(tmp.size());
+
+    if (fileexists(input)) read_file(tmp, input);
+    for(int l=0; l<(tmp.size()-1); l++){
+        s = tmp[l];
+        //iterate over each double in one line
+        for(int i=0; i<4; i++){
+            //iterate over each line
+            for(int j=0; j<s.length(); j++){
+                if(s[j] == semi[0]){
+                    counter = j;
+                    break;
+                }
+            }
+
+            //cut off the first part of s
+            tmp_s = s.substr(0, counter);
+
+            //set s to the remaining string
+            if ((counter-2) < (s.length()-1)) s = s.substr(counter+2, s.length()-1);
+
+            //set values
+            switch (i)
+            {
+                case 0: t_max[l] = stod(tmp_s);
+                        break;
+                case 1: r_max[l] = stod(tmp_s);
+                        break;
+                case 2: v_max[l] = stod(tmp_s);
+                        break;
+                case 3: v_0[l] = stod(tmp_s);
+            }
+        }
+    }
+
+    counter = 1;
+
+    for(int i=1; i<tmp.size(); i++){
+        if( (objdist - r_max[i]) < DBL_EPSILON){
+            counter = i;
+            break;
+        }
+    }
+
+    all[0] = (t_max[counter] + t_max[counter-1]) / 2.;  //Time needed to reach maxdist
+    all[1] = (r_max[counter] + r_max[counter-1]) / 2.;  //Maxdist reached
+    all[2] = (v_max[counter] + v_max[counter-1]) / 2.;  //Satellite velocity at maxdist
+    all[3] = (v_0[counter] + v_0[counter-1]) / 2.;      //Initial velocity for satellite
+    all[4] = time - all[0];                             //Starting time for satellite from earth
+
+    return all;
+}
+
 void set_startvalues(int n, vector<string> help, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, vector<double> &m, vector<double> &r){
    int counter;
    string s, tmp_s;
@@ -209,9 +270,6 @@ int initialize_satellites(bool final, int counter, double v_min, double v_max, v
     vzs.erase(vzs.begin(), vzs.end());
     ms.erase(ms.begin(), ms.end());
 
-    rs.resize(sat);
-    for(int i=0; i<sat; i++) rs[i] = 0.;
-
     if (!final){
         if ( (sat != 100) && (sat != 1000) ){
             //start that only if sat!=100 AND sat != 1000
@@ -222,7 +280,7 @@ int initialize_satellites(bool final, int counter, double v_min, double v_max, v
                 for(int i=0; i<sat; i++) ys.push_back(y[startobject] + vy[startobject] / vso * rso);
                 for(int i=0; i<sat; i++) zs.push_back(z[startobject] + vz[startobject] / vso * rso);
 
-                //since velocity will nor be an int
+                //since velocity will not be an int
                 for(int i=0; i<sat; i++) vxs.push_back((v_min - i*pow(10.,-counter)) * vx[startobject] / vso);
                 for(int i=0; i<sat; i++) vys.push_back((v_min - i*pow(10.,-counter)) * vy[startobject] / vso);
                 for(int i=0; i<sat; i++) vzs.push_back((v_min - i*pow(10.,-counter)) * vz[startobject] / vso);
@@ -284,6 +342,10 @@ int initialize_satellites(bool final, int counter, double v_min, double v_max, v
             prefactor++;
         }
     }
+
+    rs.resize(sat*prefactor);
+    for(int i=0; i<sat*prefactor; i++) rs[i] = 0.;
+
     return prefactor;
 }
 
@@ -519,68 +581,15 @@ void lf_step(double t, double dt, vector<double> &x, vector<double> &y, vector<d
     for(int i=0; i<n; i++) z[i] += dt * vz[i];
 }
 
-/*void driver(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, vector<double> &r, Step_function step, string command, double i){
+void driver(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, vector<double> &r, Step_function step, string command, double i){
     //Create and open output file
     fstream file;
     file.open(command+"-solution.csv", ios::out);
     file.precision(16);
-    double check = sqrt(pow(vx[10],2) + pow(vy[10],2) + pow(vz[10],2));
-    vx[10] = vx[10] * i / check;
-    vy[10] = vy[10] * i / check;
-    vz[10] = vz[10] * i / check;
-    
-    int count  = 0;
-    int timestep = 100;
-    //loop that iterates up to a certain chosen time (end)
-    while((t_end - t) > DBL_EPSILON){
-        if(count % timestep == 0){
-          file << t << "; ";
-              for(int i=0; i<n; i++) file << x[i] << "; ";
-              for(int i=0; i<n; i++) file << y[i] << "; ";
-              //for(int i=0; i<n; i++) file << z[i] << "; ";
-              //for(int i=0; i<n; i++) file << vx[i] << "; ";
-              //for(int i=0; i<n; i++) file << vy[i] << "; ";
-              //for(int i=0; i<n-1; i++) file << vz[i] << "; ";
-          file << vz[n-1]<< endl;
-          count = 0;
-        }
-
-        //Calculate next timestep
-        step(t, dt, x, y, z, vx, vy, vz, acceleration, n, m);
-
-        //if the satellite collided with an object remove it from further calculations
-        if ((n == 11) && (crash_check(t, x, y, z, r, x, y, z, n-1, n-1))){
-            x.erase(x.begin()+(n-1));
-            y.erase(y.begin()+(n-1));
-            z.erase(z.begin()+(n-1));
-            vx.erase(vx.begin()+(n-1));
-            vy.erase(vy.begin()+(n-1));
-            vz.erase(vz.begin()+(n-1));
-            m.erase(m.begin()+(n-1));
-            r.erase(r.begin()+(n-1));
-
-            n -= 1;
-            break;
-        }
-
-        //update time - so the loop will have a chance to end
-        t += dt;
-        count ++;
-    }
-
-    //close the output file after the iterations are done
-    file.close();
-}*/
-
-void driver_cashcarp(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, vector<double> &r, Step_function step, string command, double i){
-    //Create and open output file
-    fstream file;
-    file.open(command+"-solution.csv", ios::out);
-    file.precision(16);
-    double check = sqrt(pow(vx[10],2) + pow(vy[10],2) + pow(vz[10],2));
-    vx[10] = vx[10] * i / check;
-    vy[10] = vy[10] * i / check;
-    vz[10] = vz[10] * i / check;
+    //double check = sqrt(pow(vx[10],2) + pow(vy[10],2) + pow(vz[10],2));
+    //vx[10] = vx[10] * i / check;
+    //vy[10] = vy[10] * i / check;
+    //vz[10] = vz[10] * i / check;
 
     vector<double> x_old, y_old, z_old, vx_old, vy_old, vz_old;
 
@@ -601,7 +610,6 @@ void driver_cashcarp(double t, double t_end, double dt, vector<double> &x, vecto
               //for(int i=0; i<n-1; i++) file << vz[i] << "; ";
           file << vz[n-1]<< endl;
           count = 0;
-          // cout << "Fehler" << Delta << endl;
         }
 
         x_old = x;
@@ -638,13 +646,12 @@ void driver_cashcarp(double t, double t_end, double dt, vector<double> &x, vecto
         }
 
         t += dt;
-        //cout << t << ", " << dt << endl;
         count ++; //Count  the number of time steps for saving only every 100th value.
     }
     file.close();
 }
 
-void sat_driver(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, vector<double> m, vector<double> &r, vector<double> &xs, vector<double> &ys, vector<double> &zs, vector<double> &vxs, vector<double> &vys, vector<double> &vzs, vector<double> &ms, vector<double> &rs, int n, Step_function step, double lower, double upper, int sat, vector<double> &t_maxdist, vector<double> &maxdist, vector<double> &v_maxdist, vector<double> &v0_sat, bool out){
+void sat_driver(int countertest, double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, vector<double> m, vector<double> &r, vector<double> &xs, vector<double> &ys, vector<double> &zs, vector<double> &vxs, vector<double> &vys, vector<double> &vzs, vector<double> &ms, vector<double> &rs, int n, Step_function step, double lower, double upper, int sat, vector<double> &t_maxdist, vector<double> &maxdist, vector<double> &v_maxdist, vector<double> &v0_sat, bool out){
     //Create and open output file
     fstream file;
     if (out){
@@ -668,14 +675,11 @@ void sat_driver(double t, double t_end, double dt, vector<double> &x, vector<dou
     for(int i=0; i<sat; i++) t_maxdist.push_back(0.);
     for(int i=0; i<sat; i++) v0_sat.push_back(sqrt(pow(vxs[i],2) + pow(vys[i],2) + pow(vzs[i],2)));
 
-    vector<double> x_old, y_old, z_old, vx_old,vy_old, vz_old;
+    vector<double> x_old, y_old, z_old, vx_old, vy_old, vz_old;
     double Delta;
     double Delta_aim = 1e-16;
 
     int counter = 0; //counts the number of crashed satellites in each timestep
-
-    //inserted just for testing purposes
-    t_end = 5.;
 
     x.insert(x.end(), xs.begin(), xs.end());
     y.insert(y.end(), ys.begin(), ys.end());
@@ -685,6 +689,7 @@ void sat_driver(double t, double t_end, double dt, vector<double> &x, vector<dou
     vz.insert(vz.end(), vzs.begin(), vzs.end());
     r.insert(r.end(), rs.begin(), rs.end());
     m.insert(m.end(), ms.begin(), ms.end());
+    cout << "inserted vars" << endl;
 
     //loop that iterates up to a certain chosen time (end)
     while((t_end - t) > DBL_EPSILON){
@@ -694,9 +699,10 @@ void sat_driver(double t, double t_end, double dt, vector<double> &x, vector<dou
         vx_old = vx;
         vy_old = vy;
         vz_old = vz;
-
+        if (countertest == 2) cout << "satrt while" << endl;
         //Calculate next timestep
         rk5_step(t, dt, x_old, y_old, z_old, vx_old, vy_old, vz_old, acceleration, n+sat, m);
+        if (countertest == 2) cout << "did rk5" << endl;
 
         Delta = 0;
         for(int i=0; i<n+sat; i++) {
@@ -707,6 +713,7 @@ void sat_driver(double t, double t_end, double dt, vector<double> &x, vector<dou
 
         //Calculate next timestep for objects and sats
         step(t, dt, x, y, z, vx, vy, vz, acceleration, n+sat, m);
+        if (countertest == 2) cout << "did step" << endl;
         
         for(int i=n; i<n+sat; i++){
             xs[i-n] = x[i];
@@ -740,6 +747,7 @@ void sat_driver(double t, double t_end, double dt, vector<double> &x, vector<dou
                 vy.erase(vy.begin()+(n+i-1));
                 vz.erase(vz.begin()+(n+i-1));
                 m.erase(m.begin()+(n+i-1));
+                r.erase(r.begin()+(n+i-1));//---inserted since missing
 
                 dist.erase(dist.begin()+(i-1));
                 maxdist.erase(maxdist.begin()+(i-1));
@@ -750,6 +758,7 @@ void sat_driver(double t, double t_end, double dt, vector<double> &x, vector<dou
                 counter++;
             }
         }
+        if (countertest == 2) cout << "crash checked" << endl;
 
         //update number of remaining satellites
         sat -= counter;
@@ -801,7 +810,8 @@ vector<double> check_for_boundaries(int precision, int n, double t, double t_end
     int counter = 0; //keeps track of the digits after the decimal point
     int sat = 10;
     int prefactor;
-    double v0 = 10.;
+    //double v0 = 10.;
+    double v0 = 16.; //----just for testing
     double v_min = v0; //initial velocity and calculate below
     double v_max = 0.;
     bool out = false;
@@ -817,9 +827,10 @@ vector<double> check_for_boundaries(int precision, int n, double t, double t_end
         //Old objects and satellites are destroyed and new ones created
         initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
         prefactor = initialize_satellites(final, counter, v_min, v_max, x, y, z, vx, vy, vz, r, xs, ys, zs, vxs, vys, vzs, ms, rs, sat, startobject);
+        cout << "initialized satellites" << endl;
 
         //run programm to the end and get t_maxdist, maxdist, v_maxdist and v0_sat of satellites that returned in suitable interval
-        sat_driver(t, t_end, dt, x, y, z, vx, vy, vz, m, r, xs, ys, zs, vxs, vys, vzs, ms, rs, n, rk4_step, lower, upper, prefactor*sat, t_maxdist, maxdist, v_maxdist, v0_sat, out);
+        sat_driver(counter, t, t_end, dt, x, y, z, vx, vy, vz, m, r, xs, ys, zs, vxs, vys, vzs, ms, rs, n, rk4_step, lower, upper, prefactor*sat, t_maxdist, maxdist, v_maxdist, v0_sat, out);
 
         //know from satellite driver how many satellites made it and know their initial velocities
         v_min = findmin(v0_sat);
@@ -856,7 +867,7 @@ void calc_sat(vector<double> &x, vector<double> &y, vector<double> &z, vector<do
     double t_end = 20.;
     double dt = pow(2,-19);
     int startobject = 3;
-    int endobject = 4; //no. planet -1; (Pluto = 8)
+    int endobject = 7; //no. planet -1; (Pluto = 8)
     int precision = 4;
     int satdummy = 10;
     int sat; //aka prefactor at another point
@@ -886,9 +897,9 @@ void calc_sat(vector<double> &x, vector<double> &y, vector<double> &z, vector<do
 
     cout << "boundaries[0] = " << boundaries[0] << "; boundaries[1] = " << boundaries[1] << endl;
 
-    initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
-    sat = initialize_satellites(final, precision, v_min, v_max, x, y, z, vx, vy, vz, r, xs, ys, zs, vxs, vys, vzs, ms, rs, satdummy, startobject);
-    sat_driver(t, t_end, dt, x, y, z, vx, vy, vz, m, r, xs, ys, zs, vxs, vys, vzs, ms, rs, n, rk4_step, lower, upper, sat, t_maxdist, maxdist, v_maxdist, v0_sat, out);
+    //initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
+    //sat = initialize_satellites(final, precision, v_min, v_max, x, y, z, vx, vy, vz, r, xs, ys, zs, vxs, vys, vzs, ms, rs, satdummy, startobject);
+    //sat_driver(t, t_end, dt, x, y, z, vx, vy, vz, m, r, xs, ys, zs, vxs, vys, vzs, ms, rs, n, rk4_step, lower, upper, sat, t_maxdist, maxdist, v_maxdist, v0_sat, out);
 }
 
 void programmteil(string command){
@@ -913,15 +924,15 @@ void programmteil(string command){
     if(fileexists(name)){
         if (command == "fwd"){  // forward euler
             initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
-            driver_cashcarp(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, fwd_step, command ,t);
+            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, fwd_step, command ,t);
         }
         else if (command == "rk4"){ // Runge Kutta 4
             initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
-            driver_cashcarp(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command, t);
+            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command, t);
         }
         else if (command == "lf"){ // leap frog
             initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
-            driver_cashcarp(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, lf_step, command, t);
+            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, lf_step, command, t);
         }
         else if (command == "sat"){ // satellites
             calc_sat(x, y, z, vx, vy, vz, m, r, n, rk4_step, name);
@@ -933,7 +944,7 @@ void programmteil(string command){
                 t_end = 10.;
                 dt = pow(2,-27); //~1E-6; 2-19 ~ 1e-7 ~ 3.76s -> 1e-6 ~ 37s
                 initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
-                driver_cashcarp(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command, i);
+                driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command, i);
                 i += 0.01;
             }
         }
