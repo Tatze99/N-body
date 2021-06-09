@@ -28,9 +28,8 @@ tuple<vector<double>,vector<double>,vector<double>> acceleration(double t, vecto
   vector<double> ay(n, 0.);
   vector<double> az(n, 0.);
 
-
-  // #pragma omp parallel for
   for(int i=0; i<n; i++){
+    #pragma omp parallel for
     for(int j=0; j<i; j++) {
       Matrix[i][j] = pow((x[i]-x[j])*(x[i]-x[j])+(y[i]-y[j])*(y[i]-y[j])+(z[i]-z[j])*(z[i]-z[j]),-1.5);
     }
@@ -111,84 +110,19 @@ void read_file(vector<string> &v, string &filename){
     s.close();
 }
 
-vector<double> upperlower(vector<string> &tmp, string input, int endobject){
-    string s, tmp_s;
-    string semi = ";";
-    int counter;
-    vector<double> ul = {0., 0.};
-
-    if (fileexists(input)) read_file(tmp, input);
-    s = tmp[endobject];
-    //iterate over each double in one line
-    for(int i=0; i<5; i++){
-        //iterate over each line
-        for(int j=0; j<s.length(); j++){
-            if(s[j] == semi[0]){
-                counter = j;
-                break;
-            }
-        }
-
-        //cut off the first part of s
-        tmp_s = s.substr(0, counter);
-
-        //set s to the remaining string
-        if ((counter-2) < (s.length()-1)) s = s.substr(counter+2, s.length()-1);
-
-        //set values
-        switch (i)
-        {
-            case 3: ul[0] = stod(tmp_s);
-                    break;
-            case 4: ul[1] = stod(tmp_s);
-        }
-    }
-    return ul;
-}
-
 vector<double> all_from_target(vector<string> &tmp, string input, double objdist, double time){
-    string s, tmp_s;
-    string semi = ";";
-    int counter;
+
     vector<double> t_max, r_max, v_max, v_0;
     vector<double> all = {0., 0., 0., 0., 0.};
     t_max.resize(tmp.size());
     r_max.resize(tmp.size());
     v_max.resize(tmp.size());
     v_0.resize(tmp.size());
+    int numbers = tmp.size()-1;
 
-    if (fileexists(input)) read_file(tmp, input);
-    for(int l=0; l<(tmp.size()-1); l++){
-        s = tmp[l];
-        //iterate over each double in one line
-        for(int i=0; i<4; i++){
-            //iterate over each line
-            for(int j=0; j<s.length(); j++){
-                if(s[j] == semi[0]){
-                    counter = j;
-                    break;
-                }
-            }
+    values = make_tuple(t_max,r_max,v_max,v_0);
 
-            //cut off the first part of s
-            tmp_s = s.substr(0, counter);
-
-            //set s to the remaining string
-            if ((counter-2) < (s.length()-1)) s = s.substr(counter+2, s.length()-1);
-
-            //set values
-            switch (i)
-            {
-                case 0: t_max[l] = stod(tmp_s);
-                        break;
-                case 1: r_max[l] = stod(tmp_s);
-                        break;
-                case 2: v_max[l] = stod(tmp_s);
-                        break;
-                case 3: v_0[l] = stod(tmp_s);
-            }
-        }
-    }
+    tie(t_max,r_max,v_max,v_0) = set_values(values, numbers, input);
 
     counter = 1;
 
@@ -253,6 +187,57 @@ void set_startvalues(int n, vector<string> help, vector<double> &x, vector<doubl
             }
         }
     }
+}
+
+auto set_values(auto values, int n, vector<string> name){
+   vector<string> help = {};
+   read_file(help, name);
+   int counter;
+   string s, tmp_s;
+   string semi = ";";  //define delimiter which shall be searched for
+
+   int k = tuple_size<decltype(values)>::value;
+   //iterate over auxiliary vector
+    for(int i=0; i<n; i++){
+        s = help[i];
+        //iterate over each double in one line
+        for(int l=0; l<k; l++){
+            //iterate over each line --- mabye replace by find_first_of (see cppreference)
+            for(int j=0; j<s.length(); j++){
+                if(s[j] == semi[0]){
+                    counter = j;
+                    break;
+                }
+            }
+
+            //cut off the first part of s
+            tmp_s = s.substr(0, counter);
+
+            //set s to the remaining string
+            if ((counter+2) < s.length()) s = s.substr(counter+2, s.length()-1);
+
+            //set values
+            switch (l)
+            {
+                case 0: get<0>(values)[i] = stod(tmp_s);
+                        break;
+                case 1: get<1>(values)[i] = stod(tmp_s);
+                        break;
+                case 2: get<2>(values)[i] = stod(tmp_s);
+                        break;
+                case 3: get<3>(values)[i] = 365.245*stod(tmp_s);
+                        break;
+                case 4: get<4>(values)[i] = 365.245*stod(tmp_s);
+                        break;
+                case 5: get<5>(values)[i] = 365.245*stod(tmp_s);
+                        break;
+                case 6: get<6>(values)[i] = stod(tmp_s);
+                        break;
+                case 7: get<7>(values)[i] = stod(tmp_s);
+            }
+        }
+    }
+    return values;
 }
 
 int initialize_satellites(bool final, int counter, double v_min, double v_max, vector<double> x, vector<double> y, vector<double> z, vector<double> vx, vector<double> vy, vector<double> vz, vector<double> r, vector<double> &xs, vector<double> &ys, vector<double> &zs, vector<double> &vxs, vector<double> &vys, vector<double> &vzs, vector<double> &ms, vector<double> &rs, int sat, int startobject){
@@ -351,8 +336,8 @@ int initialize_satellites(bool final, int counter, double v_min, double v_max, v
 
 void initialize_objects(int n, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, vector<double> &m, vector<double> &r, string name){
     //auxiliary vector
-    vector<string> help = {};
-    
+    // vector<string> help = {};
+
     x.erase(x.begin(), x.end());
     y.erase(y.begin(), y.end());
     z.erase(z.begin(), z.end());
@@ -361,7 +346,7 @@ void initialize_objects(int n, vector<double> &x, vector<double> &y, vector<doub
     vz.erase(vz.begin(), vz.end());
     m.erase(m.begin(), m.end());
     r.erase(r.begin(), r.end());
-    
+
     //Change size of vectors
     x.resize(n);
     y.resize(n);
@@ -372,8 +357,11 @@ void initialize_objects(int n, vector<double> &x, vector<double> &y, vector<doub
     m.resize(n);
     r.resize(n);
 
-    read_file(help, name);
-    set_startvalues(n, help, x, y, z, vx, vy, vz, m, r);
+    // read_file(help, name);
+    // set_startvalues(n, help, x, y, z, vx, vy, vz, m, r);
+
+    auto values = make_tuple(x, y, z, vx, vy, vz, m, r);
+    tie(x, y, z, vx, vy, vz, m, r) = set_values(values, n, name);
 }
 
 void fwd_step(double t, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, DGL rhs, int n, vector<double> m){
@@ -661,7 +649,7 @@ void sat_driver(int countertest, double t, double t_end, double dt, vector<doubl
 
     vector<double> dist = {};
     vector<double> v_dist = {};
-    
+
     //clear outputvalues in the end since the no of satellites changes
     maxdist.erase(maxdist.begin(), maxdist.end());
     v_maxdist.erase(v_maxdist.begin(), v_maxdist.end());
@@ -714,7 +702,7 @@ void sat_driver(int countertest, double t, double t_end, double dt, vector<doubl
         //Calculate next timestep for objects and sats
         step(t, dt, x, y, z, vx, vy, vz, acceleration, n+sat, m);
         if (countertest == 2) cout << "did step" << endl;
-        
+
         for(int i=n; i<n+sat; i++){
             xs[i-n] = x[i];
             ys[i-n] = y[i];
@@ -736,7 +724,7 @@ void sat_driver(int countertest, double t, double t_end, double dt, vector<doubl
                 t_maxdist[i] = t;
             }
         }
-        
+
         for(int i=sat; i>0; i--){
             //if a satellite collided with an object remove it from further calculations
             if (crash_check(t, x, y, z, r, xs, ys, zs, n, i-1)){
@@ -872,9 +860,12 @@ void calc_sat(vector<double> &x, vector<double> &y, vector<double> &z, vector<do
     int satdummy = 10;
     int sat; //aka prefactor at another point
 
-    vector<string> tmp = {};
-    double lower = 99 * upperlower(tmp, input, endobject)[0]; //read 1% difference from max min orbit
-    double upper = 101 * upperlower(tmp, input, endobject)[1];
+    vector<double> a(n), e(n), b(n), l(n), u(n);
+    values = make_tuple(a,e,b,l,u);
+    tie(a,e,b,l,u) = set_values(values, 5, input);
+
+    double lower = 99 * l[endobject]; //read 1% difference from max min orbit
+    double upper = 101 * u[endobject];
     cout << "calculated upper lower" << endl;
 
     vector<double> t_maxdist = {};
@@ -900,6 +891,10 @@ void calc_sat(vector<double> &x, vector<double> &y, vector<double> &z, vector<do
     //initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
     //sat = initialize_satellites(final, precision, v_min, v_max, x, y, z, vx, vy, vz, r, xs, ys, zs, vxs, vys, vzs, ms, rs, satdummy, startobject);
     //sat_driver(t, t_end, dt, x, y, z, vx, vy, vz, m, r, xs, ys, zs, vxs, vys, vzs, ms, rs, n, rk4_step, lower, upper, sat, t_maxdist, maxdist, v_maxdist, v0_sat, out);
+}
+
+auto test2(auto x){
+  return x;
 }
 
 void programmteil(string command){
@@ -947,6 +942,13 @@ void programmteil(string command){
                 driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command, i);
                 i += 0.01;
             }
+        }
+        else if (command == "test2"){ // satellites
+            vector<double> b = {1,4,5};
+            auto t = make_tuple(b,2,3);
+            auto a= test2(t);
+            cout << get<0>(a)[2] << endl;
+            cout << tuple_size<decltype(a)>::value << endl;
         }
         else cout << "Wrong parameter!" << endl;
     }else{
