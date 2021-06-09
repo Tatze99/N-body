@@ -110,23 +110,57 @@ void read_file(vector<string> &v, string &filename){
     s.close();
 }
 
+vector<vector<double>> set_values(vector<vector<double>> values, int n, string name){
+  vector<string> help = {};
+  read_file(help, name);
+  int counter;
+  string s, tmp_s;
+  string semi = ";";  //define delimiter which shall be searched for
+
+  int k = values.size();
+  //iterate over auxiliary vector
+  for(int i=0; i<n; i++){
+    s = help[i];
+    //iterate over each double in one line
+    for(int l=0; l<k; l++){
+      //iterate over each line --- mabye replace by find_first_of (see cppreference)
+      for(int j=0; j<s.length(); j++){
+        if(s[j] == semi[0]){
+          counter = j;
+          break;
+        }
+      }
+      //cut off the first part of s
+      tmp_s = s.substr(0, counter);
+
+      //set s to the remaining string
+      if ((counter+2) < s.length()) s = s.substr(counter+2, s.length()-1);
+
+      //set values
+      values[l][i] = stod(tmp_s);
+    }
+  }
+  return values;
+}
+
 vector<double> all_from_target(vector<string> &tmp, string input, double objdist, double time){
 
-    vector<double> t_max, r_max, v_max, v_0;
+    int s = tmp.size();
+    vector<double> t_max(s), r_max(s), v_max(s), v_0(s);
     vector<double> all = {0., 0., 0., 0., 0.};
-    t_max.resize(tmp.size());
-    r_max.resize(tmp.size());
-    v_max.resize(tmp.size());
-    v_0.resize(tmp.size());
-    int numbers = tmp.size()-1;
+    int numbers = s-1;
 
-    values = make_tuple(t_max,r_max,v_max,v_0);
+    vector<vector<double>> values = {t_max,r_max,v_max,v_0};
+    values = set_values(values, numbers, input);
 
-    tie(t_max,r_max,v_max,v_0) = set_values(values, numbers, input);
+    t_max = values[0];
+    r_max = values[1];
+    v_max = values[2];
+    v_0 = values[3];
 
-    counter = 1;
+    int counter = 1;
 
-    for(int i=1; i<tmp.size(); i++){
+    for(int i=1; i<s; i++){
         if( (objdist - r_max[i]) < DBL_EPSILON){
             counter = i;
             break;
@@ -187,57 +221,6 @@ void set_startvalues(int n, vector<string> help, vector<double> &x, vector<doubl
             }
         }
     }
-}
-
-auto set_values(auto values, int n, vector<string> name){
-   vector<string> help = {};
-   read_file(help, name);
-   int counter;
-   string s, tmp_s;
-   string semi = ";";  //define delimiter which shall be searched for
-
-   int k = tuple_size<decltype(values)>::value;
-   //iterate over auxiliary vector
-    for(int i=0; i<n; i++){
-        s = help[i];
-        //iterate over each double in one line
-        for(int l=0; l<k; l++){
-            //iterate over each line --- mabye replace by find_first_of (see cppreference)
-            for(int j=0; j<s.length(); j++){
-                if(s[j] == semi[0]){
-                    counter = j;
-                    break;
-                }
-            }
-
-            //cut off the first part of s
-            tmp_s = s.substr(0, counter);
-
-            //set s to the remaining string
-            if ((counter+2) < s.length()) s = s.substr(counter+2, s.length()-1);
-
-            //set values
-            switch (l)
-            {
-                case 0: get<0>(values)[i] = stod(tmp_s);
-                        break;
-                case 1: get<1>(values)[i] = stod(tmp_s);
-                        break;
-                case 2: get<2>(values)[i] = stod(tmp_s);
-                        break;
-                case 3: get<3>(values)[i] = 365.245*stod(tmp_s);
-                        break;
-                case 4: get<4>(values)[i] = 365.245*stod(tmp_s);
-                        break;
-                case 5: get<5>(values)[i] = 365.245*stod(tmp_s);
-                        break;
-                case 6: get<6>(values)[i] = stod(tmp_s);
-                        break;
-                case 7: get<7>(values)[i] = stod(tmp_s);
-            }
-        }
-    }
-    return values;
 }
 
 int initialize_satellites(bool final, int counter, double v_min, double v_max, vector<double> x, vector<double> y, vector<double> z, vector<double> vx, vector<double> vy, vector<double> vz, vector<double> r, vector<double> &xs, vector<double> &ys, vector<double> &zs, vector<double> &vxs, vector<double> &vys, vector<double> &vzs, vector<double> &ms, vector<double> &rs, int sat, int startobject){
@@ -360,8 +343,17 @@ void initialize_objects(int n, vector<double> &x, vector<double> &y, vector<doub
     // read_file(help, name);
     // set_startvalues(n, help, x, y, z, vx, vy, vz, m, r);
 
-    auto values = make_tuple(x, y, z, vx, vy, vz, m, r);
-    tie(x, y, z, vx, vy, vz, m, r) = set_values(values, n, name);
+    vector<vector<double>> values = {x, y, z, vx, vy, vz, m, r};
+    values = set_values(values, n, name);
+    x = values[0];
+    y = values[1];
+    z = values[2];
+    vx = values[3];
+    vy = values[4];
+    vz = values[5];
+    cout << x[0] << ";" << x[1] << ";" << x[2] << endl;
+    cout << y[0] << ";" << y[1] << ";" << y[2] << endl;
+    cout << z[0] << ";" << z[1] << ";" << z[2] << endl;
 }
 
 void fwd_step(double t, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, DGL rhs, int n, vector<double> m){
@@ -592,10 +584,10 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
           file << t << "; ";
               for(int i=0; i<n; i++) file << x[i] << "; ";
               for(int i=0; i<n; i++) file << y[i] << "; ";
-              //for(int i=0; i<n; i++) file << z[i] << "; ";
-              //for(int i=0; i<n; i++) file << vx[i] << "; ";
-              //for(int i=0; i<n; i++) file << vy[i] << "; ";
-              //for(int i=0; i<n-1; i++) file << vz[i] << "; ";
+              for(int i=0; i<n; i++) file << z[i] << "; ";
+              for(int i=0; i<n; i++) file << vx[i] << "; ";
+              for(int i=0; i<n; i++) file << vy[i] << "; ";
+              for(int i=0; i<n-1; i++) file << vz[i] << "; ";
           file << vz[n-1]<< endl;
           count = 0;
         }
@@ -608,6 +600,7 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
         vz_old = vz;
 
         //Calculate next timestep
+
         rk5_step(t, dt, x_old, y_old, z_old, vx_old, vy_old, vz_old, acceleration, n, m);
 
         Delta = 0;
@@ -615,6 +608,8 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
             Delta += x_old[i]+y_old[i]+z_old[i];
         }
 
+        cout << "Delta" << Delta << endl;
+        cout << "dt = " << dt << endl;
         dt *= pow(Delta_aim/Delta, 1./5.);
         step(t, dt, x, y, z, vx, vy, vz, acceleration, n, m);
 
@@ -677,7 +672,7 @@ void sat_driver(int countertest, double t, double t_end, double dt, vector<doubl
     vz.insert(vz.end(), vzs.begin(), vzs.end());
     r.insert(r.end(), rs.begin(), rs.end());
     m.insert(m.end(), ms.begin(), ms.end());
-    cout << "inserted vars" << endl;
+    cout << "sat = " << sat << endl;
 
     //loop that iterates up to a certain chosen time (end)
     while((t_end - t) > DBL_EPSILON){
@@ -687,7 +682,7 @@ void sat_driver(int countertest, double t, double t_end, double dt, vector<doubl
         vx_old = vx;
         vy_old = vy;
         vz_old = vz;
-        if (countertest == 2) cout << "satrt while" << endl;
+        if (countertest == 2) cout << "start while (step function)" << endl;
         //Calculate next timestep
         rk5_step(t, dt, x_old, y_old, z_old, vx_old, vy_old, vz_old, acceleration, n+sat, m);
         if (countertest == 2) cout << "did rk5" << endl;
@@ -861,8 +856,11 @@ void calc_sat(vector<double> &x, vector<double> &y, vector<double> &z, vector<do
     int sat; //aka prefactor at another point
 
     vector<double> a(n), e(n), b(n), l(n), u(n);
-    values = make_tuple(a,e,b,l,u);
-    tie(a,e,b,l,u) = set_values(values, 5, input);
+    vector<vector<double>> values = {a,e,b,l,u};
+    values = set_values(values, n-1, input);
+
+    l = values[3];
+    u = values[4];
 
     double lower = 99 * l[endobject]; //read 1% difference from max min orbit
     double upper = 101 * u[endobject];
@@ -893,10 +891,6 @@ void calc_sat(vector<double> &x, vector<double> &y, vector<double> &z, vector<do
     //sat_driver(t, t_end, dt, x, y, z, vx, vy, vz, m, r, xs, ys, zs, vxs, vys, vzs, ms, rs, n, rk4_step, lower, upper, sat, t_maxdist, maxdist, v_maxdist, v0_sat, out);
 }
 
-auto test2(auto x){
-  return x;
-}
-
 void programmteil(string command){
     //vectors chosen such that n-particles can be realized
     //Only current values are stored and after the output overridden with the new ones
@@ -914,7 +908,7 @@ void programmteil(string command){
     double dt = pow(2.,-24);     //time steps
     double t = 0.;
 
-    string name = "Input2.csv";
+    string name = "Input.csv";
 
     if(fileexists(name)){
         if (command == "fwd"){  // forward euler
@@ -942,13 +936,6 @@ void programmteil(string command){
                 driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command, i);
                 i += 0.01;
             }
-        }
-        else if (command == "test2"){ // satellites
-            vector<double> b = {1,4,5};
-            auto t = make_tuple(b,2,3);
-            auto a= test2(t);
-            cout << get<0>(a)[2] << endl;
-            cout << tuple_size<decltype(a)>::value << endl;
         }
         else cout << "Wrong parameter!" << endl;
     }else{
