@@ -165,7 +165,6 @@ int initialize_satellites(int trackinit, bool final, int counter, double v_min, 
         rs.resize(100);
         for(int i=0; i<100; i++) rs[i] = 0.;
     }
-
     return prefactor;
 }
 
@@ -433,6 +432,7 @@ int main(int argc, char** argv){
         stringstream input{argv[1]};
         string command;
         input >> command;
+
 
         programmteil(command);
 

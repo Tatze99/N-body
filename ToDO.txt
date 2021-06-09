@@ -1,0 +1,54 @@
+/* To do:
+ Programming part:
+    -Write .csv/.txt -file with initialvalues for ~ 20-30 objects we want to consider with lines like: x, y, z, vx, vy, vz, m, r;
+    -include massless (0.0) test object in Input.csv
+    -Test 1d integrators for different functions and determine order of convergence with log-log-plot
+    -calculate E_tot, E_pot, E_kin in driver functions and output them for conservation plot
+    -calculate L_tot in driver functions and output it for conservation plot
+    -calculate Laplace integral in driver functions and output it for conservation plot
+    -implement adaptive stepsize control in the driver functions
+
+    -Write a script for plots:
+        -Energy
+        -L
+        -Laplace integral
+        -trajectories in position space
+        -trajectories in phase space
+        (-trajectories in momentum space)
+    -Annäherungs effekte
+
+    -Swing by maneuver, write code for:
+	-reaching Jupiter -> determine the start
+		velocity
+		angle in perspective to Jupiter
+		time it takes to reach Jupiter
+	-once Jupiter is reached -> determine the start
+		velocity
+		angle needed to cross the pluto Trajectory
+
+ Theoretical foundations:
+
+    -idea of integrator schemes: from taylor-expansion to final formulas
+    -representation of formulas in butcher tables and how to implement code from there
+    -determining order of convergence (power laws) from log-log-plots
+    (-post-newtonian/relativistic corrections)
+
+ Latex:
+	-personalize the template
+	-define the structure and the order of topics and results
+	-creating and chosing the plots for each topic
+	-writing:
+		-basics(integrators(euler, leapfrog, runge-kutta)
+		-topic1
+		-topic2
+		-topic3
+		-abstract
+		-conclusion
+
+ Other challenges:
+
+
+  Test:
+    -Unbeteiligte Planeten an/aus
+    -Satellit losschicken und bei pluto ankommen  
+*/
