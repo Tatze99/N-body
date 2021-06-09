@@ -70,8 +70,8 @@ def Laplace_Integral(x,y,z,vx,vy,vz,m,n):
 
 #%%
 command = "rk4"
-Input = np.loadtxt("Input.csv",delimiter=';')
-Daten = np.loadtxt(command+"-solution.csv",delimiter=';')
+Input = np.loadtxt("Input.csv",delimiter=';') # input vx, vy, vz now in a.u. per year!!!!
+Daten = np.loadtxt(command+"-solution_Planets.csv",delimiter=';')
 mass = np.loadtxt("Input.csv",delimiter=';',usecols=[6])
 Namen = ['Sun', 'Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptun', 'Pluto', 'Sonde']
 
@@ -112,6 +112,11 @@ probe_params = [xsat, ysat, zsat, vxsat, vysat, vzsat, 0]
 Input[10,:] = probe_params
 np.savetxt("Input.csv", Input, fmt='%1.20f', delimiter=';')
 print(xsat, ysat, zsat, vxsat, vysat, vzsat)
+
+#%%
+Input[:,3:6] *= 365.245
+
+# np.savetxt("Input.csv", Input, fmt='%1.20f', delimiter=';')
 #%%
 # Plot the trajectories
 %matplotlib inline
