@@ -1,0 +1,23 @@
+Starting satellites from earth
+
+Target		vmin	vmax		max. Dauer
+Mars:		8.5884	8.6623		5a
+Jupiter:	9.1706	9.2189		5a
+Saturn:		9.3840	9.4161		20a bei 6a: 9.4204
+Uranus:		9.53855 9.55625		50a   duration: 28min
+Neptun:				50a
+Pluto:	
+
+
+//---Wrong values too early aborted
+Uranus:		9.7378	9.8514		20a --- with 10 instead of 16
+Neptun:		9.82795 9.85975		20a
+Pluto:					20a
+
+//Error: Uranus values: 2*inf as boundary values then segmentation fault
+//Also for neptune and thus assumed for Pluto
+
+Why is written in the command line satellite 0 crashed?
+Modify driver(cashkarp) function to release satellites from earth at starting time
+
+!!! Average calculating time for whole satellite subroutine ~ 27 min !!!
