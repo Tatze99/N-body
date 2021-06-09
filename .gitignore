@@ -1,5 +1,10 @@
 *.exe
 *.csv
 *.pdf
+*.jpeg
 !Input.csv
-!Input2.csv
+!Input_old_velocities.csv
+!Orbits.csv
+!Satellites-to-Saturn.csv
+!max-to-mars.csv
+!max-to-jupiter.csv
