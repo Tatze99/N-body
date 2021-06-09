@@ -2,7 +2,8 @@
 *.csv
 *.pdf
 *.jpeg
-!Input2.csv
+!Input.csv
+!Input_old_velocities.csv
 !Orbits.csv
 !Satellites-to-Saturn.csv
 !max-to-mars.csv
