@@ -6,7 +6,6 @@
 #include <vector>
 #include <sstream>
 #include <fstream>
-#include <chrono>
 #include <cfloat>
 #include <tuple>
 #include <omp.h>
@@ -105,57 +104,47 @@ void read_file(vector<string> &v, string &filename){
     s.close();
 }
 
-void set_startvalues(int n, vector<string> help, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, vector<double> &m, vector<double> &r){
-   int counter;
-   string s, tmp_s;
-   string semi = ";";  //define delimiter which shall be searched for
+vector<vector<double>> set_values(vector<vector<double>> values, int n, string name){
+  vector<string> help = {};
+  read_file(help, name);
+  int counter;
+  string s, tmp_s;
+  string semi = ";";  //define delimiter which shall be searched for
 
-   //iterate over auxiliary vector
-    for(int i=0; i<n; i++){
-        s = help[i];
-        //iterate over each double in one line
-        for(int l=0; l<8; l++){
-            //iterate over each line --- mabye replace by find_first_of (see cppreference)
-            for(int j=0; j<s.length(); j++){
-                if(s[j] == semi[0]){
-                    counter = j;
-                    break;
-                }
-            }
-
-            //cut off the first part of s
-            tmp_s = s.substr(0, counter);
-
-            //set s to the remaining string
-            if ((counter+2) < s.length()) s = s.substr(counter+2, s.length()-1);
-
-            //set values
-            switch (l)
-            {
-                case 0: x[i] = stod(tmp_s);
-                        break;
-                case 1: y[i] = stod(tmp_s);
-                        break;
-                case 2: z[i] = stod(tmp_s);
-                        break;
-                case 3: vx[i] = 365.245*stod(tmp_s);
-                        break;
-                case 4: vy[i] = 365.245*stod(tmp_s);
-                        break;
-                case 5: vz[i] = 365.245*stod(tmp_s);
-                        break;
-                case 6: m[i] = stod(tmp_s);
-                        break;
-                case 7: r[i] = stod(tmp_s);
-            }
+  int k = values.size();
+  //iterate over auxiliary vector
+  for(int i=0; i<n; i++){
+    s = help[i];
+    //iterate over each double in one line
+    for(int l=0; l<k; l++){
+      //iterate over each line --- mabye replace by find_first_of (see cppreference)
+      for(int j=0; j<s.length(); j++){
+        if(s[j] == semi[0]){
+          counter = j;
+          break;
         }
+        // if the end of line has no ";"
+        if(j == s.length()-1){
+            counter = j-1;
+            break;
+        }
+      }
+      //cut off the first part of s
+      tmp_s = s.substr(0, counter);
+
+      //set s to the remaining string
+      if ((counter-2) < s.length()) s = s.substr(counter+1, s.length()-1);
+      //set values
+      values[l][i] = stod(tmp_s);
     }
+  }
+  return values;
 }
 
 void initialize_objects(int n, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, vector<double> &m, vector<double> &r, string name){
     //auxiliary vector
     vector<string> help = {};
-    
+
     x.erase(x.begin(), x.end());
     y.erase(y.begin(), y.end());
     z.erase(z.begin(), z.end());
@@ -164,7 +153,7 @@ void initialize_objects(int n, vector<double> &x, vector<double> &y, vector<doub
     vz.erase(vz.begin(), vz.end());
     m.erase(m.begin(), m.end());
     r.erase(r.begin(), r.end());
-    
+
     //Change size of vectors
     x.resize(n);
     y.resize(n);
@@ -175,8 +164,16 @@ void initialize_objects(int n, vector<double> &x, vector<double> &y, vector<doub
     m.resize(n);
     r.resize(n);
 
-    read_file(help, name);
-    set_startvalues(n, help, x, y, z, vx, vy, vz, m, r);
+    vector<vector<double>> values = {x, y, z, vx, vy, vz, m, r};
+    values = set_values(values, n, name);
+    x = values[0];
+    y = values[1];
+    z = values[2];
+    vx = values[3];
+    vy = values[4];
+    vz = values[5];
+    m = values[6];
+    r = values[7];
 }
 
 void fwd_step(double t, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, DGL rhs, int n, vector<double> m){
@@ -393,7 +390,7 @@ void sat_driver(double t, double t_end, double dt, vector<double> &x, vector<dou
 
     vector<double> dist = {};
     vector<double> v_dist = {};
-    
+
     //clear outputvalues in the end since the no of satellites changes
     maxdist.erase(maxdist.begin(), maxdist.end());
     v_maxdist.erase(v_maxdist.begin(), v_maxdist.end());
@@ -444,7 +441,7 @@ void sat_driver(double t, double t_end, double dt, vector<double> &x, vector<dou
 
         //Calculate next timestep for objects and sats
         step(t, dt, x, y, z, vx, vy, vz, acceleration, n+sat, m);
-        
+
         for(int i=n; i<n+sat; i++){
             xs[i-n] = x[i];
             ys[i-n] = y[i];
@@ -466,7 +463,7 @@ void sat_driver(double t, double t_end, double dt, vector<double> &x, vector<dou
                 t_maxdist[i] = t;
             }
         }
-        
+
         for(int i=sat; i>0; i--){
             //if a satellite collided with an object remove it from further calculations
             if (crash_check(t, x, y, z, r, xs, ys, zs, n, i-1)){

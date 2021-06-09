@@ -15,92 +15,27 @@
 #include <omp.h>
 
 #include "header.cpp"
-
 //for global "short-hand" notation - need not to write 'std::' in front of most things
 using namespace std;
 
-vector<double> upperlower(vector<string> &tmp, string input, int endobject){
-    string s, tmp_s;
-    string semi = ";";
-    int counter;
-    vector<double> ul = {0., 0.};
-
-    if (fileexists(input)) read_file(tmp, input);
-    s = tmp[endobject];
-    //iterate over each double in one line
-    for(int i=0; i<5; i++){
-        //iterate over each line
-        for(int j=0; j<s.length(); j++){
-            if(s[j] == semi[0]){
-                counter = j;
-                break;
-            }
-        }
-
-        //cut off the first part of s
-        tmp_s = s.substr(0, counter);
-
-        //set s to the remaining string
-        if ((counter-2) < (s.length()-1)) s = s.substr(counter+2, s.length()-1);
-
-        //set values
-        switch (i)
-        {
-            case 3: ul[0] = stod(tmp_s);
-                    break;
-            case 4: ul[1] = stod(tmp_s);
-        }
-    }
-    return ul;
-}
-
 vector<double> all_from_target(vector<string> &tmp, string input, double objdist, double time){
-    string s, tmp_s;
-    string semi = ";";
-    int counter;
-    vector<double> t_max, r_max, v_max, v_0;
+
+    int s = tmp.size();
+    vector<double> t_max(s), r_max(s), v_max(s), v_0(s);
     vector<double> all = {0., 0., 0., 0., 0.};
-    t_max.resize(tmp.size());
-    r_max.resize(tmp.size());
-    v_max.resize(tmp.size());
-    v_0.resize(tmp.size());
+    int numbers = s-1;
 
-    if (fileexists(input)) read_file(tmp, input);
-    for(int l=0; l<(tmp.size()-1); l++){
-        s = tmp[l];
-        //iterate over each double in one line
-        for(int i=0; i<4; i++){
-            //iterate over each line
-            for(int j=0; j<s.length(); j++){
-                if(s[j] == semi[0]){
-                    counter = j;
-                    break;
-                }
-            }
+    vector<vector<double>> values = {t_max,r_max,v_max,v_0};
+    values = set_values(values, numbers, input);
 
-            //cut off the first part of s
-            tmp_s = s.substr(0, counter);
+    t_max = values[0];
+    r_max = values[1];
+    v_max = values[2];
+    v_0 = values[3];
 
-            //set s to the remaining string
-            if ((counter-2) < (s.length()-1)) s = s.substr(counter+2, s.length()-1);
+    int counter = 1;
 
-            //set values
-            switch (i)
-            {
-                case 0: t_max[l] = stod(tmp_s);
-                        break;
-                case 1: r_max[l] = stod(tmp_s);
-                        break;
-                case 2: v_max[l] = stod(tmp_s);
-                        break;
-                case 3: v_0[l] = stod(tmp_s);
-            }
-        }
-    }
-
-    counter = 1;
-
-    for(int i=1; i<tmp.size(); i++){
+    for(int i=1; i<s; i++){
         if( (objdist - r_max[i]) < DBL_EPSILON){
             counter = i;
             break;
@@ -239,16 +174,15 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
     fstream file;
     file.open(command+"-solution.csv", ios::out);
     file.precision(16);
-    double check = sqrt(pow(vx[10],2) + pow(vy[10],2) + pow(vz[10],2));
-    vx[10] = vx[10] * i / check;
-    vy[10] = vy[10] * i / check;
-    vz[10] = vz[10] * i / check;
+    // double check = sqrt(pow(vx[10],2) + pow(vy[10],2) + pow(vz[10],2));
+    // vx[10] = vx[10] * i / check;
+    // vy[10] = vy[10] * i / check;
+    // vz[10] = vz[10] * i / check;
 
     vector<double> x_old, y_old, z_old, vx_old, vy_old, vz_old;
 
     double Delta = 0.;
     double Delta_aim = 1e-16;
-    double stepsize = 0;
     int count  = 0;
     int timestep = 1000;
     //loop that iterates up to a certain chosen time (end)
@@ -257,10 +191,10 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
           file << t << "; ";
               for(int i=0; i<n; i++) file << x[i] << "; ";
               for(int i=0; i<n; i++) file << y[i] << "; ";
-              //for(int i=0; i<n; i++) file << z[i] << "; ";
-              //for(int i=0; i<n; i++) file << vx[i] << "; ";
-              //for(int i=0; i<n; i++) file << vy[i] << "; ";
-              //for(int i=0; i<n-1; i++) file << vz[i] << "; ";
+              for(int i=0; i<n; i++) file << z[i] << "; ";
+              for(int i=0; i<n; i++) file << vx[i] << "; ";
+              for(int i=0; i<n; i++) file << vy[i] << "; ";
+              for(int i=0; i<n-1; i++) file << vz[i] << "; ";
           file << vz[n-1]<< endl;
           count = 0;
         }
@@ -294,7 +228,7 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
             m.erase(m.begin()+(n-1));
             r.erase(r.begin()+(n-1));
 
-            n -= 1;
+            n --;
             break;
         }
 
@@ -331,10 +265,7 @@ vector<double> check_for_boundaries(int precision, int n, double t, double t_end
     bool out = false;
     bool final = false;
 
-    vector<double> t_maxdist = {};
-    vector<double> v_maxdist = {};
-    vector<double> maxdist = {};
-    vector<double> v0_sat = {};
+    vector<double> t_maxdist, v_maxdist, maxdist, v0_sat;
 
     while(counter < (precision+1)){ //determines the precision of v0 in number of digits after the comma
         cout << "while loop " << counter << endl;
@@ -386,32 +317,27 @@ void calc_sat(vector<double> &x, vector<double> &y, vector<double> &z, vector<do
     double v_min, v_max;
 
     double t = 0.;
-    double t_end = 50.;
-    double dt = pow(2,-19);
+    double t_end = 20.;
+    double dt = pow(2,-22);
     int startobject = 3;
     int endobject = 3; //no. planet -1; (Pluto = 8)
     int precision = 4;
     int satdummy = 10;
     int sat; //aka prefactor at another point
 
-    vector<string> tmp = {};
-    double lower = 99 * upperlower(tmp, input, endobject)[0]; //read 1% difference from max min orbit
-    double upper = 101 * upperlower(tmp, input, endobject)[1];
+    vector<double> a(n), e(n), b(n), l(n), u(n);
+    vector<vector<double>> values = {a,e,b,l,u};
+    values = set_values(values, n-1, input);
+
+    l = values[3];
+    u = values[4];
+
+    double lower = 99 * l[endobject]; //read 1% difference from max min orbit
+    double upper = 101 * u[endobject];
     cout << "calculated upper lower" << endl;
 
-    vector<double> t_maxdist = {};
-    vector<double> maxdist = {};
-    vector<double> v_maxdist = {};
-    vector<double> v0_sat = {};
-
-    vector<double> xs = {};
-    vector<double> ys = {};
-    vector<double> zs = {};
-    vector<double> vxs = {};
-    vector<double> vys = {};
-    vector<double> vzs = {};
-    vector<double> ms = {};
-    vector<double> rs = {};
+    vector<double> t_maxdist, maxdist, v_maxdist, v0_sat;
+    vector<double> xs, ys, zs, vxs, vys, vzs, ms, rs;
 
     vector<double> boundaries = check_for_boundaries(precision, n, t, t_end, dt, x, y, z, vx, vy, vz, m, r, xs, ys, zs, vxs, vys, vzs, ms, rs, upper, lower, name, startobject);
     v_min = boundaries[0];
@@ -441,7 +367,7 @@ void programmteil(string command){
     double dt = pow(2.,-24);     //time steps
     double t = 0.;
 
-    string name = "Input2.csv";
+    string name = "Input.csv";
 
     if(fileexists(name)){
         if (command == "fwd"){  // forward euler
@@ -478,8 +404,8 @@ void programmteil(string command){
             vector<double> all = all_from_target(name, );
             initialize_objects(n-1, x, y, z, vx, vy, vz, m, r, name);
             driver(t, all[4], dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command, i);
-            
-            
+
+
             n = 11;
             for(double i=9.55625; i<9.557;){
                 cout << "i = " << i << endl;
