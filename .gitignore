@@ -4,6 +4,7 @@
 *.jpeg
 *.png
 !Input2.csv
+!Input.csv
 !Orbits.csv
 !Satellites-to-Saturn.csv
 *.exe.stackdump
