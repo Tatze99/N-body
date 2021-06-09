@@ -17,6 +17,15 @@
         (-trajectories in momentum space)
     -Annäherungs effekte
 
+    -Swing by maneuver, write code for:
+	-reaching Jupiter -> determine the start
+		velocity
+		angle in perspective to Jupiter
+		time it takes to reach Jupiter
+	-once Jupiter is reached -> determine the start
+		velocity
+		angle needed to cross the pluto Trajectory
+
  Theoretical foundations:
     -datatypes and their representation
     -numerical errors: their occurances and reduction
