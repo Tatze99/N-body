@@ -17,6 +17,9 @@
         (-trajectories in momentum space)
     -Annäherungs effekte
 
+ Theoretical foundations:
+    -datatypes and their representation
+    -numerical errors: their occurances and reduction
     -Swing by maneuver, write code for:
 	-reaching Jupiter -> determine the start
 		velocity
@@ -26,12 +29,15 @@
 		velocity
 		angle needed to cross the pluto Trajectory
 
- Theoretical foundations:
-
     -idea of integrator schemes: from taylor-expansion to final formulas
     -representation of formulas in butcher tables and how to implement code from there
     -determining order of convergence (power laws) from log-log-plots
     (-post-newtonian/relativistic corrections)
+
+ Other challenges:
+    (-how to call c++ programms / functions from a python script)
+    (-how to unify the plotting python scrips to a complete script that does programm execution, numerical analysis and plotting)
+    -machine leaning approach to achieve initial values from ending position
 
  Latex:
 	-personalize the template
@@ -44,9 +50,6 @@
 		-topic3
 		-abstract
 		-conclusion
-
- Other challenges:
-
 
   Test:
     -Unbeteiligte Planeten an/aus

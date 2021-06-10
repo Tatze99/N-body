@@ -1,5 +1,8 @@
 /*  Dies ist ein Programm zur Implementierung des forward-euler,
     rk4 und des leapfrog-Verfahrens.
+    C://Users/Martin/Documents/GitHub/N-body
+    g++ integrators.cpp -o integrators
+    ./integrators rk4
 */
 
 //pre-processor instructions
@@ -166,6 +169,7 @@ int initialize_satellites(int trackinit, bool final, int counter, double v_min, 
         for(int i=0; i<100; i++) rs[i] = 0.;
     }
     return prefactor;
+
 }
 
 void driver(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, vector<double> &r, Step_function step, string command, double i){
@@ -301,7 +305,6 @@ vector<double> check_for_boundaries(int precision, int n, double t, double t_end
             counter++;
         }
     }
-
     boundary[0] = v_min;
     boundary[1] = v_max;
     cout << "exit cfb" << endl;
@@ -327,7 +330,7 @@ void calc_sat(vector<double> &x, vector<double> &y, vector<double> &z, vector<do
     vector<double> a(n), e(n), b(n), l(n), u(n);
     vector<vector<double>> values = {a,e,b,l,u};
     values = set_values(values, n-1, input);
-
+      
     l = values[3];
     u = values[4];
 
@@ -432,8 +435,6 @@ int main(int argc, char** argv){
         stringstream input{argv[1]};
         string command;
         input >> command;
-
-
         programmteil(command);
 
         auto t2 = chrono::high_resolution_clock::now();
