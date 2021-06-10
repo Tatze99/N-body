@@ -20,6 +20,15 @@
  Theoretical foundations:
     -datatypes and their representation
     -numerical errors: their occurances and reduction
+    -Swing by maneuver, write code for:
+	-reaching Jupiter -> determine the start
+		velocity
+		angle in perspective to Jupiter
+		time it takes to reach Jupiter
+	-once Jupiter is reached -> determine the start
+		velocity
+		angle needed to cross the pluto Trajectory
+
     -idea of integrator schemes: from taylor-expansion to final formulas
     -representation of formulas in butcher tables and how to implement code from there
     -determining order of convergence (power laws) from log-log-plots
@@ -30,6 +39,17 @@
     (-how to unify the plotting python scrips to a complete script that does programm execution, numerical analysis and plotting)
     -machine leaning approach to achieve initial values from ending position
 
+ Latex:
+	-personalize the template
+	-define the structure and the order of topics and results
+	-creating and chosing the plots for each topic
+	-writing:
+		-basics(integrators(euler, leapfrog, runge-kutta)
+		-topic1
+		-topic2
+		-topic3
+		-abstract
+		-conclusion
 
   Test:
     -Unbeteiligte Planeten an/aus

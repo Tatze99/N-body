@@ -15,7 +15,6 @@ rcParams['font.size'] = 8
 rcParams['savefig.bbox'] = 'tight'
 rcParams['figure.figsize'] = (6,3)
 
-
 %matplotlib inline
 G = 4*np.pi**2
 
@@ -29,7 +28,7 @@ def Schwerpunkt(x, y, z, m, n):
         ys[:] += m[i]*x[:,i]
         zs[:] += m[i]*x[:,i]
     return xs, ys, zs
-
+  
 def kinetic_energy(vx, vy, vz, m, n):
     energy = np.zeros(steps)
     for i in range(n):
@@ -41,9 +40,10 @@ def distance(x1,x2,y1,y2,z1,z2):
 
 def potential_energy(x, y, z, m, n):
     energy = np.zeros(steps)
+    Matrix = np.zeros((n,n))
     for i in range(n):
         for j in range(i):
-            energy[:] -= G*m[j]*m[i]/np.sqrt((x[:,i]-x[:,j])**2+(y[:,i]-y[:,j])**2+(z[:,i]-z[:,j])**2)
+            energy[:] += G*m[j]*m[i]/np.sqrt((x[:,i]-x[:,j])**2+(y[:,i]-y[:,j])**2+(z[:,i]-z[:,j])**2)
     return energy
 
 def angular_momentum(x, y, z, vx, vy, vz, m, n):
@@ -56,19 +56,20 @@ def angular_momentum(x, y, z, vx, vy, vz, m, n):
 
 def Laplace_Integral(x,y,z,vx,vy,vz,m,n):
     Laplace = np.zeros((steps, 3))
-    cx = y*vz-z*vy 
+    cx = y*vz-z*vy
     cy = z*vx-x*vz
     cz = x*vy-y*vx
     r = np.sqrt(x**2+y**2+z**2)
-    
+
     for i in range(n):
         Laplace[:,0] += cy[:,i]*vz[:,i]-cz[:,i]*vy[:,i]+G*m[i]*x[:,i]/r[:,i]
         Laplace[:,1] += cz[:,i]*vx[:,i]-cx[:,i]*vz[:,i]+G*m[i]*y[:,i]/r[:,i]
         Laplace[:,2] += cx[:,i]*vy[:,i]-cy[:,i]*vx[:,i]+G*m[i]*z[:,i]/r[:,i]
     return Laplace
-    
 
 #%%
+# Initialize the data
+# %matplotlib inline
 command = "rk4"
 Input = np.loadtxt("Input.csv",delimiter=';') # input vx, vy, vz now in a.u. per year!!!!
 Daten = np.loadtxt(command+"-solution_Planets.csv",delimiter=';')
@@ -118,9 +119,11 @@ Input[:,3:6] *= 365.245
 
 # np.savetxt("Input.csv", Input, fmt='%1.20f', delimiter=';')
 #%%
+
 # Plot the trajectories
 %matplotlib inline
 plt.figure(dpi=300)
+
 # plt.figure(dpi=300, figsize=(2.5,3))
 plt.plot(x[:,0:number], y[:,0:number],'.',markersize=1, label=Namen[0:number])
 plt.xlim(-33,70)
@@ -208,6 +211,26 @@ ax.legend(loc='center left')
 xs, ys, zs = Schwerpunkt(x,y,z,mass, number)
 print(xs[0], ys[0], zs[0])
 print(xs[-1], ys[-1], zs[-1])
+=======
+legend = ['Laplacian $x$', 'Laplacian $y$', 'Laplacian $z$']
+for i,energy in enumerate(legend):
+    plt.plot(time,Lap[:,i],label=legend[i])
+plt.legend()
+
+
+#%%
+# Plot in 3D
+fig = plt.figure(figsize=(15, 6))
+ax = plt.axes(projection='3d')
+
+for i,name in enumerate(Namen):
+    ax.plot(x[:,i], y[:,i], z[:,i], label=Namen[i])
+
+ax.set_title('Trajectories of all planets')
+ax.set_xlabel('$x$ in a.u.')
+ax.set_ylabel('$y$ in a.u.')
+ax.set_zlabel('$z$ in a.u.')
+ax.legend()
 
 #%%
 %matplotlib auto
@@ -252,5 +275,6 @@ def animate(i):
 
 # call the animator.  blit=True means only re-draw the parts that have changed.
 # anim = animation.FuncAnimation(fig, animate, init_func=init,frames=len(x), interval=1, blit=True)
+
 plt.show()
 # anim.save('Test.mp4', writer=writer, dpi=400)
