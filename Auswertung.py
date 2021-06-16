@@ -80,7 +80,7 @@ steps = len(Daten[:,0])
 time  = Daten[:,0]
 
 n = int((len(Daten[0,:])-1)/6)    # total number of planets
-number = 11       # number of planets to display
+number = 10      # number of planets to display
 
 # create the variables and assign them their values via a loop
 var_names = ["x", "y", "z","vx", "vy", "vz"]

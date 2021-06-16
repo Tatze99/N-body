@@ -22,7 +22,7 @@ tuple<vector<double>,vector<double>,vector<double>> acceleration(double t, vecto
   vector<double> ay(n, 0.);
   vector<double> az(n, 0.);
 
-  // #pragma omp parallel for
+  #pragma omp parallel for
   for(int i=0; i<n; i++){
     for(int j=0; j<i; j++) {
       Matrix[i][j] = pow((x[i]-x[j])*(x[i]-x[j])+(y[i]-y[j])*(y[i]-y[j])+(z[i]-z[j])*(z[i]-z[j]),-1.5);
