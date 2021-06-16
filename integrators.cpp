@@ -258,8 +258,8 @@ vector<double> check_for_boundaries(int precision, int n, double t, double t_end
 
     int counter = 0; //keeps track of the digits after the decimal point
     int sat = 10;
-    int trackinit = -1; // -1 to start at planet velocity
-    //int trackinit = 2; //startint at planet velocity+2 -- just speeding things up we start at 9 (2)
+    //int trackinit = -1; // -1 to start at planet velocity
+    int trackinit = 2; //startint at planet velocity+2 -- just speeding things up we start at 9 (2)
     int prefactor;
     double v0 = 10.;
     //double v0 = 16.; //----just for testing
@@ -287,14 +287,14 @@ vector<double> check_for_boundaries(int precision, int n, double t, double t_end
 
         cout << "vmin = " << v_min << "; vmax = " << v_max << endl;
 
-        if ((v_min == infinity()) || (v_max == -infinity())){
+        if (((DBL_MAX-v_min) < DBL_EPSILON) || (v_max == -M_PI)){
             sat *= 10;
             v_min = v0;
             v_max = 0.;
             if (sat == 100) counter++;
             if (sat == 1000) trackinit++;
-            if (trackinit == 0) counter++;
-            //if (trackinit == 3) counter++; //just for speedingup purposes and starting at 9
+            //if (trackinit == 0) counter++;
+            if (trackinit == 3) counter++; //just for speedingup purposes and starting at 9
             if (trackinit > 5){
                 cout << "Broke while" << endl;
                 break; //break in order not to go to infinity
@@ -319,12 +319,11 @@ void calc_sat(vector<double> &x, vector<double> &y, vector<double> &z, vector<do
     double v_min, v_max;
 
     double t = 0.;
-    double t_end = 20.;
+    double t_end = 5.;
     double dt = pow(2,-22);
     int startobject = 3;
     int endobject = 3; //no. planet -1; (Pluto = 8)
     int precision = 4;
-    int satdummy = 10;
     int sat; //aka prefactor at another point
 
     vector<double> a(n), e(n), b(n), l(n), u(n);
@@ -348,7 +347,7 @@ void calc_sat(vector<double> &x, vector<double> &y, vector<double> &z, vector<do
     cout << "boundaries[0] = " << boundaries[0] << "; boundaries[1] = " << boundaries[1] << endl;
 
     //initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
-    //sat = initialize_satellites(0, final, precision, v_min, v_max, x, y, z, vx, vy, vz, r, xs, ys, zs, vxs, vys, vzs, ms, rs, satdummy, startobject);
+    //sat = initialize_satellites(0, final, precision, v_min, v_max, x, y, z, vx, vy, vz, r, xs, ys, zs, vxs, vys, vzs, ms, rs, 12345, startobject);
     //sat_driver(t, t_end, dt, x, y, z, vx, vy, vz, m, r, xs, ys, zs, vxs, vys, vzs, ms, rs, n, rk4_step, lower, upper, sat, t_maxdist, maxdist, v_maxdist, v0_sat, out);
 }
 

@@ -25,7 +25,10 @@ tuple<vector<double>,vector<double>,vector<double>> acceleration(double t, vecto
   // #pragma omp parallel for
   for(int i=0; i<n; i++){
     for(int j=0; j<i; j++) {
-      Matrix[i][j] = pow((x[i]-x[j])*(x[i]-x[j])+(y[i]-y[j])*(y[i]-y[j])+(z[i]-z[j])*(z[i]-z[j]),-1.5);
+      if ( (i > 9) && (j > 9) ) Matrix[i][j] = 0.;
+      else{
+        Matrix[i][j] = pow((x[i]-x[j])*(x[i]-x[j])+(y[i]-y[j])*(y[i]-y[j])+(z[i]-z[j])*(z[i]-z[j]),-1.5);
+      }
     }
   }
 
@@ -33,7 +36,7 @@ tuple<vector<double>,vector<double>,vector<double>> acceleration(double t, vecto
     Matrix[i][i] = 0.;
     for(int j=i+1; j<n; j++) Matrix[i][j] = Matrix[j][i];
     for(int j=0; j<n; j++) {
-      if (isinf(Matrix[i][j]) == true) Matrix[i][j] = 0;
+      //if (isinf(Matrix[i][j]) == true) Matrix[i][j] = 0;
       double c = Matrix[i][j]*m[j];
       ax[i] += (x[i]-x[j])*c;
       ay[i] += (y[i]-y[j])*c;
@@ -63,13 +66,13 @@ bool crash_check(double t, vector<double> x, vector<double> y, vector<double> z,
 }
 
 double findmin(vector<double> v){
-    double min = infinity();
+    double min = DBL_MAX;
     for(double i : v) if ((min-i) > DBL_EPSILON) min = i;
     return min;
 }
 
 double findmax(vector<double> v){
-    double max = -infinity();
+    double max = -M_PI;
     for(double i : v) if ((i-max) > DBL_EPSILON) max = i;
     return max;
 }
@@ -498,6 +501,8 @@ void sat_driver(double t, double t_end, double dt, vector<double> &x, vector<dou
     //delete satellites if they did not return in a suitable interval
     for(int i=sat; i>0; i--){
         if (((upper-maxdist[i-1]) < DBL_EPSILON) || ((maxdist[i-1] - lower) < DBL_EPSILON)){
+            if((upper-maxdist[i-1]) < DBL_EPSILON) cout << v0_sat[i-1] << " is too high" << endl;
+            if((maxdist[i-1] - lower) < DBL_EPSILON) cout << v0_sat[i-1] << " is too low" << endl;
             t_maxdist.erase(t_maxdist.begin()+(i-1));
             maxdist.erase(maxdist.begin()+(i-1));
             v_maxdist.erase(v_maxdist.begin()+(i-1));

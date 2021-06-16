@@ -5,8 +5,8 @@ Mars:		8.5884	8.6623		5a
 Jupiter:	9.1706	9.2189		5a
 Saturn:		9.3840	9.4161		20a bei 6a: 9.4204
 Uranus:		9.53855 9.55625		50a   duration: 28min
-Neptun:				50a
-Pluto:	
+Neptun:		9.59955 tl 9.60955 th	50a
+Pluto:		9.60285 9.65005		50a
 
 
 //---Wrong values too early aborted
@@ -21,3 +21,5 @@ Why is written in the command line satellite 0 crashed?
 Modify driver(cashkarp) function to release satellites from earth at starting time
 
 !!! Average calculating time for whole satellite subroutine ~ 27 min !!!
+Problem in having just 1 acceleration function is matrix ~ sat * sat 1000 planets not possible to calculate due to memory alloc limits
+acc_sat had only ~ sat*planets memory needed -> live with bad precision in sastellite file or include acc_sat again for sat_driver
