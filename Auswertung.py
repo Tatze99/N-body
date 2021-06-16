@@ -81,6 +81,7 @@ time  = Daten[:,0]
 
 n = int((len(Daten[0,:])-1)/6)    # total number of planets
 number = 10      # number of planets to display
+if number > n: print("Error, too many planets to display")
 
 # create the variables and assign them their values via a loop
 var_names = ["x", "y", "z","vx", "vy", "vz"]
@@ -109,15 +110,23 @@ vxsat = vx[0,3]*vsat/ve/365.24
 vysat = vy[0,3]*vsat/ve/365.24
 vzsat = vz[0,3]*vsat/ve/365.24
 
-probe_params = [xsat, ysat, zsat, vxsat, vysat, vzsat, 0]
+probe_params = [xsat, ysat, zsat, vxsat, vysat, vzsat, 0, 0]
 Input[10,:] = probe_params
-np.savetxt("Input.csv", Input, fmt='%1.20f', delimiter=';')
+# np.savetxt("Input.csv", Input, fmt='%1.20f', delimiter=';')
 print(xsat, ysat, zsat, vxsat, vysat, vzsat)
 
 #%%
 Input[:,3:6] *= 365.245
 
 # np.savetxt("Input.csv", Input, fmt='%1.20f', delimiter=';')
+#%%
+k = len(x[:,0])-1
+j = 10
+Input_tend = Input
+for i in range(j):
+    Input_tend[i,0:6] = [x[k,i], y[k,i], z[k,i], vx[k,i], vy[k,i], vz[k,i]]
+    
+np.savetxt("Input_tend.csv", Input_tend, fmt='%1.20f', delimiter=';')
 #%%
 
 # Plot the trajectories
