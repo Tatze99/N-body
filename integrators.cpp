@@ -424,19 +424,23 @@ void calc_angle(double t, double t_end, double dt, vector<double> &x, vector<dou
   double dist_old = 100, vsat_old = vsat; // groß wählen
 
   while (vsat < 10){
-    for(int i=0; i<100; i++){
+    for(int i=0; i<100; i++){ // arbitrary upper boundary, probably never reached
 
       x = x_old; y = y_old; z = z_old; vx = vx_old; vy = vy_old; vz = vz_old;
       x2 = x_old; y2 = y_old; z2 = z_old; vx2 = vx_old; vy2 = vy_old; vz2 = vz_old;
 
+      // integrate towards two starting times
       integrator(t, t+step, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step);
       integrator(t, t+step+stepsize, dt, x2, y2, z2, vx2, vy2, vz2, n, m, r, rk4_step);
 
+      // set the probe positions for the two times
       set_satellite(x,y,z,vx,vy,vz,vsat,r[3]);
       set_satellite(x2,y2,z2,vx2,vy2,vz2,vsat,r[3]);
+      // integrate for the time of Hohmann transfer orbit
       integrator(t+step, t+step+time_orbit, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step);
       integrator(t+step+stepsize, t+step+stepsize+time_orbit, dt, x2, y2, z2, vx2, vy2, vz2, n, m, r, rk4_step);
 
+      // calculate the distances
       dist = distance(x[10], y[10], z[10], x[Planet], y[Planet], z[Planet]);
       dist2 = distance(x2[10], y2[10], z2[10], x2[Planet], y2[Planet], z2[Planet]);
 
@@ -453,7 +457,7 @@ void calc_angle(double t, double t_end, double dt, vector<double> &x, vector<dou
       }
     }
 
-    if (dist < 0.01) break; // break if distance is small enough
+    if (dist < 0.01) break; // break if distance is small enough 2*10^6 km
     if (dist_old < dist) {
       vsat -= 0.005; // break if distance gets larger again
       break;
@@ -462,9 +466,9 @@ void calc_angle(double t, double t_end, double dt, vector<double> &x, vector<dou
     if (step > stepsize ) step -= stepsize;
     vsat_old = vsat;
     if (dist > 0.2){
-      vsat += 0.01;
+      vsat += 0.01;  // larger stepsizes
     } else {
-      vsat += 0.001;
+      vsat += 0.001; // if distance is small, reduce the increase of starting velocity
     }
 
     dist_old = dist;
