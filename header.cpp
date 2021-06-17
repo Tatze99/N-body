@@ -49,6 +49,25 @@ tuple<vector<double>,vector<double>,vector<double>> acceleration(double t, vecto
   return make_tuple(ax, ay, az);
 }
 
+void set_satellite(vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, double vsat, double r){
+  double ve = pow(vx[3]*vx[3]+vy[3]*vy[3]+vz[3]*vz[3], 0.5);
+  x[10] = x[3] + vx[3]*r/ve;
+  y[10] = y[3] + vy[3]*r/ve;
+  z[10] = z[3] + vz[3]*r/ve;
+
+  vx[10] = vx[3]*vsat/ve;
+  vy[10] = vy[3]*vsat/ve;
+  vz[10] = vz[3]*vsat/ve;
+}
+
+double angle(double x1, double y1, double z1, double x2, double y2, double z2){
+  return acos((x1*x2+y1*y2+z1*z2)/(pow(x1*x1+y1*y1+z1*z1,0.5)*pow(x2*x2+y2*y2+z2*z2,0.5)));
+}
+
+double distance(double x1, double y1, double z1, double x2, double y2, double z2){
+  return pow((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2)+(z1-z2)*(z1-z2),0.5);
+}
+
 bool crash_check(double t, vector<double> x, vector<double> y, vector<double> z, vector<double> r, vector<double> xs, vector<double> ys, vector<double> zs, int n, int satno){
     vector<double> dist = {};
     bool counter = false;
