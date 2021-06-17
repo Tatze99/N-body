@@ -93,7 +93,7 @@ for i,name in enumerate(var_names):
 
 
 # Plot the trajectories
-%matplotlib inline
+%matplotlib auto
 plt.figure(dpi=300)
 
 # plt.figure(dpi=300, figsize=(2.5,3))

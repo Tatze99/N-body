@@ -172,7 +172,7 @@ int initialize_satellites(int trackinit, bool final, int counter, double v_min, 
 
 }
 
-void integrator(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, vector<double> &r, Step_function step){
+void integrator(double t, double t_end, double &dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, vector<double> &r, Step_function step){
   vector<double> x_old, y_old, z_old, vx_old, vy_old, vz_old;
 
   double Delta = 0.;
@@ -464,35 +464,25 @@ void calc_angle(double t, double t_end, double dt, vector<double> &x, vector<dou
   for(int i=0; i<n; i++) file << x[i] << ";" << y[i] << ";" << z[i] << ";" << vx[i] << ";" << vy[i] << ";" << vz[i] << ";" << m[i] << ";" << r[i] << endl;
 }
 
-void calc_angle2(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, int Planet, double time_orbit, double error_aim, double Umlauf, vector<double> &r, double vsat){
+void calc_angle2(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, int Planet, double time_orbit, double Umlauf, vector<double> &r, double vsat){
 
   double Delta0 = 0, Delta1 = 0.1;
-  vector<double> x_old, y_old, z_old, vx_old, vy_old, vz_old;
-  vector<double> x_tmp, y_tmp, z_tmp, vx_tmp, vy_tmp, vz_tmp;
+  vector<double> x_old, y_old, z_old, vx_old, vy_old, vz_old; // save current position
   vector<double> x2, y2, z2, vx2, vy2, vz2;
 
   x_old = x; y_old = y; z_old = z; vx_old = vx; vy_old = vy; vz_old = vz;
 
-  int count  = 0;
-  int timestep = 1000;
-  double omega = 2*M_PI/Umlauf;
-  cout << "Delta aim = " << M_PI - omega*time_orbit << endl;
+  double omega = 2*M_PI/Umlauf; // angular velocity of the planet
+  // cout << "Delta aim = " << M_PI - omega*time_orbit << endl;
 
   while((t_end - t) > DBL_EPSILON){
-    x_tmp = x; y_tmp = y; z_tmp = z; vx_tmp = vx; vy_tmp = vy; vz_tmp = vz;
 
-    rk5_step(t, dt, x_tmp, y_tmp, z_tmp, vx_tmp, vy_tmp, vz_tmp, acceleration, n, m);
-
-    double error = 0.;
-    for(int i=0; i<n; i++) error += x_tmp[i]+y_tmp[i]+z_tmp[i];
-    dt *= pow(error_aim/error, 1./5.);
-
+    // calculate angle between the Planet and the earth
     Delta0 = angle(x[3], y[3], z[3], x[Planet], y[Planet], z[Planet]);
-    rk4_step(t, dt, x, y, z, vx, vy, vz, acceleration, n, m);
+    integrator(t, t+dt/2, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step); // ensure only one step
     Delta1 = angle(x[3], y[3], z[3], x[Planet], y[Planet], z[Planet]);
 
-    if(count % timestep == 0) {
-      cout << t <<";" << Delta1 << endl; count=0;}
+    // angle should be Delta = phi(t=torbit, Planet)
     if (Delta0 > Delta1){
       if ((Delta1 < (M_PI - omega*time_orbit)) && (Delta1 > (M_PI - omega*time_orbit-0.1))){
         cout << "Planet: " << x[Planet] <<"; "<< y[Planet] <<"; "<< z[Planet] << endl;
@@ -502,19 +492,23 @@ void calc_angle2(double t, double t_end, double dt, vector<double> &x, vector<do
       }
     }
     t += dt;
-    count ++;
   }
 
-  double time_est = t;
-  integrator(0, t-0.15, dt, x_old, y_old, z_old, vx_old, vy_old, vz_old, n, m, r, rk4_step);
+  double time_before = 0.1;
+  double time_est = t-time_before;
+  // integrate to a time slightly before the estimate
+  integrator(0, t-time_before, dt, x_old, y_old, z_old, vx_old, vy_old, vz_old, n, m, r, rk4_step);
 
   t = 0; // set t back to zero
+  // Set the position of the probe to earths position + radius and set the velocity
   set_satellite(x_old,y_old,z_old,vx_old,vy_old,vz_old,vsat,r[3]);
 
-  double stepsize = 0.01;
+  // stepsize for integration time
+  double stepsize = 0.005;
   double step = 0.;
+  // distance between planet and earth
   double dist, dist2;
-  double dist_old = 100; // groß wählen
+  double dist_old = 100, vsat_old = vsat; // groß wählen
 
   while (vsat < 10){
     for(int i=0; i<100; i++){
@@ -540,22 +534,30 @@ void calc_angle2(double t, double t_end, double dt, vector<double> &x, vector<do
         continue;
         }
       else {
-        cout << "time =" << time_est << "+" << step << endl;
+        cout << "time = " << (time_est+step) << endl;
+        cout << "vsat = " << vsat << endl;
         break;
       }
     }
 
-    if (dist < 0.01) break;
+    if (dist < 0.01) break; // break if distance is small enough
     if (dist_old < dist) {
-      vsat -= 0.005;
+      vsat -= 0.005; // break if distance gets larger again
       break;
     }
 
-    if (step > stepsize ) step -= 2*stepsize;
-    vsat += 0.005;
+    if (step > stepsize ) step -= stepsize;
+    vsat_old = vsat;
+    if (dist > 0.2){
+      vsat += 0.01;
+    } else {
+      vsat += 0.001;
+    }
+
     dist_old = dist;
   }
 
+  cout << "vsat = " << vsat << endl;
   x = x_old; y = y_old; z = z_old; vx = vx_old; vy = vy_old; vz = vz_old;
   integrator(t, t+step, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step);
 
@@ -617,7 +619,10 @@ void programmteil(string command){
         }
         else if (command == "angle"){
             initialize_objects(n, x, y, z, vx, vy, vz, m, r, "Input.csv");
-            calc_angle2(t, 12., dt, x, y, z, vx, vy, vz, 11, m, 5, 2.54289877, 1e-16, 11.862, r, 9.35);
+            double time_orbit = 2.54289877;
+            double vsat = 9.1706;
+            double Umlauf = 11.862;
+            calc_angle2(t, 12., dt, x, y, z, vx, vy, vz, 11, m, 5, time_orbit, Umlauf, r, vsat);
         }
         else if (command == "calc_t"){
             double t_end = 2.54289877;
