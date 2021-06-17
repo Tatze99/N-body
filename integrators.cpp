@@ -172,6 +172,32 @@ int initialize_satellites(int trackinit, bool final, int counter, double v_min, 
 
 }
 
+void integrator(double t, double t_end, double &dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, vector<double> &r, Step_function step){
+  vector<double> x_old, y_old, z_old, vx_old, vy_old, vz_old;
+
+  double Delta = 0.;
+  double Delta_aim = 1e-16;
+  //loop that iterates up to a certain chosen time (end)
+  while((t_end - t) > DBL_EPSILON){
+      x_old = x;
+      y_old = y;
+      z_old = z;
+      vx_old = vx;
+      vy_old = vy;
+      vz_old = vz;
+
+      //Calculate next timestep
+      rk5_step(t, dt, x_old, y_old, z_old, vx_old, vy_old, vz_old, acceleration, n, m);
+
+      Delta = 0;
+      for(int i=0; i<n; i++) Delta += x_old[i]+y_old[i]+z_old[i];
+
+      dt *= pow(Delta_aim/Delta, 1./5.);
+      step(t, dt, x, y, z, vx, vy, vz, acceleration, n, m);
+      t += dt;
+  }
+}
+
 void driver(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, vector<double> &r, Step_function step, string command, double i){
     //Create and open output file
     fstream file;
@@ -187,7 +213,7 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
     double Delta = 0.;
     double Delta_aim = 1e-16;
     int count  = 0;
-    int timestep = 1000;
+    int timestep = 100;
     //loop that iterates up to a certain chosen time (end)
     while((t_end - t) > DBL_EPSILON){
         if(count % timestep == 0){
@@ -322,14 +348,14 @@ void calc_sat(vector<double> &x, vector<double> &y, vector<double> &z, vector<do
     double t_end = 5.;
     double dt = pow(2,-22);
     int startobject = 3;
-    int endobject = 3; //no. planet -1; (Pluto = 8)
+    int endobject = 4; //no. planet -1; (Pluto = 8)
     int precision = 4;
     int sat; //aka prefactor at another point
 
     vector<double> a(n), e(n), b(n), l(n), u(n);
     vector<vector<double>> values = {a,e,b,l,u};
+    cout << "Test" << endl;
     values = set_values(values, n-1, input);
-      
     l = values[3];
     u = values[4];
 
@@ -351,6 +377,199 @@ void calc_sat(vector<double> &x, vector<double> &y, vector<double> &z, vector<do
     //sat_driver(t, t_end, dt, x, y, z, vx, vy, vz, m, r, xs, ys, zs, vxs, vys, vzs, ms, rs, n, rk4_step, lower, upper, sat, t_maxdist, maxdist, v_maxdist, v0_sat, out);
 }
 
+void calc_angle(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, int Planet, double time_orbit, double error_aim, double Umlauf, vector<double> &r, double vsat){
+  double Delta0 = 0, Delta1 = 0.1;
+  vector<double> x_old, y_old, z_old, vx_old, vy_old, vz_old;
+  vector<double> x2, y2, z2, vx2, vy2, vz2;
+
+  int count  = 0;
+  int timestep = 100;
+  double omega = 2*M_PI/Umlauf;
+  cout << "Delta aim = " << M_PI - omega*time_orbit << endl;
+
+  while((t_end - t) > DBL_EPSILON){
+    x_old = x;
+    y_old = y;
+    z_old = z;
+    vx_old = vx;
+    vy_old = vy;
+    vz_old = vz;
+
+    rk5_step(t, dt, x_old, y_old, z_old, vx_old, vy_old, vz_old, acceleration, n, m);
+
+    double error = 0.;
+    for(int i=0; i<n; i++) error += x_old[i]+y_old[i]+z_old[i];
+    dt *= pow(error_aim/error, 1./5.);
+
+    Delta0 = angle(x[3], y[3], z[3], x[Planet], y[Planet], z[Planet]);
+    rk4_step(t, dt, x, y, z, vx, vy, vz, acceleration, n, m);
+    Delta1 = angle(x[3], y[3], z[3], x[Planet], y[Planet], z[Planet]);
+
+
+    if(count % timestep == 0) {
+      cout << t <<";" << Delta1 << endl; count=0;}
+    if (Delta0 > Delta1){
+      if ((Delta1 < (M_PI - omega*time_orbit)) && (Delta1 > (M_PI - omega*time_orbit-0.1))){
+        cout << "Planet: " << x[Planet] <<"; "<< y[Planet] <<"; "<< z[Planet] << endl;
+        cout << "Erde: " << x[3] <<"; "<< y[3] <<"; "<< z[3] << endl;
+        cout << "end time = " << t << ";  Angle = " << Delta1 << endl;
+        break;
+      }
+    }
+    t += dt;
+    count ++;
+  }
+
+  x_old = x; y_old = y; z_old = z; vx_old = vx; vy_old = vy; vz_old = vz;
+  set_satellite(x_old,y_old,z_old,vx_old,vy_old,vz_old,vsat,r[3]);
+
+  double step = 0;
+  double step2 = 0.05;
+  double dist, dist2;
+
+  for(int i=0; i<10; i++){
+
+    x = x_old; y = y_old; z = z_old; vx = vx_old; vy = vy_old; vz = vz_old;
+    x2 = x_old; y2 = y_old; z2 = z_old; vx2 = vx_old; vy2 = vy_old; vz2 = vz_old;
+
+    integrator(t, t+step, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step);
+    integrator(t, t+step2, dt, x2, y2, z2, vx2, vy2, vz2, n, m, r, rk4_step);
+
+    set_satellite(x,y,z,vx,vy,vz,vsat,r[3]);
+    set_satellite(x2,y2,z2,vx2,vy2,vz2,vsat,r[3]);
+    integrator(t+step, t+step+time_orbit, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step);
+    integrator(t+step2, t+step2+time_orbit, dt, x2, y2, z2, vx2, vy2, vz2, n, m, r, rk4_step);
+
+    dist = distance(x[10], y[10], z[10], x[Planet], y[Planet], z[Planet]);
+    dist2 = distance(x2[10], y2[10], z2[10], x2[Planet], y2[Planet], z2[Planet]);
+
+    cout << dist << " ; "<< dist2 << " ; " << step<< endl;
+    if (dist < dist2) {
+      step = step2;
+      step2 -= step2*2.1;
+      dt = -dt;
+      }
+    else {
+      step = step2;
+      step2 += step2*1.1;
+    }
+  }
+
+  set_satellite(x,y,z,vx,vy,vz,vsat,r[3]);
+  fstream file;
+  file.open("Input_tend.csv", ios::out);
+  file.precision(20);
+  file.setf(ios_base::fixed);
+
+  for(int i=0; i<n; i++) file << x[i] << ";" << y[i] << ";" << z[i] << ";" << vx[i] << ";" << vy[i] << ";" << vz[i] << ";" << m[i] << ";" << r[i] << endl;
+}
+
+void calc_angle2(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, int Planet, double time_orbit, double Umlauf, vector<double> &r, double vsat){
+
+  double Delta0 = 0, Delta1 = 0.1;
+  vector<double> x_old, y_old, z_old, vx_old, vy_old, vz_old; // save current position
+  vector<double> x2, y2, z2, vx2, vy2, vz2;
+
+  x_old = x; y_old = y; z_old = z; vx_old = vx; vy_old = vy; vz_old = vz;
+
+  double omega = 2*M_PI/Umlauf; // angular velocity of the planet
+  // cout << "Delta aim = " << M_PI - omega*time_orbit << endl;
+
+  while((t_end - t) > DBL_EPSILON){
+
+    // calculate angle between the Planet and the earth
+    Delta0 = angle(x[3], y[3], z[3], x[Planet], y[Planet], z[Planet]);
+    integrator(t, t+dt/2, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step); // ensure only one step
+    Delta1 = angle(x[3], y[3], z[3], x[Planet], y[Planet], z[Planet]);
+
+    // angle should be Delta = phi(t=torbit, Planet)
+    if (Delta0 > Delta1){
+      if ((Delta1 < (M_PI - omega*time_orbit)) && (Delta1 > (M_PI - omega*time_orbit-0.1))){
+        cout << "Planet: " << x[Planet] <<"; "<< y[Planet] <<"; "<< z[Planet] << endl;
+        cout << "Erde: " << x[3] <<"; "<< y[3] <<"; "<< z[3] << endl;
+        cout << "end time = " << t << ";  Angle = " << Delta1 << endl;
+        break;
+      }
+    }
+    t += dt;
+  }
+
+  double time_before = 0.1;
+  double time_est = t-time_before;
+  // integrate to a time slightly before the estimate
+  integrator(0, t-time_before, dt, x_old, y_old, z_old, vx_old, vy_old, vz_old, n, m, r, rk4_step);
+
+  t = 0; // set t back to zero
+  // Set the position of the probe to earths position + radius and set the velocity
+  set_satellite(x_old,y_old,z_old,vx_old,vy_old,vz_old,vsat,r[3]);
+
+  // stepsize for integration time
+  double stepsize = 0.005;
+  double step = 0.;
+  // distance between planet and earth
+  double dist, dist2;
+  double dist_old = 100, vsat_old = vsat; // groß wählen
+
+  while (vsat < 10){
+    for(int i=0; i<100; i++){
+
+      x = x_old; y = y_old; z = z_old; vx = vx_old; vy = vy_old; vz = vz_old;
+      x2 = x_old; y2 = y_old; z2 = z_old; vx2 = vx_old; vy2 = vy_old; vz2 = vz_old;
+
+      integrator(t, t+step, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step);
+      integrator(t, t+step+stepsize, dt, x2, y2, z2, vx2, vy2, vz2, n, m, r, rk4_step);
+
+      set_satellite(x,y,z,vx,vy,vz,vsat,r[3]);
+      set_satellite(x2,y2,z2,vx2,vy2,vz2,vsat,r[3]);
+      integrator(t+step, t+step+time_orbit, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step);
+      integrator(t+step+stepsize, t+step+stepsize+time_orbit, dt, x2, y2, z2, vx2, vy2, vz2, n, m, r, rk4_step);
+
+      dist = distance(x[10], y[10], z[10], x[Planet], y[Planet], z[Planet]);
+      dist2 = distance(x2[10], y2[10], z2[10], x2[Planet], y2[Planet], z2[Planet]);
+
+      cout << dist << " ; "<< dist2 << " ; " << step<< endl;
+      if (dist > dist2) {
+        step += stepsize;
+
+        continue;
+        }
+      else {
+        cout << "time = " << (time_est+step) << endl;
+        cout << "vsat = " << vsat << endl;
+        break;
+      }
+    }
+
+    if (dist < 0.01) break; // break if distance is small enough
+    if (dist_old < dist) {
+      vsat -= 0.005; // break if distance gets larger again
+      break;
+    }
+
+    if (step > stepsize ) step -= stepsize;
+    vsat_old = vsat;
+    if (dist > 0.2){
+      vsat += 0.01;
+    } else {
+      vsat += 0.001;
+    }
+
+    dist_old = dist;
+  }
+
+  cout << "vsat = " << vsat << endl;
+  x = x_old; y = y_old; z = z_old; vx = vx_old; vy = vy_old; vz = vz_old;
+  integrator(t, t+step, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step);
+
+  set_satellite(x,y,z,vx,vy,vz,vsat,r[3]);
+  fstream file;
+  file.open("Input_tend.csv", ios::out);
+  file.precision(20);
+  file.setf(ios_base::fixed);
+
+  for(int i=0; i<n; i++) file << x[i] << ";" << y[i] << ";" << z[i] << ";" << vx[i] << ";" << vy[i] << ";" << vz[i] << ";" << m[i] << ";" << r[i] << endl;
+}
+
 void programmteil(string command){
     //vectors chosen such that n-particles can be realized
     //Only current values are stored and after the output overridden with the new ones
@@ -363,12 +582,13 @@ void programmteil(string command){
     vector<double> m = {};
     vector<double> r = {};
 
-    int n = 10;                  //Number of objects
-    double t_end = 10.;           //final time
+    int n = 11;                  //Number of objects
+    double t_end = 3.54289877;           //final time  9.09745;
+    // double t_end = 5.81159;
     double dt = pow(2.,-24);     //time steps
     double t = 0.;
 
-    string name = "Input.csv";
+    string name = "Input_tend.csv";
 
     if(fileexists(name)){
         if (command == "fwd"){  // forward euler
@@ -384,11 +604,11 @@ void programmteil(string command){
             driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, lf_step, command, t);
         }
         else if (command == "sat"){ // satellites
-            calc_sat(x, y, z, vx, vy, vz, m, r, n, rk4_step, name);
+            calc_sat(x, y, z, vx, vy, vz, m, r, 10, rk4_step, name);
         }
         else if (command == "test"){ //testing suite for sat velocity boundary applied with rk4 scheme
             n = 11;
-            for(double i=9.55625; i<9.557;){
+            for(double i=9.1706; i<9.18;){
                 cout << "i = " << i << endl;
                 t_end = 35.;
                 dt = pow(2,-27); //~1E-6; 2-19 ~ 1e-7 ~ 3.76s -> 1e-6 ~ 37s
@@ -397,6 +617,20 @@ void programmteil(string command){
                 i += 0.01;
             }
         }
+        else if (command == "angle"){
+            initialize_objects(n, x, y, z, vx, vy, vz, m, r, "Input.csv");
+            double time_orbit = 2.54289877;
+            double vsat = 9.1706;
+            double Umlauf = 11.862;
+            calc_angle2(t, 12., dt, x, y, z, vx, vy, vz, 11, m, 5, time_orbit, Umlauf, r, vsat);
+        }
+        else if (command == "calc_t"){
+            double t_end = 2.54289877;
+            // double t_end = 5;
+            initialize_objects(n, x, y, z, vx, vy, vz, m, r, "Input_tend.csv");
+            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command, t);
+        }
+
         /*else if (command == "time"){ //testing suite for sat velocity boundary applied with rk4 scheme
             n = 11;
 

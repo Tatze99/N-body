@@ -28,7 +28,10 @@ def Schwerpunkt(x, y, z, m, n):
         ys[:] += m[i]*x[:,i]
         zs[:] += m[i]*x[:,i]
     return xs, ys, zs
-  
+
+def angle(x1,y1,z1,x2,y2,z2):
+    return np.arccos((x1*x2+y1*y2+z1*z2)/(np.sqrt(x1**2+y1**2+z1**2)*np.sqrt(x2**2+y2**2+z2**2)))
+    
 def kinetic_energy(vx, vy, vz, m, n):
     energy = np.zeros(steps)
     for i in range(n):
@@ -70,9 +73,9 @@ def Laplace_Integral(x,y,z,vx,vy,vz,m,n):
 #%%
 # Initialize the data
 # %matplotlib inline
-command = "rk4"
+command = "calc_t"
 Input = np.loadtxt("Input.csv",delimiter=';') # input vx, vy, vz now in a.u. per year!!!!
-Daten = np.loadtxt(command+"-solution_Planets.csv",delimiter=';')
+Daten = np.loadtxt(command+"-solution.csv",delimiter=';')
 mass = np.loadtxt("Input.csv",delimiter=';',usecols=[6])
 Namen = ['Sun', 'Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptun', 'Pluto', 'Sonde']
 
@@ -80,7 +83,7 @@ steps = len(Daten[:,0])
 time  = Daten[:,0]
 
 n = int((len(Daten[0,:])-1)/6)    # total number of planets
-number = 10      # number of planets to display
+number = 11      # number of planets to display
 if number > n: print("Error, too many planets to display")
 
 # create the variables and assign them their values via a loop
@@ -88,62 +91,69 @@ var_names = ["x", "y", "z","vx", "vy", "vz"]
 for i,name in enumerate(var_names):
   globals()[name] = Daten[:,i*n+1:(i+1)*n+1]
 
-#%%
-# Calculate starting velocity of satellite
-r0 = 6.685e-6
-ve = np.sqrt(vx[0,3]**2+vy[0,3]**2+vz[0,3]**2)
-scale_radius = 5
-re = 4.2644e-5*scale_radius
-
-xsat = x[0,3]+vx[0,3]*re/ve
-ysat = y[0,3]+vy[0,3]*re/ve
-zsat = z[0,3]+vz[0,3]*re/ve
-
-vsat = 0
-for i in range(9): # without satellite
-    vsat += abs(mass[i]*(1/distance(xsat,x[0,i], ysat, y[0,i], zsat, z[0,i])-1/distance(x[0,i],x[0,9], y[0,i], y[0,9], z[0,i], z[0,9])))
-
-vsat += mass[9]/(2*r0)
-scale = 1
-vsat = np.sqrt(vsat)*np.sqrt(2*G)*scale
-vxsat = vx[0,3]*vsat/ve/365.24
-vysat = vy[0,3]*vsat/ve/365.24
-vzsat = vz[0,3]*vsat/ve/365.24
-
-probe_params = [xsat, ysat, zsat, vxsat, vysat, vzsat, 0, 0]
-Input[10,:] = probe_params
-# np.savetxt("Input.csv", Input, fmt='%1.20f', delimiter=';')
-print(xsat, ysat, zsat, vxsat, vysat, vzsat)
-
-#%%
-Input[:,3:6] *= 365.245
-
-# np.savetxt("Input.csv", Input, fmt='%1.20f', delimiter=';')
-#%%
-k = len(x[:,0])-1
-j = 10
-Input_tend = Input
-for i in range(j):
-    Input_tend[i,0:6] = [x[k,i], y[k,i], z[k,i], vx[k,i], vy[k,i], vz[k,i]]
-    
-np.savetxt("Input_tend.csv", Input_tend, fmt='%1.20f', delimiter=';')
-#%%
 
 # Plot the trajectories
-%matplotlib inline
+%matplotlib auto
 plt.figure(dpi=300)
 
 # plt.figure(dpi=300, figsize=(2.5,3))
 plt.plot(x[:,0:number], y[:,0:number],'.',markersize=1, label=Namen[0:number])
-plt.xlim(-33,70)
-plt.ylim(-40,40)
-# plt.xlim(-4,4)
+# plt.xlim(-33,70)
+# plt.ylim(-40,40)
+plt.xlim(-12,12)
+plt.ylim(-12,12)
 plt.legend(title='Planets')
 plt.xlabel('$x$ in AU')
 plt.ylabel('$y$ in AU')
 # plt.yticks([])
 # plt.title('Trajectories of the planets for 248 years')
 # plt.savefig("Trajectories2D_"+command+"_Ausschnitt.pdf")
+#%%
+# Calculate starting velocity of satellite
+var_names2 = ["X", "Y", "Z","VX", "VY", "VZ"]
+for i,name in enumerate(var_names2):
+  globals()[name] = Input_tend[3,i]
+
+ve = np.sqrt(VX**2+VY**2+VZ**2)
+re = 4.2644e-5
+
+xsat = X+VX*re/ve
+ysat = Y+VY*re/ve
+zsat = Z+VZ*re/ve
+
+# vsat = 0
+# for i in range(9): # without satellite
+#     vsat += abs(mass[i]*(1/distance(xsat,x[0,i], ysat, y[0,i], zsat, z[0,i])-1/distance(x[0,i],x[0,9], y[0,i], y[0,9], z[0,i], z[0,9])))
+
+# vsat += mass[9]/(2*r0)
+# vsat = np.sqrt(vsat)*np.sqrt(2*G)*scale
+
+vsat = 9.170599
+
+vxsat = VX*vsat/ve
+vysat = VY*vsat/ve
+vzsat = VZ*vsat/ve
+
+probe_params = [xsat, ysat, zsat, vxsat, vysat, vzsat, 0, 0]
+Input_tend[10,:] = probe_params
+np.savetxt("Input_tend.csv", Input_tend, fmt='%1.20f', delimiter=';')
+print(xsat, ysat, zsat, vxsat, vysat, vzsat)
+
+#%%
+Input_tend = np.loadtxt("Input_tend.csv",delimiter=';')
+np.savetxt("Input_tend.csv", Input_tend, fmt='%1.20f', delimiter=';')
+print(angle(Input_tend[3,0],Input_tend[3,1],Input_tend[3,2],Input_tend[5,0],Input_tend[5,1],Input_tend[5,2]))
+print(Input_tend[3,0],Input_tend[3,1],Input_tend[3,2],Input_tend[5,0],Input_tend[5,1],Input_tend[5,2])
+
+#%%
+k = len(x[:,0])-1
+j = 10
+# Input_tend = Input
+for i in range(j):
+    Input_tend[i,0:6] = [x[k,i], y[k,i], z[k,i], vx[k,i], vy[k,i], vz[k,i]]
+    
+print(angle(x[k,3],y[k,3],z[k,3],x[k,5],y[k,5],z[k,5]))
+# np.savetxt("Input_tend.csv", Input_tend, fmt='%1.20f', delimiter=';')
 
 #%%
 # Plot in phase space
