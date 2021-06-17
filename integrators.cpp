@@ -377,94 +377,7 @@ void calc_sat(vector<double> &x, vector<double> &y, vector<double> &z, vector<do
     //sat_driver(t, t_end, dt, x, y, z, vx, vy, vz, m, r, xs, ys, zs, vxs, vys, vzs, ms, rs, n, rk4_step, lower, upper, sat, t_maxdist, maxdist, v_maxdist, v0_sat, out);
 }
 
-void calc_angle(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, int Planet, double time_orbit, double error_aim, double Umlauf, vector<double> &r, double vsat){
-  double Delta0 = 0, Delta1 = 0.1;
-  vector<double> x_old, y_old, z_old, vx_old, vy_old, vz_old;
-  vector<double> x2, y2, z2, vx2, vy2, vz2;
-
-  int count  = 0;
-  int timestep = 100;
-  double omega = 2*M_PI/Umlauf;
-  cout << "Delta aim = " << M_PI - omega*time_orbit << endl;
-
-  while((t_end - t) > DBL_EPSILON){
-    x_old = x;
-    y_old = y;
-    z_old = z;
-    vx_old = vx;
-    vy_old = vy;
-    vz_old = vz;
-
-    rk5_step(t, dt, x_old, y_old, z_old, vx_old, vy_old, vz_old, acceleration, n, m);
-
-    double error = 0.;
-    for(int i=0; i<n; i++) error += x_old[i]+y_old[i]+z_old[i];
-    dt *= pow(error_aim/error, 1./5.);
-
-    Delta0 = angle(x[3], y[3], z[3], x[Planet], y[Planet], z[Planet]);
-    rk4_step(t, dt, x, y, z, vx, vy, vz, acceleration, n, m);
-    Delta1 = angle(x[3], y[3], z[3], x[Planet], y[Planet], z[Planet]);
-
-
-    if(count % timestep == 0) {
-      cout << t <<";" << Delta1 << endl; count=0;}
-    if (Delta0 > Delta1){
-      if ((Delta1 < (M_PI - omega*time_orbit)) && (Delta1 > (M_PI - omega*time_orbit-0.1))){
-        cout << "Planet: " << x[Planet] <<"; "<< y[Planet] <<"; "<< z[Planet] << endl;
-        cout << "Erde: " << x[3] <<"; "<< y[3] <<"; "<< z[3] << endl;
-        cout << "end time = " << t << ";  Angle = " << Delta1 << endl;
-        break;
-      }
-    }
-    t += dt;
-    count ++;
-  }
-
-  x_old = x; y_old = y; z_old = z; vx_old = vx; vy_old = vy; vz_old = vz;
-  set_satellite(x_old,y_old,z_old,vx_old,vy_old,vz_old,vsat,r[3]);
-
-  double step = 0;
-  double step2 = 0.05;
-  double dist, dist2;
-
-  for(int i=0; i<10; i++){
-
-    x = x_old; y = y_old; z = z_old; vx = vx_old; vy = vy_old; vz = vz_old;
-    x2 = x_old; y2 = y_old; z2 = z_old; vx2 = vx_old; vy2 = vy_old; vz2 = vz_old;
-
-    integrator(t, t+step, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step);
-    integrator(t, t+step2, dt, x2, y2, z2, vx2, vy2, vz2, n, m, r, rk4_step);
-
-    set_satellite(x,y,z,vx,vy,vz,vsat,r[3]);
-    set_satellite(x2,y2,z2,vx2,vy2,vz2,vsat,r[3]);
-    integrator(t+step, t+step+time_orbit, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step);
-    integrator(t+step2, t+step2+time_orbit, dt, x2, y2, z2, vx2, vy2, vz2, n, m, r, rk4_step);
-
-    dist = distance(x[10], y[10], z[10], x[Planet], y[Planet], z[Planet]);
-    dist2 = distance(x2[10], y2[10], z2[10], x2[Planet], y2[Planet], z2[Planet]);
-
-    cout << dist << " ; "<< dist2 << " ; " << step<< endl;
-    if (dist < dist2) {
-      step = step2;
-      step2 -= step2*2.1;
-      dt = -dt;
-      }
-    else {
-      step = step2;
-      step2 += step2*1.1;
-    }
-  }
-
-  set_satellite(x,y,z,vx,vy,vz,vsat,r[3]);
-  fstream file;
-  file.open("Input_tend.csv", ios::out);
-  file.precision(20);
-  file.setf(ios_base::fixed);
-
-  for(int i=0; i<n; i++) file << x[i] << ";" << y[i] << ";" << z[i] << ";" << vx[i] << ";" << vy[i] << ";" << vz[i] << ";" << m[i] << ";" << r[i] << endl;
-}
-
-void calc_angle2(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, int Planet, double time_orbit, double Umlauf, vector<double> &r, double vsat){
+void calc_angle(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, int Planet, double time_orbit, double Umlauf, vector<double> &r, double vsat){
 
   double Delta0 = 0, Delta1 = 0.1;
   vector<double> x_old, y_old, z_old, vx_old, vy_old, vz_old; // save current position
@@ -622,7 +535,7 @@ void programmteil(string command){
             double time_orbit = 2.54289877;
             double vsat = 9.1706;
             double Umlauf = 11.862;
-            calc_angle2(t, 12., dt, x, y, z, vx, vy, vz, 11, m, 5, time_orbit, Umlauf, r, vsat);
+            calc_angle(t, 12., dt, x, y, z, vx, vy, vz, 11, m, 5, time_orbit, Umlauf, r, vsat);
         }
         else if (command == "calc_t"){
             double t_end = 2.54289877;
