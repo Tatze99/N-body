@@ -198,15 +198,11 @@ void integrator(double t, double t_end, double &dt, vector<double> &x, vector<do
   }
 }
 
-void driver(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, vector<double> &r, Step_function step, string command, double i){
+void driver(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, vector<double> &r, Step_function step, string command){
     //Create and open output file
     fstream file;
     file.open(command+"-solution.csv", ios::out);
     file.precision(16);
-    // double check = sqrt(pow(vx[10],2) + pow(vy[10],2) + pow(vz[10],2));
-    // vx[10] = vx[10] * i / check;
-    // vy[10] = vy[10] * i / check;
-    // vz[10] = vz[10] * i / check;
 
     vector<double> x_old, y_old, z_old, vx_old, vy_old, vz_old;
 
@@ -505,32 +501,36 @@ void programmteil(string command){
     double dt = pow(2.,-24);     //time steps
     double t = 0.;
 
-    string name = "Input_tend.csv";
+    string name = "Input.csv";
 
     if(fileexists(name)){
         if (command == "fwd"){  // forward euler
             initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
-            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, fwd_step, command, t);
+            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, fwd_step, command);
         }
         else if (command == "rk4"){ // Runge Kutta 4
             initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
-            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command, t);
+            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command);
         }
         else if (command == "lf"){ // leap frog
             initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
-            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, lf_step, command, t);
+            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, lf_step, command);
         }
         else if (command == "sat"){ // satellites
             calc_sat(x, y, z, vx, vy, vz, m, r, 10, rk4_step, name);
         }
         else if (command == "test"){ //testing suite for sat velocity boundary applied with rk4 scheme
             n = 11;
-            for(double i=9.1706; i<9.18;){
+            for(double i=9.2189; i<9.22;){
                 cout << "i = " << i << endl;
-                t_end = 35.;
+                t_end = 10;
                 dt = pow(2,-27); //~1E-6; 2-19 ~ 1e-7 ~ 3.76s -> 1e-6 ~ 37s
+                double check = sqrt(pow(vx[10],2) + pow(vy[10],2) + pow(vz[10],2));
+                vx[10] *= i / check;
+                vy[10] *= i / check;
+                vz[10] *= i / check;
                 initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
-                driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command, i);
+                driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command);
                 i += 0.01;
             }
         }
@@ -542,10 +542,11 @@ void programmteil(string command){
             calc_angle(t, 12., dt, x, y, z, vx, vy, vz, 11, m, 5, time_orbit, Umlauf, r, vsat);
         }
         else if (command == "calc_t"){
+            // double t_end = 10;
             double t_end = 2.54289877;
             // double t_end = 5;
             initialize_objects(n, x, y, z, vx, vy, vz, m, r, "Input_tend.csv");
-            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command, t);
+            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command);
         }
 
         /*else if (command == "time"){ //testing suite for sat velocity boundary applied with rk4 scheme

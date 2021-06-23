@@ -126,7 +126,7 @@ zsat = Z+VZ*re/ve
 #     vsat += abs(mass[i]*(1/distance(xsat,x[0,i], ysat, y[0,i], zsat, z[0,i])-1/distance(x[0,i],x[0,9], y[0,i], y[0,9], z[0,i], z[0,9])))
 
 # vsat += mass[9]/(2*r0)
-# vsat = np.sqrt(vsat)*np.sqrt(2*G)*scale
+# vsat = np.sqrt(vsat)*np.sqrt(2*G)
 
 vsat = 9.170599
 
@@ -253,6 +253,7 @@ ax.legend()
 
 #%%
 %matplotlib auto
+col = ['#000000', '#0C5DA5', '#0C5DA5', '#0C5DA5', '#0C5DA5', '#00B945', '#FF9500', '#FF2C00', '#845B97', '#474747', '#9e9e9e']
 from matplotlib import animation
 Writer = animation.writers['ffmpeg']
 writer = Writer(fps=120, metadata=dict(artist='Martin Beyer'), bitrate=-1)
@@ -263,17 +264,18 @@ line, = ax1.plot([], [], lw=2)
 plt.xlabel('$x$ in a.u.')
 plt.ylabel('$y$ in a.u.')
 
-for i in range(number):
-    ax1.plot(x[:,i],y[:,i],'-')  
+# for i in range(number):
+#     ax1.plot(x[:,i],y[:,i],'-')  
 
 lines = []
 x2 = x[:,:number]
 y2 = y[:,:number]
-for index in range(number):
-    lobj = ax1.plot(x[:1,index],y[:1,index],'o', label=Namen[index])[0]
+for i in range(number):
+    lobj = ax1.plot([],[],'o', label=Namen[i], c=col[i])[0]
     lines.append(lobj)
 plt.legend(loc='right')
-# plt.xlim(-35,70)
+plt.xlim(-6,9)
+plt.ylim(-6,6)
 
 def init():
     for line in lines:
@@ -293,7 +295,7 @@ def animate(i):
     return lines
 
 # call the animator.  blit=True means only re-draw the parts that have changed.
-# anim = animation.FuncAnimation(fig, animate, init_func=init,frames=len(x), interval=1, blit=True)
+anim = animation.FuncAnimation(fig, animate, init_func=init,frames=len(x), interval=1, blit=True)
 
 plt.show()
 # anim.save('Test.mp4', writer=writer, dpi=400)

@@ -50,7 +50,20 @@ tuple<vector<double>,vector<double>,vector<double>> acceleration(double t, vecto
 }
 
 void set_satellite(vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, double vsat, double r){
+  const double v0 = 6.179554659505929;
+  const double h0 = 1.016334532486522;
+  const double g0 = -38.21962069010524;
+
+  double hs = pow(x[3]*x[3]+y[3]*y[3]+z[3]*z[3], 0.5);
   double ve = pow(vx[3]*vx[3]+vy[3]*vy[3]+vz[3]*vz[3], 0.5);
+  double gs = -4*M_PI*M_PI/(hs*hs);
+
+  vsat += ve - v0;
+
+  // double Deltav = abs(v0-pow(v0*v0-2*(g0*h0-gs*hs),0.5));
+  // if (h0 > hs){vsat += Deltav;}
+  // else{vsat -= Deltav;}
+
   x[10] = x[3] + vx[3]*r/ve;
   y[10] = y[3] + vy[3]*r/ve;
   z[10] = z[3] + vz[3]*r/ve;
