@@ -109,6 +109,10 @@ plt.ylabel('$y$ in AU')
 # plt.title('Trajectories of the planets for 248 years')
 # plt.savefig("Trajectories2D_"+command+"_Ausschnitt.pdf")
 #%%
+for i in range(n):
+    print(np.sqrt(Input[i,0]**2+Input[i,1]**2+Input[i,2]**2))
+
+#%%
 # Calculate starting velocity of satellite
 var_names2 = ["X", "Y", "Z","VX", "VY", "VZ"]
 for i,name in enumerate(var_names2):

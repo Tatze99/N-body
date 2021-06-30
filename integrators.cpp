@@ -497,6 +497,7 @@ void programmteil(string command){
 
     int n = 11;                  //Number of objects
     double t_end = 3.54289877;           //final time  9.09745;
+    int Planet = 5;  // 0 = Merkur, 2 = Erde
     // double t_end = 5.81159;
     double dt = pow(2.,-24);     //time steps
     double t = 0.;
@@ -511,6 +512,15 @@ void programmteil(string command){
         else if (command == "rk4"){ // Runge Kutta 4
             initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
             driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command);
+
+            double vsat = 9.7655;
+            set_satellite_old(x,y,z,vx,vy,vz,vsat,r[3]);
+            fstream file;
+            file.open("Input_tend"+to_string(t_end)+".csv", ios::out);
+            file.precision(20);
+            file.setf(ios_base::fixed);
+
+            for(int i=0; i<n; i++) file << x[i] << ";" << y[i] << ";" << z[i] << ";" << vx[i] << ";" << vy[i] << ";" << vz[i] << ";" << m[i] << ";" << r[i] << endl;
         }
         else if (command == "lf"){ // leap frog
             initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
@@ -536,15 +546,27 @@ void programmteil(string command){
         }
         else if (command == "angle"){
             initialize_objects(n, x, y, z, vx, vy, vz, m, r, "Input.csv");
-            double time_orbit = 2.54289877;
-            double vsat = 9.1706;
-            double Umlauf = 11.862;
-            calc_angle(t, 12., dt, x, y, z, vx, vy, vz, 11, m, 5, time_orbit, Umlauf, r, vsat);
+            vector<double> a(n), e(n), b(n), l(n), u(n), Umlaufzeit(n), Hohmann(n), vmin(n);
+            vector<vector<double>> values = {a,e,b,l,u, Umlaufzeit, Hohmann, vmin};
+            values = set_values(values, 9, "Orbits.csv");
+
+            Umlaufzeit = values[5];
+            Hohmann = values[6];
+            vmin = values[7];
+
+            double Umlauf = Umlaufzeit[Planet];
+            double time_orbit = Hohmann[Planet];
+            double vsat = vmin[Planet];
+            cout << Umlauf << ";" << time_orbit << ";" << vsat << endl;
+            // double Umlauf = 11.862; // 1 Jupiter year
+            calc_angle(t, Umlauf, dt, x, y, z, vx, vy, vz, 11, m, Planet+1, time_orbit, Umlauf, r, vsat);
         }
         else if (command == "calc_t"){
-            // double t_end = 10;
-            double t_end = 2.54289877;
-            // double t_end = 5;
+            vector<double> a(n), e(n), b(n), l(n), u(n), Umlaufzeit(n), Hohmann(n), vmin(n);
+            vector<vector<double>> values = {a,e,b,l,u, Umlaufzeit, Hohmann, vmin};
+            values = set_values(values, 9, "Orbits.csv");
+            Hohmann = values[6];
+            double t_end = Hohmann[Planet];
             initialize_objects(n, x, y, z, vx, vy, vz, m, r, "Input_tend.csv");
             driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command);
         }
