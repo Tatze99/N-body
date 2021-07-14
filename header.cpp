@@ -49,9 +49,9 @@ tuple<vector<double>,vector<double>,vector<double>> acceleration(double t, vecto
   return make_tuple(ax, ay, az);
 }
 
-void set_satellite_old(vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, double vsat, double r){
+void set_satellite_old(vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, double vsat, double r, double factor){
   double ve = pow(vx[3]*vx[3]+vy[3]*vy[3]+vz[3]*vz[3], 0.5);
-  
+
   x[10] = x[3] + vx[3]*r/ve;
   y[10] = y[3] + vy[3]*r/ve;
   z[10] = z[3] + vz[3]*r/ve;
@@ -59,6 +59,11 @@ void set_satellite_old(vector<double> &x, vector<double> &y, vector<double> &z, 
   vx[10] = vx[3]*vsat/ve;
   vy[10] = vy[3]*vsat/ve;
   vz[10] = vz[3]*vsat/ve;
+
+  double alpha = pow(1-(factor*factor-1)*vz[10]*vz[10]/(vx[10]*vx[10]+vy[10]*vy[10]),0.5);
+  vz[10] *= factor;
+  // vx[10] *= alpha;
+  // vy[10] *= alpha;
 }
 
 void set_satellite(vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, double vsat, double r){

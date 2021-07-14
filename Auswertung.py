@@ -72,8 +72,8 @@ def Laplace_Integral(x,y,z,vx,vy,vz,m,n):
 
 #%%
 # Initialize the data
-# %matplotlib inline
-command = "calc_t"
+%matplotlib inline
+command = "Swing"
 Input = np.loadtxt("Input.csv",delimiter=';') # input vx, vy, vz now in a.u. per year!!!!
 Daten = np.loadtxt(command+"-solution.csv",delimiter=';')
 mass = np.loadtxt("Input.csv",delimiter=';',usecols=[6])
@@ -93,15 +93,14 @@ for i,name in enumerate(var_names):
 
 
 # Plot the trajectories
-%matplotlib auto
 plt.figure(dpi=300)
 
 # plt.figure(dpi=300, figsize=(2.5,3))
 plt.plot(x[:,0:number], y[:,0:number],'.',markersize=1, label=Namen[0:number])
-# plt.xlim(-33,70)
-# plt.ylim(-40,40)
-plt.xlim(-12,12)
-plt.ylim(-12,12)
+plt.xlim(-33,70)
+plt.ylim(-40,40)
+# plt.xlim(-12,12)
+# plt.ylim(-12,12)
 plt.legend(title='Planets')
 plt.xlabel('$x$ in AU')
 plt.ylabel('$y$ in AU')
@@ -227,6 +226,9 @@ ax.set_xlabel('$x$ in AU')
 ax.set_ylabel('$y$ in AU')
 ax.set_zlabel('$z$ in AU')
 ax.legend(loc='center left')
+plt.xlim(-4,-1)
+plt.ylim(-6,-3)
+plt.zlim(-5,0)
 # plt.savefig("Trajectories3D_"+command+".pdf")
 
 #%%
@@ -255,6 +257,13 @@ ax.set_ylabel('$y$ in a.u.')
 ax.set_zlabel('$z$ in a.u.')
 ax.legend()
 
+#%% Plot probe velocity
+%matplotlib auto
+vel = np.sqrt(vx[:,10]**2+vy[:,10]**2+vz[:,10]**2)
+plt.figure()
+plt.plot(time,vel)
+plt.plot(time_old,vel_old)
+
 #%%
 %matplotlib auto
 col = ['#000000', '#0C5DA5', '#0C5DA5', '#0C5DA5', '#0C5DA5', '#00B945', '#FF9500', '#FF2C00', '#845B97', '#474747', '#9e9e9e']
@@ -268,8 +277,8 @@ line, = ax1.plot([], [], lw=2)
 plt.xlabel('$x$ in a.u.')
 plt.ylabel('$y$ in a.u.')
 
-# for i in range(number):
-#     ax1.plot(x[:,i],y[:,i],'-')  
+for i in range(number):
+    ax1.plot(x[:,i],y[:,i],'-', c=col[i])  
 
 lines = []
 x2 = x[:,:number]
@@ -278,8 +287,11 @@ for i in range(number):
     lobj = ax1.plot([],[],'o', label=Namen[i], c=col[i])[0]
     lines.append(lobj)
 plt.legend(loc='right')
-plt.xlim(-6,9)
-plt.ylim(-6,6)
+plt.xlim(-2.1,-1.5)
+plt.ylim(-5,-4)
+
+# plt.xlim(-6,9)
+# plt.ylim(-6,6)
 
 def init():
     for line in lines:
