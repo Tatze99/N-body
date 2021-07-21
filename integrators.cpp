@@ -512,8 +512,94 @@ void calc_angle(double t, double t_end, double dt, vector<double> &x, vector<dou
   for(int i=0; i<n; i++) file << x[i] << ";" << y[i] << ";" << z[i] << ";" << vx[i] << ";" << vy[i] << ";" << vz[i] << ";" << m[i] << ";" << r[i] << endl;
 }
 
-void optimize_vsat(){
+double optimize_vsat(double t, double t_end, double dt, vector<double> x, vector<double> y, vector<double> z, vector<double> vx, vector<double> vy, vector<double> vz, int n, vector<double> m, vector<double> r, int Planet, double vsat, double Factorz){
+  vector <double> x_old, y_old, z_old, vx_old, vy_old, vz_old;
+  vector<double> x2, y2, z2, vx2, vy2, vz2;
+  vector<double> x3, y3, z3, vx3, vy3, vz3;
+  vector<double> dist_min, distxy_min, distz_min, velocity;
+  double dist1, dist2, dist3, dist1_min, dist2_min, dist3_min, r1, r2, r3;
 
+  dist1_min = DBL_MAX;
+  dist2_min = DBL_MAX;
+  dist3_min = DBL_MAX;
+  x_old = x; y_old = y; z_old = z; vx_old = vx; vy_old = vy; vz_old = vz;
+
+  x2 = x; y2 = y; z2 = z; vx2 = vx; vy2 = vy; vz2 = vz;
+  x3 = x; y3 = y; z3 = z; vx3 = vx; vy3 = vy; vz3 = vz;
+
+  double Factor1 = 1.;
+  double Factor2 = 0.99;
+  double Factor3 = 1.01;
+  set_satellite_old(x,y,z,vx,vy,vz,vsat,r[3],Factorz,Factor1);
+  set_satellite_old(x2,y2,z2,vx2,vy2,vz2,vsat,r[3],Factorz,Factor2);
+  set_satellite_old(x3,y3,z3,vx3,vy3,vz3,vsat,r[3],Factorz,Factor3);
+
+  while (t<1.5){
+    // integrate towards two starting times
+    integrator(t, t+dt/10, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step);
+    integrator(t, t+dt/10, dt, x2, y2, z2, vx2, vy2, vz2, n, m, r, rk4_step);
+    integrator(t, t+dt/10, dt, x3, y3, z3, vx3, vy3, vz3, n, m, r, rk4_step);
+    dist1 = distance(x[10], y[10], z[10], x[Planet], y[Planet], z[Planet]);
+    dist2 = distance(x2[10], y2[10], z2[10], x2[Planet], y2[Planet], z2[Planet]);
+    dist3 = distance(x3[10], y3[10], z3[10], x3[Planet], y3[Planet], z3[Planet]);
+
+    if (dist1 < dist1_min) {
+      dist1_min=dist1;
+      r1 = distance(x[10], y[10], 0, x[Planet], y[Planet], 0);
+    }
+    if (dist2 < dist2_min) {
+      dist2_min=dist2;
+      r2 = distance(x2[10], y2[10], 0, x2[Planet], y2[Planet], 0);
+    }
+    if (dist3 < dist3_min) {
+      dist3_min=dist3;
+      r3 = distance(x3[10], y3[10], 0, x3[Planet], y3[Planet], 0);
+    }
+    t+=dt;
+  }
+  double v1 = Factor1*vsat;
+  double v2 = Factor2*vsat;
+  double v3 = Factor3*vsat;
+
+  //  https://www.arndt-bruenner.de/mathe/10/parabeldurchdreipunkte.htm
+  double vsat_old = vsat;
+  vsat = (v2*v2*(r3-r1)-v1*v1*(r3-r2)-v3*v3*(r2-r1))/(2*(v2*(r3-r1)-v1*(r3-r2)-v3*(r2-r1)));
+
+  cout << "v1 =" << v1 << "; v2 =" << v2 << "; v3 =" << v3 << endl;
+  cout << "r1 =" << r1 << "; r2 =" << r2 << "; r3 =" << r3 << endl;
+  cout << "vsat =" << vsat << endl;
+  fstream file;
+  file.open("test.csv", ios::out);
+  file.precision(20);
+  file.setf(ios_base::fixed);
+
+  double v = vsat + 0.1;
+  while (v>(vsat-0.1)){
+    vector <double> dist, distxy, distz;
+    x = x_old; y = y_old; z = z_old; vx = vx_old; vy = vy_old; vz = vz_old;
+    set_satellite_old(x,y,z,vx,vy,vz,vsat,r[3],1, v/vsat);
+    t = 0;
+
+    while (t < 1.5){
+      integrator(t, t+dt/10, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step);
+      dist.push_back(distance(x[10], y[10], z[10], x[Planet], y[Planet], z[Planet]));
+      distxy.push_back(distance(x[10], y[10], 0, x[Planet], y[Planet], 0));
+      distz.push_back(distance(0, 0, z[10], 0, 0, z[Planet]));
+      t+=dt;
+    }
+    dist_min.push_back(findmin(dist));
+    distxy_min.push_back(findmin(distxy));
+    distz_min.push_back(findmin(distz));
+    velocity.push_back(v);
+    int arg_dist_min = findargmin(dist);
+
+    file << v << ";" << findmin(dist) << ";" << distxy[arg_dist_min] << ";" << distz[arg_dist_min] << endl;
+    cout << "v = " << v << ";  rmin = " << findmin(dist) <<endl;
+    v -= 0.005;
+
+  }
+  int arg_vmin = findargmin(dist_min);
+  return velocity[arg_vmin]/vsat_old;
 }
 
 double optimize_initial_angle(double t, double t_end, double dt, vector<double> x, vector<double> y, vector<double> z, vector<double> vx, vector<double> vy, vector<double> vz, int n, vector<double> m, vector<double> r, int Planet, double vsat){
@@ -526,8 +612,8 @@ double optimize_initial_angle(double t, double t_end, double dt, vector<double> 
 
   double Factor1 = 1.;
   double Factor2 = 0.95;
-  set_satellite_old(x,y,z,vx,vy,vz,vsat,r[3],Factor1);
-  set_satellite_old(x2,y2,z2,vx2,vy2,vz2,vsat,r[3],Factor2);
+  set_satellite_old(x,y,z,vx,vy,vz,vsat,r[3],Factor1,1);
+  set_satellite_old(x2,y2,z2,vx2,vy2,vz2,vsat,r[3],Factor2,1);
 
   while (t<1.5){
     // integrate towards two starting times
@@ -592,7 +678,7 @@ void programmteil(string command){
             // double vsat = 9.53855;
             // double vsat = pow(vx[3]*vx[3]+vy[3]*vy[3]+vz[3]*vz[3], 0.5) + 3.4172; //  New Horizon
             double vsat = pow(vx[3]*vx[3]+vy[3]*vy[3]+vz[3]*vz[3], 0.5) + 3.449; //  New Horizon
-            set_satellite_old(x,y,z,vx,vy,vz,vsat,r[3],1);
+            set_satellite_old(x,y,z,vx,vy,vz,vsat,r[3],1,1);
             fstream file;
             // file.open("Input_tend"+to_string(t_end)+".csv", ios::out);
             file.open("Input_tend.csv", ios::out);
@@ -652,14 +738,25 @@ void programmteil(string command){
         }
         else if (command == "Swing"){
           initialize_objects(n, x, y, z, vx, vy, vz, m, r, "Input_Horizon.csv");
-          optimize_vsat();
           double vsat = pow(vx[3]*vx[3]+vy[3]*vy[3]+vz[3]*vz[3], 0.5) + 3.449; //  New Horizon
-          double Faktor = optimize_initial_angle(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, 5, vsat);
-          cout << "Faktor = " << Faktor <<  endl;
-          set_satellite_old(x,y,z,vx,vy,vz,vsat,r[3],Faktor);
+          double Faktorz = optimize_initial_angle(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, 5, vsat);
+          double Faktorxy = optimize_vsat(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, 5, vsat, Faktorz);
+          cout << "Faktor = " << Faktorz <<  endl;
+
+          set_satellite_old(x,y,z,vx,vy,vz,vsat,r[3],Faktorz,Faktorxy);
 
           double t_end = 9.5;
           driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command);
+        }
+
+        else if (command == "test2"){
+          initialize_objects(n, x, y, z, vx, vy, vz, m, r, "Input_Horizon.csv");
+          double vsat = pow(vx[3]*vx[3]+vy[3]*vy[3]+vz[3]*vz[3], 0.5) + 3.4172; //  New Horizon
+          set_satellite_old(x,y,z,vx,vy,vz,vsat,r[3],1,1);
+          cout << vsat << endl;
+          double t_end = 1.5;
+          double Faktor = optimize_vsat(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, 5, vsat, 1);
+          cout << Faktor << endl;
         }
 
         /*else if (command == "time"){ //testing suite for sat velocity boundary applied with rk4 scheme

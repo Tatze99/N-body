@@ -112,6 +112,11 @@ for i in range(n):
     print(np.sqrt(Input[i,0]**2+Input[i,1]**2+Input[i,2]**2))
 
 #%%
+Test = np.loadtxt("Test.csv", delimiter=';')
+plt.plot(Test[:,0], Test[:,1])
+plt.plot(Test[:,0], Test[:,2])
+plt.plot(Test[:,0], Test[:,3])
+#%%
 # Calculate starting velocity of satellite
 var_names2 = ["X", "Y", "Z","VX", "VY", "VZ"]
 for i,name in enumerate(var_names2):
@@ -226,9 +231,9 @@ ax.set_xlabel('$x$ in AU')
 ax.set_ylabel('$y$ in AU')
 ax.set_zlabel('$z$ in AU')
 ax.legend(loc='center left')
-plt.xlim(-4,-1)
-plt.ylim(-6,-3)
-plt.zlim(-5,0)
+# plt.xlim(-4,-1)
+# plt.ylim(-6,-3)
+# plt.zlim(-5,0)
 # plt.savefig("Trajectories3D_"+command+".pdf")
 
 #%%
@@ -245,6 +250,7 @@ plt.legend()
 
 #%%
 # Plot in 3D
+# %matplotlib auto
 fig = plt.figure(figsize=(15, 6))
 ax = plt.axes(projection='3d')
 

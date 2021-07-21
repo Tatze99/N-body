@@ -49,7 +49,7 @@ tuple<vector<double>,vector<double>,vector<double>> acceleration(double t, vecto
   return make_tuple(ax, ay, az);
 }
 
-void set_satellite_old(vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, double vsat, double r, double factor){
+void set_satellite_old(vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, double vsat, double r, double zfactor, double xyfactor){
   double ve = pow(vx[3]*vx[3]+vy[3]*vy[3]+vz[3]*vz[3], 0.5);
 
   x[10] = x[3] + vx[3]*r/ve;
@@ -60,8 +60,10 @@ void set_satellite_old(vector<double> &x, vector<double> &y, vector<double> &z, 
   vy[10] = vy[3]*vsat/ve;
   vz[10] = vz[3]*vsat/ve;
 
-  double alpha = pow(1-(factor*factor-1)*vz[10]*vz[10]/(vx[10]*vx[10]+vy[10]*vy[10]),0.5);
-  vz[10] *= factor;
+  // double alpha = pow(1-(factor*factor-1)*vz[10]*vz[10]/(vx[10]*vx[10]+vy[10]*vy[10]),0.5);
+  vx[10] *= pow(xyfactor,0.5);
+  vy[10] *= pow(xyfactor,0.5);
+  vz[10] *= zfactor;
   // vx[10] *= alpha;
   // vy[10] *= alpha;
 }
@@ -120,8 +122,14 @@ double findmin(vector<double> v){
     return min;
 }
 
+int findargmin(vector<double> v){
+    int min = 0;
+    for(int i=0; i<v.size(); i++) if ((v[min]-v[i]) > DBL_EPSILON) min = i;
+    return min;
+}
+
 double findmax(vector<double> v){
-    double max = -M_PI;
+    double max = -DBL_MAX;
     for(double i : v) if ((i-max) > DBL_EPSILON) max = i;
     return max;
 }
