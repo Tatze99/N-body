@@ -243,8 +243,6 @@ void fwd_step(double t, double dt, vector<double> &x, vector<double> &y, vector<
 
     //determine the acceleration
     tie(ax, ay, az) = rhs(t, x, y, z, n, m);
-    // ay = rhs(t, y, z, x, n, m);
-    // az = rhs(t, z, x, y, n, m);
 
     //do the iteration step (update the positions)
     for(int i=0; i<n; i++) x[i] += dt * vx[i];
@@ -393,7 +391,7 @@ void rk5_step(double t, double dt, vector<double> &x, vector<double> &y, vector<
 
     tie(ax6, ay6, az6) = rhs(t+dt*(7./8.), tmpx, tmpy, tmpz, n, m);
 
-    //do the iteration step (update the positions)
+    // rk4 scheme converging in 5.th order
     for(int i=0; i<n; i++) {
       vx_5[i] = ((37./378.) * ax1[i] + (250./621.) * ax3[i] + (125./594.) * ax4[i] + (512./1771.) * ax6[i])*dt;
       vy_5[i] = ((37./378.) * ay1[i] + (250./621.) * ay3[i] + (125./594.) * ay4[i] + (512./1771.) * ay6[i])*dt;
@@ -403,7 +401,7 @@ void rk5_step(double t, double dt, vector<double> &x, vector<double> &y, vector<
       z_5[i]  = ((37./378.) * vz1[i] + (250./621.) * vz3[i] + (125./594.) * vz4[i] + (512./1771.) * vz6[i])*dt;
     }
 
-    // rk4 scheme
+    // rk4 scheme converging in 4.th order
     for(int i=0; i<n; i++) {
       vx_4[i] = ((2825./27648.) * ax1[i] + (18575./48384.) * ax3[i] + (13525./55296.) * ax4[i] + (277./14336.) * ax5[i] + (1./4.) * ax6[i])*dt;
       vy_4[i] = ((2825./27648.) * ay1[i] + (18575./48384.) * ay3[i] + (13525./55296.) * ay4[i] + (277./14336.) * ay5[i] + (1./4.) * ay6[i])*dt;
