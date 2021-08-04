@@ -1,4 +1,5 @@
 *.exe
+*.exe.stackdump
 *.csv
 *.pdf
 *.jpeg
