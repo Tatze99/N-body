@@ -95,17 +95,50 @@ def Laplace_Integral(x,y,z,vx,vy,vz,m,n):
 
 #%%
 #Load data for convergence plots
-command = "fwd"
-Daten = np.loadtxt(command+"-convergence.csv",delimiter=';')
+command = "Convergence/rk4-cash-karp-convergence-x.csv"
+#Daten = np.loadtxt(command+"-convergence.csv",delimiter=';')
+Daten = np.loadtxt(command,delimiter=';')
 h,f = Daten[:,0], Daten[:,1]
-# Plot the trajectories
-plt.figure(dpi=300)
 
-# plt.figure(dpi=300, figsize=(2.5,3))
-plt.loglog(h, f, 'o-')
-#plt.legend(title='Planets')
+#For Euler convergence
+#stepsize = 2*np.logspace(-8,-1, num=16)
+#Error = stepsize
+#Fit = 0.4438*(stepsize**0.99536)
+#Fit = 0.41736*(stepsize**0.99894)
+
+#For RK4 convergence
+stepsize = 4*np.logspace(-4,-1, num=16)
+Error = stepsize**4
+#Fit = 10.5E-4 * (stepsize**3.9640)
+Fit = 11.14E-5 * (stepsize**3.9132)
+
+#For RK5 convergence
+#stepsize = 4*np.logspace(-3,-1, num=16)
+#Error = stepsize**5
+#Fit = 14.94E-6 * (stepsize**4.8168)
+#Fit = 5.779E-6 * (stepsize**4.9308)
+
+#For convergence of RK4-part of Cash-Karp
+stepsize = 7*np.logspace(-4,-1, num=16)
+Error = stepsize**4
+Fit = 88.33E-6 * (stepsize**3.9712)
+#Fit = 8.13E-6 * (stepsize**3.8864)
+
+#For lf convergence
+#stepsize = 4*np.logspace(-7,-1, num=16)
+#Error = stepsize**2
+#Fit = 16.7E-3 * (stepsize**1.9773)
+#Fit = 4.708E-6 * (stepsize**4.832)
+
+# Plot the trajectories
+plt.figure(dpi=400)
+plt.loglog(h, f, 'o-', label='Behaviour of integrator')
+plt.loglog(stepsize, Error, '--',label='$f(x)=x^4$')
+plt.loglog(stepsize, Fit, '--',label='Fit: $f(x)=88.3*10^{-6}*x^{3.9712}$')
+plt.legend(prop={'size': 9})
 plt.xlabel('$h$')
-plt.ylabel('$E$')
+plt.ylabel('Error in positions')
+#plt.ylabel('Error in velocities')
 
 #%%
 # Initialize the data
@@ -117,7 +150,6 @@ Daten = np.loadtxt(command+"-solution.csv",delimiter=';')
 mass = np.loadtxt("Input.csv",delimiter=';',usecols=[6])
 #Namen = ['Sun', 'Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptun', 'Pluto', 'Sonde']
 Namen = ['Sun', 'Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptun', 'Pluto']
-
 
 steps = len(Daten[:,0])
 time  = Daten[:,0]

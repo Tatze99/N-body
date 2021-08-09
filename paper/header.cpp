@@ -424,7 +424,7 @@ void rk5_step(double t, double dt, vector<double> &x, vector<double> &y, vector<
       z_4[i]  = ((2825./27648.) * vz1[i] + (18575./48384.) * vz3[i] + (13525./55296.) * vz4[i] + (277./14336.) * vz5[i] + (1./4.) * vz6[i])*dt;
     }
 
-    /*
+  
     for(int i=0; i<n; i++) {
       vx[i] = abs(vx_5[i] - vx_4[i]);
       vy[i] = abs(vy_5[i] - vy_4[i]);
@@ -433,17 +433,16 @@ void rk5_step(double t, double dt, vector<double> &x, vector<double> &y, vector<
       y[i]  = abs(y_5[i]  - y_4[i]);
       z[i]  = abs(z_5[i]  - z_4[i]);
     }
-    */
-
+  
    //just for rk5 converging purposes
-   for(int i=0; i<n; i++){
-      vx[i] += vx_5[i];
-      vy[i] += vy_5[i];
-      vz[i] += vz_5[i];
-      x[i]  += x_5[i];
-      y[i]  += y_5[i];
-      z[i]  += z_5[i];
-   }
+   /*for(int i=0; i<n; i++){
+      vx[i] += vx_4[i];
+      vy[i] += vy_4[i];
+      vz[i] += vz_4[i];
+      x[i]  += x_4[i];
+      y[i]  += y_4[i];
+      z[i]  += z_4[i];
+   }*/
 }
 
 void lf_step(double t, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, DGL rhs, int n, vector<double> m){

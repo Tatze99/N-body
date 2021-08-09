@@ -198,7 +198,7 @@ void integrator(double t, double t_end, double &dt, vector<double> &x, vector<do
   }
 }
 
-void convergence_driver(int n, vector<double> m, vector<double> &r, string command){
+void convergence_driver(int n, vector<double> m, vector<double> &r, string command, bool lf){
     //Create and open output file
     fstream file;
     file.open(command+"-convergence.csv", ios::out);
@@ -215,36 +215,63 @@ void convergence_driver(int n, vector<double> m, vector<double> &r, string comma
 
     double t, dt;
     double t_end = pow(2,-0);
-    vector<double> h = {pow(2,-3), pow(2,-6), pow(2,-9), pow(2,-12), pow(2,-15), pow(2,-18), pow(2,-27), pow(2,-30)};
-    //use for rk4
-    //vector<double> h = {pow(2,-2), pow(2,-3), pow(2,-4), pow(2,-5), pow(2,-6), pow(2,-7), pow(2,-8), pow(2,-9), pow(2,-10), pow(2,-11), pow(2,-12), pow(2,-13), pow(2,-14), pow(2,-15), pow(2,-16), pow(2,-17), pow(2,-18)};
-    //use for rk5
-    //vector<double> h = {pow(2,-2), pow(2,-3), pow(2,-4), pow(2,-5), pow(2,-6), pow(2,-7), pow(2,-8), pow(2,-9), pow(2,-10), pow(2,-11), pow(2,-12), pow(2,-13), pow(2,-14)};
-    for (int i=0; i<7; i++){
-      t = 0.;
-      dt = h[i];
-      x[0] = 0.;
-      y[0] = 0.;
-      z[0] = 0.;
-      vx[0] = 1.;
-      vy[0] = 1.;
-      vz[0] = 1.;
-    cout << "for-loop" << i << endl;
-      //loop that iterates up to a certain chosen time (end)
-      while((t_end - t) > DBL_EPSILON){
-        //if((t_end-t-dt) < DBL_EPSILON) file << h[i] << "; "<< fabs(x[0] - sin(t)) << "; " << fabs(y[0] - sin(t)) << "; " << fabs(z[0] - sin(t)) << endl;
-        if((t_end-t-dt) < DBL_EPSILON) file << h[i] << "; "<< fabs(vx[0] - cos(t)) << "; " << fabs(vy[0] - cos(t)) << "; " << fabs(vz[0] - cos(t)) << endl;
 
-        //testing the convergence behavior for rk5
-        //rk5_step(t, dt, x, y, z, vx, vy, vz, convergence_test, n, m);
+    if (!lf){
+        //use for euler
+        //vector<double> h = {pow(2,-2), pow(2,-4), pow(2,-6), pow(2,-8), pow(2,-10), pow(2,-12), pow(2,-14), pow(2,-16), pow(2,-18), pow(2,-20), pow(2,-22), pow(2,-24)};
+        //use for rk4
+        //vector<double> h = {pow(2,-2), pow(2,-3), pow(2,-4), pow(2,-5), pow(2,-6), pow(2,-7), pow(2,-8), pow(2,-9), pow(2,-10), pow(2,-11), pow(2,-12), pow(2,-13), pow(2,-14), pow(2,-15), pow(2,-16), pow(2,-17), pow(2,-18)};
+        //use for rk5
+        vector<double> h = {pow(2,-2), pow(2,-3), pow(2,-4), pow(2,-5), pow(2,-6), pow(2,-7), pow(2,-8), pow(2,-9), pow(2,-10), pow(2,-11), pow(2,-12), pow(2,-13), pow(2,-14)};
+        for (int i=0; i<12; i++){
+          t = 0.;
+          dt = h[i];
+          x[0] = 0.;
+          y[0] = 0.;
+          z[0] = 0.;
+          vx[0] = 1.;
+          vy[0] = 1.;
+          vz[0] = 1.;
+        cout << "for-loop" << i << endl;
+          //loop that iterates up to a certain chosen time (end)
+          while((t_end - t) > DBL_EPSILON){
+            if((t_end-t-dt) < DBL_EPSILON) file << h[i] << "; "<< fabs(x[0] - sin(t)) << "; " << fabs(y[0] - sin(t)) << "; " << fabs(z[0] - sin(t)) << endl;
+            //if((t_end-t-dt) < DBL_EPSILON) file << h[i] << "; "<< fabs(vx[0] - cos(t)) << "; " << fabs(vy[0] - cos(t)) << "; " << fabs(vz[0] - cos(t)) << endl;
 
-        //testing the convergence behavior for rk4
-        //rk4_step(t, dt, x, y, z, vx, vy, vz, convergence_test, n, m);
+            //testing the convergence behavior for rk5
+            rk5_step(t, dt, x, y, z, vx, vy, vz, convergence_test, n, m);
 
-        //testing the convergence behavior for forward euler
-        fwd_step(t, dt, x, y, z, vx, vy, vz, convergence_test, n, m);
-        t += dt;
-      }
+            //testing the convergence behavior for rk4
+            //rk4_step(t, dt, x, y, z, vx, vy, vz, convergence_test, n, m);
+
+            //testing the convergence behavior for forward euler
+            //fwd_step(t, dt, x, y, z, vx, vy, vz, convergence_test, n, m);
+            t += dt;
+          }
+        }
+    }
+    else{
+        vector<double> h = {pow(2,-2), pow(2,-4), pow(2,-6), pow(2,-8), pow(2,-10), pow(2,-12), pow(2,-14), pow(2,-16), pow(2,-18), pow(2,-20), pow(2,-22), pow(2,-24), pow(2,-26)};
+        for (int i=0; i<12; i++){
+          t = 0.;
+          dt = h[i];
+          x[0] = 0.;
+          y[0] = 0.;
+          z[0] = 0.;
+          vx[0] = cos(-0.5*dt);
+          vy[0] = cos(-0.5*dt);
+          vz[0] = cos(-0.5*dt);
+          cout << "for-loop" << i << endl;
+
+          while((t_end - t) > DBL_EPSILON){
+            if((t_end-t-dt) < DBL_EPSILON) file << h[i] << "; "<< fabs(x[0] - sin(t)) << "; " << fabs(y[0] - sin(t)) << "; " << fabs(z[0] - sin(t)) << endl;
+            //if((t_end-t-dt) < DBL_EPSILON) file << h[i] << "; "<< fabs(vx[0] - cos(t-0.5*dt)) << "; " << fabs(vy[0] - cos(t-0.5*dt)) << "; " << fabs(vz[0] - cos(t-0.5*dt)) << endl;
+
+            //testing the convergence behavior for leap-frog scheme
+            lf_step(t, dt, x, y, z, vx, vy, vz, convergence_test, n, m);
+            t += dt;
+          }
+        }
     }
     file.close();
 }
@@ -722,11 +749,12 @@ void programmteil(string command){
     if(fileexists(name)){
         if (command == "fwd"){  // forward euler
             //testing the convergence behavior
-            convergence_driver(n, m, r, command);
+            convergence_driver(n, m, r, command, false);
 
             //initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
             //driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, fwd_step, command);
         }
+
         else if (command == "rk4"){ // Runge Kutta 4 / Cash-Carp -- used for solar system simulation
             n = 10;
             name = "Input.csv";
@@ -734,6 +762,15 @@ void programmteil(string command){
             initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
             driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command);
         }
+
+        else if (command == "lf"){ // leap frog
+            //testing the convergence behavior
+            convergence_driver(n, m, r, command, true);
+
+            //initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
+            //driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, lf_step, command);
+        }
+
         else if (command == "rk4-horizon"){ // Runge Kutta 4 for new horizons
             n = 11;
             string name = "Input_Horizon.csv";
@@ -751,10 +788,6 @@ void programmteil(string command){
             file.setf(ios_base::fixed);
 
             for(int i=0; i<n; i++) file << x[i] << ";" << y[i] << ";" << z[i] << ";" << vx[i] << ";" << vy[i] << ";" << vz[i] << ";" << m[i] << ";" << r[i] << endl;
-        }
-        else if (command == "lf"){ // leap frog
-            initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
-            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, lf_step, command);
         }
         else if (command == "sat"){ // satellites
             calc_sat(x, y, z, vx, vy, vz, m, r, 10, rk4_step, name);
