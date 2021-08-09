@@ -1,0 +1,18 @@
+Starting satellites from earth
+
+Target		vmin	vmax		max. Dauer
+Mars:		8.5884	8.6623		5a
+Jupiter:	9.1706	9.2189		5a
+Saturn:		9.3840	9.4161		20a bei 6a: 9.4204
+Uranus:		9.53855 9.55625		50a   duration: 28min
+Neptun:		9.59955 tl 9.60955 th	50a
+Pluto:		9.60285 9.65005		50a
+
+Newly calculated intervals:
+Target		vmin	vmax		max. Dauer
+Mars:		8.5884	8.6624		1.5a
+Jupiter:	9.1720	9.2316		12a
+Saturn:		9.3834	9.4187		12a
+Uranus:		9.54455 9.57435		12a
+Neptun:		9.73115 9.75675		12a
+Pluto:		9.7266 10.2435		12a

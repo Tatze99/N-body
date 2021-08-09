@@ -371,8 +371,8 @@ vector<double> check_for_boundaries(int precision, int n, double t, double t_end
 
     int counter = 0; //keeps track of the digits after the decimal point
     int sat = 10;
-    //int trackinit = -1; // -1 to start at planet velocity
-    int trackinit = 2; //startint at planet velocity+2 -- just speeding things up we start at 9 (2)
+    int trackinit = -1; // -1 to start at planet velocity
+    //int trackinit = 2; //startint at planet velocity+2 -- just speeding things up we start at 9 (2)
     int prefactor;
     double v0 = 10.;
     //double v0 = 16.; //----just for testing
@@ -400,14 +400,14 @@ vector<double> check_for_boundaries(int precision, int n, double t, double t_end
 
         cout << "vmin = " << v_min << "; vmax = " << v_max << endl;
 
-        if (((DBL_MAX-v_min) < DBL_EPSILON) || (v_max == -M_PI)){
+        if ( (v_min == DBL_MAX) || (v_max == -DBL_MAX) ){
             sat *= 10;
             v_min = v0;
             v_max = 0.;
             if (sat == 100) counter++;
             if (sat == 1000) trackinit++;
-            //if (trackinit == 0) counter++;
-            if (trackinit == 3) counter++; //just for speedingup purposes and starting at 9
+            if (trackinit == 0) counter++;
+            //if (trackinit == 3) counter++; //just for speedingup purposes and starting at 9
             if (trackinit > 5){
                 cout << "Broke while" << endl;
                 break; //break in order not to go to infinity
@@ -432,16 +432,16 @@ void calc_sat(vector<double> &x, vector<double> &y, vector<double> &z, vector<do
     double v_min, v_max;
 
     double t = 0.;
-    double t_end = 5.;
+    double t_end = 12.;
     double dt = pow(2,-22);
     int startobject = 3;
-    int endobject = 4; //no. planet -1; (Pluto = 8)
+    int endobject = 8; //no. planet -1; (Pluto = 8)
     int precision = 4;
     int sat; //aka prefactor at another point
 
     vector<double> a(n), e(n), b(n), l(n), u(n);
     vector<vector<double>> values = {a,e,b,l,u};
-    cout << "Test" << endl;
+    
     values = set_values(values, n-1, input);
     l = values[3];
     u = values[4];
@@ -749,10 +749,10 @@ void programmteil(string command){
     if(fileexists(name)){
         if (command == "fwd"){  // forward euler
             //testing the convergence behavior
-            convergence_driver(n, m, r, command, false);
+            //convergence_driver(n, m, r, command, false);
 
-            //initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
-            //driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, fwd_step, command);
+            initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
+            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, fwd_step, command);
         }
 
         else if (command == "rk4"){ // Runge Kutta 4 / Cash-Carp -- used for solar system simulation
@@ -763,12 +763,31 @@ void programmteil(string command){
             driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command);
         }
 
+        else if (command == "sat-trajectories"){ // Runge Kutta 4 / Cash-Carp -- used for solar system simulation
+            n = 16;
+            name = "Input.csv";
+            t_end = 11.;
+
+            initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
+            //initial velocities for Mars, Jupiter, Saturn, Uranus, Neptune, Pluto: Upper velocity limit
+            vector<double> initvelocities = {8.6623, 9.2189, 9.4161, 9.55625, 9.60955, 9.65005};
+            double length;
+            for(int i=10;i<n;i++){
+                length = sqrt(pow(vx[i],2) + pow(vy[i],2) + pow(vz[i],2));
+                vx[i] *= initvelocities[i-10] / length;
+                vy[i] *= initvelocities[i-10] / length;
+                vz[i] *= initvelocities[i-10] / length;
+            }
+
+            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command);
+        }
+
         else if (command == "lf"){ // leap frog
             //testing the convergence behavior
-            convergence_driver(n, m, r, command, true);
+            //convergence_driver(n, m, r, command, true);
 
-            //initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
-            //driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, lf_step, command);
+            initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
+            driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, lf_step, command);
         }
 
         else if (command == "rk4-horizon"){ // Runge Kutta 4 for new horizons
@@ -789,9 +808,11 @@ void programmteil(string command){
 
             for(int i=0; i<n; i++) file << x[i] << ";" << y[i] << ";" << z[i] << ";" << vx[i] << ";" << vy[i] << ";" << vz[i] << ";" << m[i] << ";" << r[i] << endl;
         }
+        
         else if (command == "sat"){ // satellites
             calc_sat(x, y, z, vx, vy, vz, m, r, 10, rk4_step, name);
         }
+        
         else if (command == "test"){ //testing suite for sat velocity boundary applied with rk4 scheme
             n = 11;
             for(double i=9.2189; i<9.22;){
@@ -807,6 +828,7 @@ void programmteil(string command){
                 i += 0.01;
             }
         }
+        
         else if (command == "angle"){
             initialize_objects(n, x, y, z, vx, vy, vz, m, r, "Input.csv");
             vector<double> a(n), e(n), b(n), l(n), u(n), Umlaufzeit(n), Hohmann(n), vmin(n);
@@ -824,6 +846,7 @@ void programmteil(string command){
             // double Umlauf = 11.862; // 1 Jupiter year
             calc_angle(t, Umlauf, dt, x, y, z, vx, vy, vz, 11, m, Planet+1, time_orbit, Umlauf, r, vsat);
         }
+        
         else if (command == "calc_t"){
             vector<double> a(n), e(n), b(n), l(n), u(n), Umlaufzeit(n), Hohmann(n), vmin(n);
             vector<vector<double>> values = {a,e,b,l,u, Umlaufzeit, Hohmann, vmin};
@@ -834,6 +857,7 @@ void programmteil(string command){
             initialize_objects(n, x, y, z, vx, vy, vz, m, r, "Input_tend.csv");
             driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command);
         }
+        
         else if (command == "Swing"){
           initialize_objects(n, x, y, z, vx, vy, vz, m, r, "Input_Horizon.csv");
           double vsat = pow(vx[3]*vx[3]+vy[3]*vy[3]+vz[3]*vz[3], 0.5) + 3.449; //  New Horizon
@@ -877,6 +901,7 @@ void programmteil(string command){
                 i += 0.01;
             }
         }*/
+        
         else cout << "Wrong parameter!" << endl;
     }else{
         cout << "Input file not found!" << endl;

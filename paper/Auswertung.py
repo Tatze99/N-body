@@ -130,7 +130,7 @@ Fit = 88.33E-6 * (stepsize**3.9712)
 #Fit = 16.7E-3 * (stepsize**1.9773)
 #Fit = 4.708E-6 * (stepsize**4.832)
 
-# Plot the trajectories
+# Convergence plot
 plt.figure(dpi=400)
 plt.loglog(h, f, 'o-', label='Behaviour of integrator')
 plt.loglog(stepsize, Error, '--',label='$f(x)=x^4$')
@@ -139,6 +139,33 @@ plt.legend(prop={'size': 9})
 plt.xlabel('$h$')
 plt.ylabel('Error in positions')
 #plt.ylabel('Error in velocities')
+
+#%%
+#Plot the solar system with different satellite trajectories
+command = "sat-trajectories-solution.csv"
+Daten = np.loadtxt(command,delimiter=';')
+Namen = ['Sun', 'Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptun', 'Pluto', 'Mars-Sonde','Mars-Sonde','Jupiter-Sonde','Saturn-Sonde','Uranus-Sonde','Neptun-Sonde','Pluto-Sonde']
+
+steps = len(Daten[:,0])
+time  = Daten[:,0]
+
+n = int((len(Daten[0,:])-1)/6)    # total number of planets
+number = 16
+if number > n: print("Error, too many planets to display")
+
+# create the variables and assign them their values via a loop
+var_names = ["x", "y", "z","vx", "vy", "vz"]
+for i,name in enumerate(var_names):
+  globals()[name] = Daten[:,i*n+1:(i+1)*n+1]
+
+# Plot the trajectories
+plt.figure(dpi=400)
+plt.plot(x[:,0:number], y[:,0:number],'.',markersize=1, label=Namen[0:number])
+plt.xlim(-33,20)
+plt.ylim(-35,20)
+#plt.legend(title='Planets')
+plt.xlabel('$x$ in AU')
+plt.ylabel('$y$ in AU')
 
 #%%
 # Initialize the data
@@ -169,7 +196,7 @@ for i,name in enumerate(var_names):
 plt.figure(dpi=300)
 
 # plt.figure(dpi=300, figsize=(2.5,3))
-plt.plot(x[:,0:number], y[:,0:number],'.',markersize=1, label=Namen[0:number])
+plt.plot(x[:,0:number], y[:,0:number],'.',markersize=0.5, label=Namen[0:number])
 plt.xlim(-33,50)
 plt.ylim(-35,50)
 # plt.xlim(-12,12)
@@ -180,6 +207,7 @@ plt.ylabel('$y$ in AU')
 # plt.yticks([])
 # plt.title('Trajectories of the planets for 248 years')
 # plt.savefig("Trajectories2D_"+command+"_Ausschnitt.pdf")
+
 #%%
 for i in range(n):
     print(np.sqrt(Input[i,0]**2+Input[i,1]**2+Input[i,2]**2))
