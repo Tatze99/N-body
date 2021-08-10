@@ -1,6 +1,5 @@
 *.exe
 *.exe.stackdump
-*.pdf
 *.jpeg
 !Input.csv
 !Input_old_velocities.csv
