@@ -5,15 +5,28 @@ Auswertung des N-body Problems
 @author: Martin, Florian, Sebastian
 """
 #%% header----------------------------------------
+#import numpy as np
+#import matplotlib.pyplot as plt
+#from matplotlib import rcParams
+#rcParams['xtick.direction'] = 'in'
+#rcParams['ytick.direction'] = 'in'
+#rcParams['legend.fontsize'] = 7
+#rcParams['font.size'] = 8
+#rcParams['savefig.bbox'] = 'tight'
+#rcParams['figure.figsize'] = (6,3)
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
+#plt.style.use(['science'])
 rcParams['xtick.direction'] = 'in'
 rcParams['ytick.direction'] = 'in'
-rcParams['legend.fontsize'] = 7
+rcParams['legend.fontsize'] = 8
 rcParams['font.size'] = 8
 rcParams['savefig.bbox'] = 'tight'
 rcParams['figure.figsize'] = (6,3)
+rcParams['legend.frameon'] ='true'
+rcParams['legend.framealpha'] = 0.74
+plt.rcParams["font.family"] = "Times New Roman"
 
 #%% Define functions----------------------------------------
 #%matplotlib inline
@@ -151,6 +164,7 @@ time  = Daten[:,0]
 
 n = int((len(Daten[0,:])-1)/6)    # total number of planets
 number = 16
+#number = 11
 if number > n: print("Error, too many planets to display")
 
 # create the variables and assign them their values via a loop
@@ -161,8 +175,10 @@ for i,name in enumerate(var_names):
 # Plot the trajectories
 plt.figure(dpi=400)
 plt.plot(x[:,0:number], y[:,0:number],'.',markersize=1, label=Namen[0:number])
-plt.xlim(-33,20)
-plt.ylim(-35,20)
+plt.xlim(-35,45)
+plt.ylim(-35,50)
+#plt.xlim(-6,6)
+#plt.ylim(-5,5)
 #plt.legend(title='Planets')
 plt.xlabel('$x$ in AU')
 plt.ylabel('$y$ in AU')
@@ -197,10 +213,10 @@ plt.figure(dpi=300)
 
 # plt.figure(dpi=300, figsize=(2.5,3))
 plt.plot(x[:,0:number], y[:,0:number],'.',markersize=0.5, label=Namen[0:number])
-plt.xlim(-33,50)
-plt.ylim(-35,50)
-# plt.xlim(-12,12)
-# plt.ylim(-12,12)
+#plt.xlim(-33,50)
+#plt.ylim(-35,50)
+plt.xlim(-6,6)
+plt.ylim(-5,5)
 #plt.legend(title='Planets')
 plt.xlabel('$x$ in AU')
 plt.ylabel('$y$ in AU')
@@ -279,7 +295,7 @@ for i in range(3):
         ax[i].set_xticks([])
     ax[i].set_xlim(-32,45)
     ax[i].set_ylim(-13,10)
-#plt.legend(title='Planets', bbox_to_anchor=(1.26, 2.5))
+plt.legend(title='Planets', bbox_to_anchor=(1.26, 2.5))
 #ax[0].set_title('Phase space plots')
 
 #%%

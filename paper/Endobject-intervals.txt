@@ -9,10 +9,31 @@ Neptun:		9.59955 tl 9.60955 th	50a
 Pluto:		9.60285 9.65005		50a
 
 Newly calculated intervals:
-Target		vmin	vmax		max. Dauer
-Mars:		8.5884	8.6624		1.5a
-Jupiter:	9.1720	9.2316		12a
-Saturn:		9.3834	9.4187		12a
-Uranus:		9.54455 9.57435		12a
-Neptun:		9.73115 9.75675		12a
-Pluto:		9.7266 10.2435		12a
+Target		vmin		vmax		max. Dauer
+Mars:		8.58893		8.66280		6a
+Jupiter:	9.17193 	9.23167		12a
+Saturn:		9.38332		9.41874		20a
+Uranus:		9.53875		9.55607		45a
+Neptun:		9.59955 tl 	9.60955 th	90a
+Pluto:		9.60213		9.64665		100a
+
+Varying the start, all going to pluto:
+Start		vmin		vmax		max. Dauer
+Mercury:	14.4477		14.4847		100a
+Venus:		11.0100 	11.0517		100a
+Earth:		9.60213		9.64665		100a				100a
+Mars:		7.44138		7.50452		90a
+Jupiter		m:13.57		m:13.62		60a
+Saturn:		9.59231		9.60577		50a
+Uranus:		6.09282		6.13427		40a
+Neptune:	5.99720		6.02250		30a
+
+Starting object velocities:
+Mercury:	10.3222
+Venus:		 7.3408
+Earth:		 6.1796
+Mars:		 5.2911
+Jupiter:	 2.6246
+Saturn:		 2.0941
+Uranus:		 1.5029
+Neptune:	 1.1370

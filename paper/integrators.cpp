@@ -355,31 +355,22 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
 }
 
 vector<double> check_for_boundaries(int precision, int n, double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, vector<double> &m, vector<double> &r, vector<double> &xs, vector<double> &ys, vector<double> &zs, vector<double> &vxs, vector<double> &vys, vector<double> &vzs, vector<double> &ms, vector<double> &rs, double upper, double lower, string name, int startobject){
-    //Know approximately (integer of) initial velocity (v0 ~ 8 < 10)
-    //Idea send out some satellites and determine if they return inside a fixed interval of distance to the origin
-    //Test 10 sattelites (one for each decimal point) wheather one returns in the interval
-        //If no satellite returns test 100 satellites (one for each of the first two digits after the decimal point)
-        //It at least one returns then check if we could go lower/higher with the initial velocity v0 by
-        //sending out 10 satellites below the lowest digit that worked and ten above the highest digit that worked
-    //Repeat sending out lower and higher satellites in even further digits behind the decimal point
-    //If some given accuracy of v0 is reached, return highest and lowest velocity that let the satellite turn in the fixed intervall (v_max and v_min)
-    //Those values are the "boundary values" for the velocity
     cout << "entered cfb" << endl;
     string input = "Orbits.csv";
     vector<string> tmp = {};
     vector<double> boundary = {0., 0.};
 
-    int counter = 0; //keeps track of the digits after the decimal point
-    int sat = 10;
-    int trackinit = -1; // -1 to start at planet velocity
-    //int trackinit = 2; //startint at planet velocity+2 -- just speeding things up we start at 9 (2)
-    int prefactor;
+    int counter = 0;      //keeps track of the digits after the decimal point
+    int sat = 10;         //No. of satellites one for each digit
+    int trackinit = -1;   // -1 to start at planet velocity
+    //int trackinit = 2;  //startint at earth velocity+2 -- just speeding things up we start at 9 (2)
+    int prefactor;        //Needed for case of 20 satellites for right initialisation
     double v0 = 10.;
-    //double v0 = 16.; //----just for testing
-    double v_min = v0; //initial velocity and calculate below
+    //double v0 = 16;    //----just for testing
+    double v_min = v0;    //initial velocity and calculate below
     double v_max = 0.;
-    bool out = false;
-    bool final = false;
+    bool out = false;     //boolean that determines whether a file for returning satellites with maxdist,... is written
+    bool final = false;   //boolean that if true initializes satellites for vmin - vmax
 
     vector<double> t_maxdist, v_maxdist, maxdist, v0_sat;
 
@@ -432,11 +423,11 @@ void calc_sat(vector<double> &x, vector<double> &y, vector<double> &z, vector<do
     double v_min, v_max;
 
     double t = 0.;
-    double t_end = 12.;
+    double t_end = 60.;
     double dt = pow(2,-22);
-    int startobject = 3;
+    int startobject = 5;
     int endobject = 8; //no. planet -1; (Pluto = 8)
-    int precision = 4;
+    int precision = 5;
     int sat; //aka prefactor at another point
 
     vector<double> a(n), e(n), b(n), l(n), u(n);
@@ -765,19 +756,49 @@ void programmteil(string command){
 
         else if (command == "sat-trajectories"){ // Runge Kutta 4 / Cash-Carp -- used for solar system simulation
             n = 16;
+            //n=11;
             name = "Input.csv";
-            t_end = 11.;
+            t_end = 200.;
 
             initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
             //initial velocities for Mars, Jupiter, Saturn, Uranus, Neptune, Pluto: Upper velocity limit
-            vector<double> initvelocities = {8.6623, 9.2189, 9.4161, 9.55625, 9.60955, 9.65005};
+            vector<double> initvelocities2 = {8.6628, 9.2317, 9.4187, 9.5561, 9.6096, 9.6467};
+            vector<double> initvelocities1 = {8.5889, 9.1719, 9.3833, 9.5388, 9.5996, 9.6021};
+            vector<double> jupiter = {13.57, 13.58, 13.59, 13.6, 13.61, 13.62};
             double length;
+            
             for(int i=10;i<n;i++){
+                //starting from different bodies to Pluto
+                length = sqrt(pow(vx[i-9],2) + pow(vy[i-9],2) + pow(vz[i-9],2));
+                x[i] = x[i-9] + r[i-9] * vx[i-9] / length;
+                y[i] = y[i-9] + r[i-9] * vy[i-9] / length;
+                z[i] = z[i-9] + r[i-9] * vz[i-9] / length;
+
+                //startting from earth to different bodies
+                length = sqrt(pow(vx[3],2) + pow(vy[3],2) + pow(vz[3],2));
+                x[i] = x[3] + r[3] * vx[3] / length;
+                y[i] = y[3] + r[3] * vy[3] / length;
+                z[i] = z[3] + r[3] * vz[3] / length;
+
                 length = sqrt(pow(vx[i],2) + pow(vy[i],2) + pow(vz[i],2));
-                vx[i] *= initvelocities[i-10] / length;
-                vy[i] *= initvelocities[i-10] / length;
-                vz[i] *= initvelocities[i-10] / length;
+                vx[i] *= initvelocities2[i-10] / length;
+                vy[i] *= initvelocities2[i-10] / length;
+                vz[i] *= initvelocities2[i-10] / length;
+
+                //length = sqrt(pow(vx[5],2) + pow(vy[5],2) + pow(vz[5],2));
+                //x[i] = x[5] + r[5] * vx[5] / length;
+                //y[i] = y[5] + r[5] * vy[5] / length;
+                //z[i] = z[5] + r[5] * vz[5] / length;
+
+                //vx[i] *= jupiter[i-10] / length;
+                //vy[i] *= jupiter[i-10] / length;
+                //vz[i] *= jupiter[i-10] / length;
             }
+            //double velocity;
+            //cout.precision(10);
+            //for(int i=1;i<n;i++){
+            //    velocity = sqrt(pow(vx[i],2) + pow(vy[i],2) + pow(vz[i],2));
+            //    cout << i << ": v = " << velocity << endl;
 
             driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command);
         }
