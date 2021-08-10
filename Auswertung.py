@@ -8,7 +8,7 @@ Auswertung des N-body Problems
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
-plt.style.use(['science'])
+plt.style.use(['science'])  ## pip install SciencePlots
 rcParams['xtick.direction'] = 'in'
 rcParams['ytick.direction'] = 'in'
 rcParams['legend.fontsize'] = 8
@@ -98,7 +98,7 @@ def Data_to_variables(Daten, n):
 %matplotlib inline
 command = "rk4"
 Input = np.loadtxt("Input.csv",delimiter=';') # input vx, vy, vz now in a.u. per year!!!!
-Daten = np.loadtxt(command+"-solution_e18.csv",delimiter=';')
+Daten = np.loadtxt(command+"-solution_248.csv",delimiter=';')
 Daten_rk4 = np.loadtxt("rk4-solution_248.csv",delimiter=';')
 Daten_fwd = np.loadtxt("fwd-solution_248.csv",delimiter=';')
 Daten_lf = np.loadtxt("lf-solution_248.csv",delimiter=';')
@@ -157,11 +157,17 @@ plt.legend(title='Integrators')
 plt.xlabel('$x$ in AU')
 plt.ylabel('$y$ in AU')
 
-#%%
-plt.plot(x[:,1],y[:,1],'.',markersize=1, label="$10^{-18}$")
-plt.plot(x[:,1],y[:,1],'.',markersize=1, label="$10^{-18}$")
-plt.plot(x[:,1],y[:,1],'.',markersize=1, label="$10^{-18}$")
-plt.legend(title='Error specification')
+#%%  Compare different error-values for Cash-Karp
+
+x_18, y_18, z_18, vx_18, vy_18, vz_18 = Data_to_variables(np.loadtxt("rk4-solution_e18.csv",delimiter=';'), n)
+x_10, y_10, z_10, vx_10, vy_10, vz_10 = Data_to_variables(np.loadtxt("rk4-solution_e10.csv",delimiter=';'), n)
+x_7, y_7, z_7, vx_7, vy_7, vz_7 = Data_to_variables(np.loadtxt("rk4-solution_e7.csv",delimiter=';'), n)
+plt.plot(x_7[:,1],y_7[:,1],'.',markersize=1, label="$10^{-7}$")
+plt.plot(x_10[:,1],y_10[:,1],'.',markersize=1, label="$10^{-10}$")
+plt.plot(x_18[:,1],y_18[:,1],'.',markersize=1, label="$10^{-18}$")
+plt.legend(title='Error specification', markerscale=5.)
+plt.xlabel('$x$ in AU')
+plt.ylabel('$y$ in AU')
 
 #%%
 # Calculate starting velocity of satellite
