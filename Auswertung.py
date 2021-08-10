@@ -8,15 +8,21 @@ Auswertung des N-body Problems
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
+plt.style.use(['science'])
 rcParams['xtick.direction'] = 'in'
 rcParams['ytick.direction'] = 'in'
-rcParams['legend.fontsize'] = 7
+rcParams['legend.fontsize'] = 8
 rcParams['font.size'] = 8
 rcParams['savefig.bbox'] = 'tight'
 rcParams['figure.figsize'] = (6,3)
+rcParams['legend.frameon'] ='true'
+rcParams['legend.framealpha'] = 0.74
+plt.rcParams["font.family"] = "Times New Roman"
+
 
 %matplotlib inline
 G = 4*np.pi**2
+col = ['#0C5DA5', '#00B945', '#FF9500', '#FF2C00', '#845B97', '#474747', '#9e9e9e', '#e377c2', '#8c564b', '#17becf', '#bcbd22']
 
 def Schwerpunkt(x, y, z, m, n):
     xs = np.zeros(len(x[:,0]))
@@ -49,6 +55,15 @@ def potential_energy(x, y, z, m, n):
             energy[:] += G*m[j]*m[i]/np.sqrt((x[:,i]-x[:,j])**2+(y[:,i]-y[:,j])**2+(z[:,i]-z[:,j])**2)
     return energy
 
+def total_energy(Daten,m,n):
+    x = Daten[:,0*n+1:(0+1)*n+1]
+    y = Daten[:,1*n+1:(1+1)*n+1]  
+    z = Daten[:,2*n+1:(2+1)*n+1]  
+    vx = Daten[:,3*n+1:(3+1)*n+1]  
+    vy = Daten[:,4*n+1:(4+1)*n+1]  
+    vz = Daten[:,5*n+1:(5+1)*n+1]  
+    return kinetic_energy(vx, vy, vz, m, n)-potential_energy(x, y, z, m, n)
+    
 def angular_momentum(x, y, z, vx, vy, vz, m, n):
     ang = np.zeros((steps, 3))
     for i in range(n):
@@ -70,12 +85,23 @@ def Laplace_Integral(x,y,z,vx,vy,vz,m,n):
         Laplace[:,2] += cx[:,i]*vy[:,i]-cy[:,i]*vx[:,i]+G*m[i]*z[:,i]/r[:,i]
     return Laplace
 
+def Data_to_variables(Daten, n):
+    x = Daten[:,0*n+1:(0+1)*n+1]
+    y = Daten[:,1*n+1:(1+1)*n+1]  
+    z = Daten[:,2*n+1:(2+1)*n+1]  
+    vx = Daten[:,3*n+1:(3+1)*n+1]  
+    vy = Daten[:,4*n+1:(4+1)*n+1]  
+    vz = Daten[:,5*n+1:(5+1)*n+1]
+    return x,y,z,vx,vy,vz
 #%%
 # Initialize the data
 %matplotlib inline
-command = "Swing"
+command = "rk4"
 Input = np.loadtxt("Input.csv",delimiter=';') # input vx, vy, vz now in a.u. per year!!!!
-Daten = np.loadtxt(command+"-solution.csv",delimiter=';')
+Daten = np.loadtxt(command+"-solution_e18.csv",delimiter=';')
+Daten_rk4 = np.loadtxt("rk4-solution_248.csv",delimiter=';')
+Daten_fwd = np.loadtxt("fwd-solution_248.csv",delimiter=';')
+Daten_lf = np.loadtxt("lf-solution_248.csv",delimiter=';')
 mass = np.loadtxt("Input.csv",delimiter=';',usecols=[6])
 Namen = ['Sun', 'Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptun', 'Pluto', 'Sonde']
 
@@ -83,20 +109,19 @@ steps = len(Daten[:,0])
 time  = Daten[:,0]
 
 n = int((len(Daten[0,:])-1)/6)    # total number of planets
-number = 11      # number of planets to display
-if number > n: print("Error, too many planets to display")
+number = 10      # number of planets to display
 
 # create the variables and assign them their values via a loop
 var_names = ["x", "y", "z","vx", "vy", "vz"]
 for i,name in enumerate(var_names):
   globals()[name] = Daten[:,i*n+1:(i+1)*n+1]
 
-
+#%%
 # Plot the trajectories
 plt.figure(dpi=300)
 
 # plt.figure(dpi=300, figsize=(2.5,3))
-plt.plot(x[:,0:number], y[:,0:number],'.',markersize=1, label=Namen[0:number])
+plt.plot(x[:,1:number], y[:,1:number],'.',markersize=1, label=Namen[1:number])
 plt.xlim(-33,70)
 plt.ylim(-40,40)
 # plt.xlim(-12,12)
@@ -108,14 +133,36 @@ plt.ylabel('$y$ in AU')
 # plt.title('Trajectories of the planets for 248 years')
 # plt.savefig("Trajectories2D_"+command+"_Ausschnitt.pdf")
 #%%
-for i in range(n):
-    print(np.sqrt(Input[i,0]**2+Input[i,1]**2+Input[i,2]**2))
+var_names = ["x_rk4", "y_rk4", "z_rk4","vx_rk4", "vy_rk4", "vz_rk4"]
+for i,name in enumerate(var_names):
+  globals()[name] = Daten[:,i*n+1:(i+1)*n+1]
+  
+var_names = ["x_fwd", "y_fwd", "z_fwd","vx_fwd", "vy_fwd", "vz_fwd"]
+for i,name in enumerate(var_names):
+  globals()[name] = Daten[:,i*n+1:(i+1)*n+1]
+  
+var_names = ["x_lf", "y_lf", "z_lf","vx_lf", "vy_lf", "vz_lf"]
+for i,name in enumerate(var_names):
+  globals()[name] = Daten[:,i*n+1:(i+1)*n+1]
+
+#%% Compare trajectories for rk4, lf, fwd
+
+plt.plot(Daten_rk4[:,0*n+2], Daten_rk4[:,1*n+2],'.',markersize=1, label="Runge-Kutta")
+plt.plot(Daten_fwd[:,0*10+2], Daten_fwd[:,1*10+2],'.',markersize=0.5, label="Euler-Forward")
+plt.plot(Daten_lf[:,0*n+2], Daten_lf[:,1*n+2],'.',markersize=0.5, label="Leap-Frog", alpha=0.7)
+plt.xlim(-1,1)
+plt.ylim(-1,1)
+
+plt.legend(title='Integrators')
+plt.xlabel('$x$ in AU')
+plt.ylabel('$y$ in AU')
 
 #%%
-Test = np.loadtxt("Test.csv", delimiter=';')
-plt.plot(Test[:,0], Test[:,1])
-plt.plot(Test[:,0], Test[:,2])
-plt.plot(Test[:,0], Test[:,3])
+plt.plot(x[:,1],y[:,1],'.',markersize=1, label="$10^{-18}$")
+plt.plot(x[:,1],y[:,1],'.',markersize=1, label="$10^{-18}$")
+plt.plot(x[:,1],y[:,1],'.',markersize=1, label="$10^{-18}$")
+plt.legend(title='Error specification')
+
 #%%
 # Calculate starting velocity of satellite
 var_names2 = ["X", "Y", "Z","VX", "VY", "VZ"]
@@ -149,7 +196,7 @@ print(xsat, ysat, zsat, vxsat, vysat, vzsat)
 
 #%%
 Input_tend = np.loadtxt("Input_tend.csv",delimiter=';')
-np.savetxt("Input_tend.csv", Input_tend, fmt='%1.20f', delimiter=';')
+np.savetxt("Input_tend_new.csv", Input_tend, fmt='%1.20f', delimiter=';')
 print(angle(Input_tend[3,0],Input_tend[3,1],Input_tend[3,2],Input_tend[5,0],Input_tend[5,1],Input_tend[5,2]))
 print(Input_tend[3,0],Input_tend[3,1],Input_tend[3,2],Input_tend[5,0],Input_tend[5,1],Input_tend[5,2])
 
@@ -190,7 +237,7 @@ pot = energy_conversion*potential_energy(x, y, z, mass, number)
 
 plt.figure(dpi=300)
 legend = ['kinetic energy', 'potential energy', 'total energy']
-for i,energy in enumerate([kin, pot, kin+pot]):
+for i,energy in enumerate([kin, pot, kin-pot]):
     plt.plot(time,energy,label=legend[i])
 plt.legend()
 plt.xlabel('time $t$ in years')
@@ -198,10 +245,17 @@ plt.ylabel('energy $E$ in $10^37$ J')
 # plt.title('Energy of the system as a function of time')
 plt.savefig("Energy_"+command+".pdf")
 
-# print the kinetic energies of the planets
-# for i in range(n):
-#     print(0.5*mass[i]*(vx[-1,i]**2+vy[-1,i]**2+vz[-1,i]**2))
-    
+
+#%% Compare total energy for rk4, lf, fwd
+E_rk4 = 4.47*total_energy(Daten_rk4,mass,n)
+E_fwd = 4.47*total_energy(Daten_fwd,mass,n)
+E_lf = 4.47*total_energy(Daten_lf,mass,n)
+plt.plot(time,E_rk4, label="Runge-Kutta")
+plt.plot(time,E_fwd, label="Euler-forward")
+plt.plot(time,E_lf, label="leap frog")
+plt.legend(title="Integrators")
+plt.xlabel('time $t$ in years')
+plt.ylabel('energy $E$ in $10^{37}$ J')
 #%%
 # Plot the angular momentum 
 ang = angular_momentum(x,y,z,vx,vy,vz,mass,n)
@@ -223,18 +277,19 @@ plt.legend()
 fig = plt.figure(figsize=(6,6))
 ax = fig.add_subplot(projection='3d')
 
-for i,name in enumerate(Namen):
-    ax.plot(x[:,i], y[:,i], z[:,i], label=Namen[i])
+for i in range(n):
+    ax.plot(x[:,i], y[:,i], z[:,i], label=Namen[i], c=col[n-1-i])
 
 # ax.set_title('Trajectories of all planets')
 ax.set_xlabel('$x$ in AU')
 ax.set_ylabel('$y$ in AU')
 ax.set_zlabel('$z$ in AU')
 ax.legend(loc='center left')
+ax.zaxis._axinfo["grid"]['where'] = "major"
 # plt.xlim(-4,-1)
 # plt.ylim(-6,-3)
 # plt.zlim(-5,0)
-# plt.savefig("Trajectories3D_"+command+".pdf")
+plt.savefig("Trajectories3D_"+command+".pdf")
 
 #%%
 # Plot Schwerpunkt
@@ -247,21 +302,6 @@ for i,energy in enumerate(legend):
     plt.plot(time,Lap[:,i],label=legend[i])
 plt.legend()
 
-
-#%%
-# Plot in 3D
-# %matplotlib auto
-fig = plt.figure(figsize=(15, 6))
-ax = plt.axes(projection='3d')
-
-for i,name in enumerate(Namen):
-    ax.plot(x[:,i], y[:,i], z[:,i], label=Namen[i])
-
-ax.set_title('Trajectories of all planets')
-ax.set_xlabel('$x$ in a.u.')
-ax.set_ylabel('$y$ in a.u.')
-ax.set_zlabel('$z$ in a.u.')
-ax.legend()
 
 #%% Plot probe velocity
 %matplotlib auto

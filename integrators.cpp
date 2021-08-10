@@ -201,7 +201,7 @@ void integrator(double t, double t_end, double &dt, vector<double> &x, vector<do
 void driver(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, vector<double> &r, Step_function step, string command){
     //Create and open output file
     fstream file;
-    file.open(command+"-solution.csv", ios::out);
+    file.open(command+"-solution_e10.csv", ios::out);
     file.precision(16);
 
     vector<double> x_old, y_old, z_old, vx_old, vy_old, vz_old;
@@ -209,7 +209,7 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
     double Delta = 0.;
     double Delta_aim = 1e-18;
     int count  = 0;
-    int timestep = 100;
+    int timestep = 10;
     double dist_min = 100.;
     double dist, distxy, distz, distxy_min, distz_min;
     int test = 0;
@@ -225,6 +225,7 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
               for(int i=0; i<n-1; i++) file << vz[i] << "; ";
           file << vz[n-1]<< endl;
           count = 0;
+          cout << "dt = " << dt << endl;
         }
 
         x_old = x;
@@ -243,6 +244,7 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
         }
 
         dt *= pow(Delta_aim/Delta, 1./5.);
+
         step(t, dt, x, y, z, vx, vy, vz, acceleration, n, m);
 
         //if the satellite collided with an object remove it from further calculations
@@ -655,16 +657,16 @@ void programmteil(string command){
     vector<double> m = {};
     vector<double> r = {};
 
-    int n = 11;                  //Number of objects
+    int n = 10;                  //Number of objects
     // double t_end = 0.462693;           //final time  9.09745;
     int Planet = 4;  // 0 = Merkur, 2 = Erde
     // double t_end = 36.5573329;   // New Horizon
     // double t_end = 36.5648329;   // New Horizon test
-    double t_end = 0;
-    double dt = pow(2.,-24);     //time steps
+    double t_end = 100;
+    double dt = pow(2.,-16);     //time steps
     double t = 0.;
 
-    string name = "Input_Horizon.csv";
+    string name = "Input.csv";
 
     if(fileexists(name)){
         if (command == "fwd"){  // forward euler
@@ -677,7 +679,7 @@ void programmteil(string command){
 
             // double vsat = 9.53855;
             // double vsat = pow(vx[3]*vx[3]+vy[3]*vy[3]+vz[3]*vz[3], 0.5) + 3.4172; //  New Horizon
-            double vsat = pow(vx[3]*vx[3]+vy[3]*vy[3]+vz[3]*vz[3], 0.5) + 3.449; //  New Horizon
+            double vsat = pow(vx[3]*vx[3]+vy[3]*vy[3]+vz[3]*vz[3], 0.5) + 3.449; //  New Horizon korrigiert
             set_satellite_old(x,y,z,vx,vy,vz,vsat,r[3],1,1);
             fstream file;
             // file.open("Input_tend"+to_string(t_end)+".csv", ios::out);
