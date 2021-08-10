@@ -1,6 +1,5 @@
 *.exe
 *.exe.stackdump
-*.csv
 *.pdf
 *.jpeg
 !Input.csv
