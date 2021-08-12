@@ -285,7 +285,7 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
     vector<double> x_old, y_old, z_old, vx_old, vy_old, vz_old;
 
     double Delta = 0.;
-    double Delta_aim = 1e-18;
+    double Delta_aim = 1e-14;
     int count  = 0;
     int timestep = 1000;
     double dist_min = 100.;
@@ -294,6 +294,7 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
     //loop that iterates up to a certain chosen time (end)
     while((t_end - t) > DBL_EPSILON){
         if(count % timestep == 0){
+          cout << "t = " << t << endl;
           file << t << "; ";
               for(int i=0; i<n; i++) file << x[i] << "; ";
               for(int i=0; i<n; i++) file << y[i] << "; ";
@@ -423,9 +424,9 @@ void calc_sat(vector<double> &x, vector<double> &y, vector<double> &z, vector<do
     double v_min, v_max;
 
     double t = 0.;
-    double t_end = 60.;
+    double t_end = 100.;
     double dt = pow(2,-22);
-    int startobject = 5;
+    int startobject = 8;
     int endobject = 8; //no. planet -1; (Pluto = 8)
     int precision = 5;
     int sat; //aka prefactor at another point
@@ -755,15 +756,17 @@ void programmteil(string command){
         }
 
         else if (command == "sat-trajectories"){ // Runge Kutta 4 / Cash-Carp -- used for solar system simulation
-            n = 16;
+            n = 18;
             //n=11;
             name = "Input.csv";
-            t_end = 200.;
+            t_end = 5.;
 
             initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
             //initial velocities for Mars, Jupiter, Saturn, Uranus, Neptune, Pluto: Upper velocity limit
             vector<double> initvelocities2 = {8.6628, 9.2317, 9.4187, 9.5561, 9.6096, 9.6467};
             vector<double> initvelocities1 = {8.5889, 9.1719, 9.3833, 9.5388, 9.5996, 9.6021};
+            vector<double> topluto = {14.4477, 11.01, 9.6021, 7.4414, 13.57, 9.5923, 6.0928, 5.9972};
+            vector<double> topluto2 = {14.4847, 11.0517, 9.6467, 7.5045, 13.62, 9.6058, 6.1343, 6.0225};
             vector<double> jupiter = {13.57, 13.58, 13.59, 13.6, 13.61, 13.62};
             double length;
             
@@ -775,15 +778,21 @@ void programmteil(string command){
                 z[i] = z[i-9] + r[i-9] * vz[i-9] / length;
 
                 //startting from earth to different bodies
-                length = sqrt(pow(vx[3],2) + pow(vy[3],2) + pow(vz[3],2));
-                x[i] = x[3] + r[3] * vx[3] / length;
-                y[i] = y[3] + r[3] * vy[3] / length;
-                z[i] = z[3] + r[3] * vz[3] / length;
+                //length = sqrt(pow(vx[3],2) + pow(vy[3],2) + pow(vz[3],2));
+                //x[i] = x[3] + r[3] * vx[3] / length;
+                //y[i] = y[3] + r[3] * vy[3] / length;
+                //z[i] = z[3] + r[3] * vz[3] / length;
 
-                length = sqrt(pow(vx[i],2) + pow(vy[i],2) + pow(vz[i],2));
-                vx[i] *= initvelocities2[i-10] / length;
-                vy[i] *= initvelocities2[i-10] / length;
-                vz[i] *= initvelocities2[i-10] / length;
+                //length = sqrt(pow(vx[i],2) + pow(vy[i],2) + pow(vz[i],2));
+                //vx[i] *= initvelocities2[i-10] / length;
+                //vy[i] *= initvelocities2[i-10] / length;
+                //vz[i] *= initvelocities2[i-10] / length;
+
+                //sending probes from different planets to pluto
+                length = sqrt(pow(vx[i-9],2) + pow(vy[i-9],2) + pow(vz[i-9],2));
+                vx[i] = topluto2[i-10] / length * vx[i-9];
+                vy[i] = topluto2[i-10] / length * vy[i-9];
+                vz[i] = topluto2[i-10] / length * vz[i-9];
 
                 //length = sqrt(pow(vx[5],2) + pow(vy[5],2) + pow(vz[5],2));
                 //x[i] = x[5] + r[5] * vx[5] / length;
@@ -799,7 +808,7 @@ void programmteil(string command){
             //for(int i=1;i<n;i++){
             //    velocity = sqrt(pow(vx[i],2) + pow(vy[i],2) + pow(vz[i],2));
             //    cout << i << ": v = " << velocity << endl;
-
+            
             driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command);
         }
 

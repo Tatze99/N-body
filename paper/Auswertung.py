@@ -155,7 +155,7 @@ plt.ylabel('Error in positions')
 
 #%%
 #Plot the solar system with different satellite trajectories
-command = "sat-trajectories-solution.csv"
+command = "sat-trajectories-to-pluto.csv"
 Daten = np.loadtxt(command,delimiter=';')
 Namen = ['Sun', 'Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptun', 'Pluto', 'Mars-Sonde','Mars-Sonde','Jupiter-Sonde','Saturn-Sonde','Uranus-Sonde','Neptun-Sonde','Pluto-Sonde']
 
@@ -174,9 +174,11 @@ for i,name in enumerate(var_names):
 
 # Plot the trajectories
 plt.figure(dpi=400)
-plt.plot(x[:,0:number], y[:,0:number],'.',markersize=1, label=Namen[0:number])
-plt.xlim(-35,45)
-plt.ylim(-35,50)
+plt.plot(x[:,0:number], y[:,0:number],'.',markersize=0.5, label=Namen[0:number])
+#plt.xlim(-32,45)
+#plt.ylim(-5,46)
+plt.xlim(-32,45)
+plt.ylim(-32,50)
 #plt.xlim(-6,6)
 #plt.ylim(-5,5)
 #plt.legend(title='Planets')
@@ -192,7 +194,7 @@ Input = np.loadtxt("Input.csv",delimiter=';') # input vx, vy, vz now in a.u. per
 Daten = np.loadtxt(command+"-solution.csv",delimiter=';')
 mass = np.loadtxt("Input.csv",delimiter=';',usecols=[6])
 #Namen = ['Sun', 'Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptun', 'Pluto', 'Sonde']
-Namen = ['Sun', 'Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptun', 'Pluto']
+Namen = ['Sun', 'Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']
 
 steps = len(Daten[:,0])
 time  = Daten[:,0]
