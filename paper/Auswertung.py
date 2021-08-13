@@ -17,7 +17,7 @@ Auswertung des N-body Problems
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
-#plt.style.use(['science'])
+plt.style.use(['science'])
 rcParams['xtick.direction'] = 'in'
 rcParams['ytick.direction'] = 'in'
 rcParams['legend.fontsize'] = 8
@@ -27,6 +27,7 @@ rcParams['figure.figsize'] = (6,3)
 rcParams['legend.frameon'] ='true'
 rcParams['legend.framealpha'] = 0.74
 plt.rcParams["font.family"] = "Times New Roman"
+col = ['#0C5DA5', '#00B945', '#FF9500', '#FF2C00', '#845B97', '#474747', '#9e9e9e', '#e377c2', '#8c564b', '#17becf', '#bcbd22']
 
 #%% Define functions----------------------------------------
 #%matplotlib inline
@@ -157,24 +158,33 @@ plt.ylabel('Error in positions')
 #Plot the solar system with different satellite trajectories
 command = "sat-trajectories-solution.csv"
 Daten = np.loadtxt(command,delimiter=';')
+Daten_248 = np.loadtxt('rk4-solution_248.csv",delimiter=';')
 Namen = ['Sun', 'Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptun', 'Pluto', 'Mars-Sonde','Mars-Sonde','Jupiter-Sonde','Saturn-Sonde','Uranus-Sonde','Neptun-Sonde','Pluto-Sonde']
 
 steps = len(Daten[:,0])
 time  = Daten[:,0]
 
 n = int((len(Daten[0,:])-1)/6)    # total number of planets
-number = 16
+number = 10
 #number = 11
 if number > n: print("Error, too many planets to display")
 
 # create the variables and assign them their values via a loop
 var_names = ["x", "y", "z","vx", "vy", "vz"]
 for i,name in enumerate(var_names):
-  globals()[name] = Daten[:,i*n+1:(i+1)*n+1]
+  globals()[name] = Daten_248[:,i*n+1:(i+1)*n+1]
 
 # Plot the trajectories
 plt.figure(dpi=400)
-plt.plot(x[:,0:number], y[:,0:number],'.',markersize=1, label=Namen[0:number])
+for i in range(number):
+    plt.plot(x[:,i], y[:,i],'.',markersize=0.5, label=Namen[i], c=col[number-1-i])
+
+plt.plot(x[:130,11], y[:130,11],'.',markersize=0.5, label=Namen[4], c=col[4])
+plt.plot(x[:285,12], y[:285,12],'.',markersize=0.5, label=Namen[3], c=col[3])
+plt.plot(x[:550,13], y[:550,13],'.',markersize=0.5, label=Namen[3], c=col[2])
+plt.plot(x[:1000,14], y[:1000,14],'.',markersize=0.5, label=Namen[3], c=col[1])
+
+
 plt.xlim(-35,45)
 plt.ylim(-35,50)
 #plt.xlim(-6,6)
@@ -211,8 +221,9 @@ for i,name in enumerate(var_names):
 # Plot the trajectories
 plt.figure(dpi=300)
 
-# plt.figure(dpi=300, figsize=(2.5,3))
-plt.plot(x[:,0:number], y[:,0:number],'.',markersize=0.5, label=Namen[0:number])
+plt.figure(dpi=300, figsize=(2.5,3))
+for i in range(number):
+    plt.plot(x[:,i], y[:,i],'.',markersize=0.5, label=Namen[i], c=col[i])
 #plt.xlim(-33,50)
 #plt.ylim(-35,50)
 plt.xlim(-6,6)
