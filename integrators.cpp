@@ -561,7 +561,7 @@ double optimize_vsat(double t, double t_end, double dt, vector<double> x, vector
   cout << "r1 =" << r1 << "; r2 =" << r2 << "; r3 =" << r3 << endl;
   cout << "vsat =" << vsat << endl;
   fstream file;
-  file.open("test.csv", ios::out);
+  file.open("velocity_dependence.csv", ios::out);
   file.precision(20);
   file.setf(ios_base::fixed);
 
@@ -654,7 +654,7 @@ void programmteil(string command){
 
     int n = 10;                  //Number of objects
     // double t_end = 0.462693;           //final time  9.09745;
-    int Planet = 8;  // 0 = Merkur, 2 = Erde
+    int Planet = 3;  // 0 = Merkur, 2 = Erde
     // double t_end = 36.5573329;   // New Horizon
     // double t_end = 36.5648329;   // New Horizon test
     double t_end = 100;
@@ -753,7 +753,7 @@ void programmteil(string command){
         }
 
         else if (command == "Swing-by"){
-          int Planet = 5;
+          int Planet = 9;
           n=11;
           vector<double> a(n), e(n), b(n), l(n), u(n), Umlaufzeit(n), Hohmann(n), vmin(n);
           vector<vector<double>> values = {a,e,b,l,u, Umlaufzeit, Hohmann, vmin};
@@ -796,21 +796,7 @@ void programmteil(string command){
           cout << "vsat = " << vsat << endl;
 
           set_satellite_old(x,y,z,vx,vy,vz,vsat,r[3],Faktorz,Faktorxy, n);
-          // set_satellite(x,y,z,vx,vy,vz,8.621,r[3]);
-          driver(t, t_end*6, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command);
-          vector<double> dist, dist_min;
-          // set_satellite_old(x,y,z,vx,vy,vz,9.45193,r[3],1, 9.35693/9.45193,n);
-          // t = 0;
-          //
-          // while (t < t_end+0.1){
-          //   integrator(t, t+dt/10, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step);
-          //   dist.push_back(distance(x[10], y[10], z[10], x[Planet], y[Planet], z[Planet]));
-          //   t+=dt;
-          // }
-          // dist_min.push_back(findmin(dist));
-          //
-          // cout << "rmin = " << findmin(dist) <<endl;
-
+          // driver(t, t_end*6, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command);
         }
 
         else if (command == "NewHorizon"){

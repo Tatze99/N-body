@@ -513,13 +513,27 @@ for i,energy in enumerate(legend):
 plt.legend()
 
 
-#%% Plot probe velocity
-%matplotlib auto
-vel = np.sqrt(vx[:,10]**2+vy[:,10]**2+vz[:,10]**2)
-plt.figure()
-plt.plot(time,vel)
-plt.plot(time_old,vel_old)
+#%% Plot probe velocity to minimum distance
+v_dep_Mars = np.loadtxt(CSV/"velocity_dependence_Mars.csv",delimiter=';')
+v_dep_Jupiter = np.loadtxt(CSV/"velocity_dependence_Jupiter.csv",delimiter=';')
+v_dep_Saturn = np.loadtxt(CSV/"velocity_dependence_Saturn.csv",delimiter=';')
+v_dep_Uranus = np.loadtxt(CSV/"velocity_dependence_Uranus.csv",delimiter=';')
+v_dep_Neptune = np.loadtxt(CSV/"velocity_dependence_Neptune.csv",delimiter=';')
 
+plt.figure()
+plt.plot(v_dep_Mars[:,0], v_dep_Mars[:,1], label="Mars")
+plt.plot(v_dep_Jupiter[:,0], v_dep_Jupiter[:,3], label="Jupiter")
+plt.plot(v_dep_Saturn[:,0], v_dep_Saturn[:,3], label="Saturn")
+plt.plot(v_dep_Uranus[:,0], v_dep_Uranus[:,3], label="Uranus")
+plt.plot(v_dep_Neptune[:,0], v_dep_Neptune[:,3], label="Neptune")
+plt.xlim(9.28, 9.92)
+plt.legend()
+# plt.savefig(PDF/"velocity_dependence.pdf")
+
+# plt.plot(v_dep_Mars[:,0], v_dep_Mars[:,1], label="Mars")
+# plt.yticks([0.04, 0.08])
+# plt.xticks([8.6, 8.7])
+# plt.savefig(PDF/"velocity_dependence_Zoom.pdf")
 #%%
 #Load data for convergence plots
 #Daten = np.loadtxt(command+"-convergence.csv",delimiter=';')
