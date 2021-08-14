@@ -176,7 +176,7 @@ void integrator(double t, double t_end, double &dt, vector<double> &x, vector<do
   vector<double> x_old, y_old, z_old, vx_old, vy_old, vz_old;
 
   double Delta = 0.;
-  double Delta_aim = 1e-16;
+  double Delta_aim = 1e-14;
   //loop that iterates up to a certain chosen time (end)
   while((t_end - t) > DBL_EPSILON){
       x_old = x;
@@ -201,18 +201,18 @@ void integrator(double t, double t_end, double &dt, vector<double> &x, vector<do
 void driver(double t, double t_end, double dt, vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, int n, vector<double> m, vector<double> &r, Step_function step, string command){
     //Create and open output file
     fstream file;
-    file.open(command+"-solution_e10.csv", ios::out);
+    file.open(command+"-solution.csv", ios::out);
     file.precision(16);
 
     vector<double> x_old, y_old, z_old, vx_old, vy_old, vz_old;
 
     double Delta = 0.;
-    double Delta_aim = 1e-18;
+    double Delta_aim = 1e-14;
     int count  = 0;
-    int timestep = 10;
+    int timestep = 100;
     double dist_min = 100.;
-    double dist, distxy, distz, distxy_min, distz_min;
-    int test = 0;
+    double dist;
+
     //loop that iterates up to a certain chosen time (end)
     while((t_end - t) > DBL_EPSILON){
         if(count % timestep == 0){
@@ -225,7 +225,7 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
               for(int i=0; i<n-1; i++) file << vz[i] << "; ";
           file << vz[n-1]<< endl;
           count = 0;
-          cout << "dt = " << dt << endl;
+          // cout << "dt = " << dt << endl;
         }
 
         x_old = x;
@@ -263,17 +263,14 @@ void driver(double t, double t_end, double dt, vector<double> &x, vector<double>
         }
         // if (int(t)%(int(t_end)/1000)==0){ cout << t/t_end << endl;}
         dist = distance(x[10], y[10], z[10], x[5], y[5], z[5]);
-        distxy = distance(x[10], y[10], z[10], x[5], y[5], z[10]);
-        distz = distance(x[10], y[10], z[10], x[10], y[10], z[5]);
 
-        if(dist < dist_min) {dist_min = dist; distxy_min = distxy; distz_min = distz;}
+        if(dist < dist_min) {dist_min = dist;}
 
         t += dt;
         count ++; //Count  the number of time steps for saving only every 100th value.
     }
-    cout << "Distance to Jupiter: " << dist_min << endl;
-    cout << "Distance to Jupiter in x-y: " << distxy_min << endl;
-    cout << "Distance to Jupiter in z: " << distz_min << endl;
+    cout << "Distance to Planet: " << dist_min << endl;
+
     file.close();
 }
 
@@ -417,7 +414,7 @@ void calc_angle(double t, double t_end, double dt, vector<double> &x, vector<dou
     t += dt;
   }
 
-  double time_before = 0.05;
+  double time_before = 0.1;
   double time_est = t-time_before;
   // integrate to a time slightly before the estimate
   integrator(0, t-time_before, dt, x_old, y_old, z_old, vx_old, vy_old, vz_old, n, m, r, rk4_step);
@@ -461,7 +458,7 @@ void calc_angle(double t, double t_end, double dt, vector<double> &x, vector<dou
       if (dist > dist2) {
         step += stepsize;
         if (dist > 1) {
-          step += dist*0.001;
+          step += dist*0.0001;
         }
         continue;
         }
@@ -474,25 +471,17 @@ void calc_angle(double t, double t_end, double dt, vector<double> &x, vector<dou
 
 
     if (dist < 0.01) break; // break if distance is small enough 2*10^6 km
-    if (dist_old < dist) {
-      vsat = vsat_old + 0.0001; // break if distance gets larger again
-      vsat_old = vsat;
-      if (abs(vsat - vsat_old) < 0.0002){
-        break;
-      } else{
-        continue;
-      }
-    }
+    if (dist_old < dist & dist < 3) break;
 
-    if (step > stepsize ) step = step_old;
+    if (step > stepsize ) step = step_old-stepsize;
     vsat_old = vsat;
 
     if (distance(x[10], y[10], z[10], 0,0,0)>distance(x[Planet], y[Planet], z[Planet], 0,0,0)){
       mult=-1;
     } else {mult = 1;}
 
-    if (dist > 0.2){
-      vsat += mult*0.01;  // larger stepsizes
+    if (dist > 1){
+      vsat += mult*0.005;  // larger stepsizes
     } else {
       vsat += mult*0.001; // if distance is small, reduce the increase of starting velocity
     }
@@ -514,7 +503,7 @@ void calc_angle(double t, double t_end, double dt, vector<double> &x, vector<dou
   for(int i=0; i<n; i++) file << x[i] << ";" << y[i] << ";" << z[i] << ";" << vx[i] << ";" << vy[i] << ";" << vz[i] << ";" << m[i] << ";" << r[i] << endl;
 }
 
-double optimize_vsat(double t, double t_end, double dt, vector<double> x, vector<double> y, vector<double> z, vector<double> vx, vector<double> vy, vector<double> vz, int n, vector<double> m, vector<double> r, int Planet, double vsat, double Factorz){
+double optimize_vsat(double t, double t_end, double dt, vector<double> x, vector<double> y, vector<double> z, vector<double> vx, vector<double> vy, vector<double> vz, int n, vector<double> m, vector<double> r, int Planet, double &vsat, double Factorz){
   vector <double> x_old, y_old, z_old, vx_old, vy_old, vz_old;
   vector<double> x2, y2, z2, vx2, vy2, vz2;
   vector<double> x3, y3, z3, vx3, vy3, vz3;
@@ -532,15 +521,16 @@ double optimize_vsat(double t, double t_end, double dt, vector<double> x, vector
   double Factor1 = 1.;
   double Factor2 = 0.99;
   double Factor3 = 1.01;
-  set_satellite_old(x,y,z,vx,vy,vz,vsat,r[3],Factorz,Factor1);
-  set_satellite_old(x2,y2,z2,vx2,vy2,vz2,vsat,r[3],Factorz,Factor2);
-  set_satellite_old(x3,y3,z3,vx3,vy3,vz3,vsat,r[3],Factorz,Factor3);
+  set_satellite_old(x,y,z,vx,vy,vz,vsat,r[3],Factorz,Factor1,n);
+  set_satellite_old(x2,y2,z2,vx2,vy2,vz2,vsat,r[3],Factorz,Factor2,n);
+  set_satellite_old(x3,y3,z3,vx3,vy3,vz3,vsat,r[3],Factorz,Factor3,n);
 
-  while (t<1.5){
+  while (t<t_end){
     // integrate towards two starting times
     integrator(t, t+dt/10, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step);
     integrator(t, t+dt/10, dt, x2, y2, z2, vx2, vy2, vz2, n, m, r, rk4_step);
     integrator(t, t+dt/10, dt, x3, y3, z3, vx3, vy3, vz3, n, m, r, rk4_step);
+
     dist1 = distance(x[10], y[10], z[10], x[Planet], y[Planet], z[Planet]);
     dist2 = distance(x2[10], y2[10], z2[10], x2[Planet], y2[Planet], z2[Planet]);
     dist3 = distance(x3[10], y3[10], z3[10], x3[Planet], y3[Planet], z3[Planet]);
@@ -571,7 +561,7 @@ double optimize_vsat(double t, double t_end, double dt, vector<double> x, vector
   cout << "r1 =" << r1 << "; r2 =" << r2 << "; r3 =" << r3 << endl;
   cout << "vsat =" << vsat << endl;
   fstream file;
-  file.open("test.csv", ios::out);
+  file.open("velocity_dependence.csv", ios::out);
   file.precision(20);
   file.setf(ios_base::fixed);
 
@@ -579,10 +569,10 @@ double optimize_vsat(double t, double t_end, double dt, vector<double> x, vector
   while (v>(vsat-0.1)){
     vector <double> dist, distxy, distz;
     x = x_old; y = y_old; z = z_old; vx = vx_old; vy = vy_old; vz = vz_old;
-    set_satellite_old(x,y,z,vx,vy,vz,vsat,r[3],1, v/vsat);
+    set_satellite_old(x,y,z,vx,vy,vz,vsat,r[3],1, v/vsat,n);
     t = 0;
 
-    while (t < 1.5){
+    while (t < t_end){
       integrator(t, t+dt/10, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step);
       dist.push_back(distance(x[10], y[10], z[10], x[Planet], y[Planet], z[Planet]));
       distxy.push_back(distance(x[10], y[10], 0, x[Planet], y[Planet], 0));
@@ -597,14 +587,19 @@ double optimize_vsat(double t, double t_end, double dt, vector<double> x, vector
 
     file << v << ";" << findmin(dist) << ";" << distxy[arg_dist_min] << ";" << distz[arg_dist_min] << endl;
     cout << "v = " << v << ";  rmin = " << findmin(dist) <<endl;
-    v -= 0.005;
+    if (findmin(dist) < 0.04){
+      v -= 0.001;
+    } else{
+      v -= 0.005;
+    }
 
   }
   int arg_vmin = findargmin(dist_min);
-  return velocity[arg_vmin]/vsat_old;
+  cout << "velocity min = " << velocity[arg_vmin] << endl;
+  return velocity[arg_vmin]/vsat;
 }
 
-double optimize_initial_angle(double t, double t_end, double dt, vector<double> x, vector<double> y, vector<double> z, vector<double> vx, vector<double> vy, vector<double> vz, int n, vector<double> m, vector<double> r, int Planet, double vsat){
+double optimize_initial_angle(double t, double t_end, double dt, vector<double> x, vector<double> y, vector<double> z, vector<double> vx, vector<double> vy, vector<double> vz, int n, vector<double> m, vector<double> r, int Planet, double vsat, double Factorxy){
   vector<double> x2, y2, z2, vx2, vy2, vz2;
   double dist, dist2, dist_min, dist2_min, distz_min, distz2_min;
   dist_min = 100.;
@@ -614,10 +609,10 @@ double optimize_initial_angle(double t, double t_end, double dt, vector<double> 
 
   double Factor1 = 1.;
   double Factor2 = 0.95;
-  set_satellite_old(x,y,z,vx,vy,vz,vsat,r[3],Factor1,1);
-  set_satellite_old(x2,y2,z2,vx2,vy2,vz2,vsat,r[3],Factor2,1);
+  set_satellite_old(x,y,z,vx,vy,vz,vsat,r[3],Factor1,Factorxy,n);
+  set_satellite_old(x2,y2,z2,vx2,vy2,vz2,vsat,r[3],Factor2,Factorxy,n);
 
-  while (t<1.5){
+  while (t<t_end){
     // integrate towards two starting times
     integrator(t, t+dt/10, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step);
     integrator(t, t+dt/10, dt, x2, y2, z2, vx2, vy2, vz2, n, m, r, rk4_step);
@@ -659,11 +654,11 @@ void programmteil(string command){
 
     int n = 10;                  //Number of objects
     // double t_end = 0.462693;           //final time  9.09745;
-    int Planet = 4;  // 0 = Merkur, 2 = Erde
+    int Planet = 3;  // 0 = Merkur, 2 = Erde
     // double t_end = 36.5573329;   // New Horizon
     // double t_end = 36.5648329;   // New Horizon test
     double t_end = 100;
-    double dt = pow(2.,-16);     //time steps
+    double dt = pow(2.,-25);     //time steps
     double t = 0.;
 
     string name = "Input.csv";
@@ -674,13 +669,14 @@ void programmteil(string command){
             driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, fwd_step, command);
         }
         else if (command == "rk4"){ // Runge Kutta 4
+            n=11;
             initialize_objects(n, x, y, z, vx, vy, vz, m, r, name);
             driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command);
 
             // double vsat = 9.53855;
             // double vsat = pow(vx[3]*vx[3]+vy[3]*vy[3]+vz[3]*vz[3], 0.5) + 3.4172; //  New Horizon
             double vsat = pow(vx[3]*vx[3]+vy[3]*vy[3]+vz[3]*vz[3], 0.5) + 3.449; //  New Horizon korrigiert
-            set_satellite_old(x,y,z,vx,vy,vz,vsat,r[3],1,1);
+            set_satellite_old(x,y,z,vx,vy,vz,vsat,r[3],1,1,n);
             fstream file;
             // file.open("Input_tend"+to_string(t_end)+".csv", ios::out);
             file.open("Input_tend.csv", ios::out);
@@ -712,6 +708,7 @@ void programmteil(string command){
             }
         }
         else if (command == "angle"){
+            int n = 11;
             initialize_objects(n, x, y, z, vx, vy, vz, m, r, "Input.csv");
             vector<double> a(n), e(n), b(n), l(n), u(n), Umlaufzeit(n), Hohmann(n), vmin(n);
             vector<vector<double>> values = {a,e,b,l,u, Umlaufzeit, Hohmann, vmin};
@@ -725,36 +722,104 @@ void programmteil(string command){
             double time_orbit = Hohmann[Planet];
             double vsat = vmin[Planet];
             cout << Umlauf << ";" << time_orbit << ";" << vsat << endl;
-            // double Umlauf = 11.862; // 1 Jupiter year
+
             calc_angle(t, Umlauf, dt, x, y, z, vx, vy, vz, 11, m, Planet+1, time_orbit, Umlauf, r, vsat);
         }
         else if (command == "calc_t"){
+            int n = 11;
             vector<double> a(n), e(n), b(n), l(n), u(n), Umlaufzeit(n), Hohmann(n), vmin(n);
             vector<vector<double>> values = {a,e,b,l,u, Umlaufzeit, Hohmann, vmin};
             values = set_values(values, 9, "Orbits.csv");
             Hohmann = values[6];
-            double t_end = 9.5;
-            // double t_end = Hohmann[Planet];
+            double t_end = Hohmann[Planet];
             initialize_objects(n, x, y, z, vx, vy, vz, m, r, "Input_tend.csv");
             driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command);
         }
         else if (command == "Swing"){
+          n=11;
+          t_end = 1.5;
           initialize_objects(n, x, y, z, vx, vy, vz, m, r, "Input_Horizon.csv");
           double vsat = pow(vx[3]*vx[3]+vy[3]*vy[3]+vz[3]*vz[3], 0.5) + 3.449; //  New Horizon
-          double Faktorz = optimize_initial_angle(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, 5, vsat);
-          double Faktorxy = optimize_vsat(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, 5, vsat, Faktorz);
-          cout << "Faktor = " << Faktorz <<  endl;
+          double Faktorxy = optimize_vsat(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, 5, vsat, 1);
+          double Faktorz = optimize_initial_angle(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, 5, vsat, Faktorxy);
+          cout << "Faktor z = " << Faktorz <<  endl;
+          cout << "Faktor xy = " << Faktorxy <<  endl;
+          cout << "vsat = " << vsat << endl;
 
-          set_satellite_old(x,y,z,vx,vy,vz,vsat,r[3],Faktorz,Faktorxy);
+          set_satellite_old(x,y,z,vx,vy,vz,vsat,r[3],Faktorz,Faktorxy, n);
 
           double t_end = 9.5;
           driver(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command);
         }
 
+        else if (command == "Swing-by"){
+          int Planet = 9;
+          n=11;
+          vector<double> a(n), e(n), b(n), l(n), u(n), Umlaufzeit(n), Hohmann(n), vmin(n);
+          vector<vector<double>> values = {a,e,b,l,u, Umlaufzeit, Hohmann, vmin};
+          values = set_values(values, 9, "Orbits.csv");
+          Hohmann = values[6];
+          double t_end = Hohmann[Planet-1];
+          double vsat;
+
+          if (Planet == 4){
+            initialize_objects(n, x, y, z, vx, vy, vz, m, r, "Input_tend_Mars.csv");
+            vsat = 8.621; //Mars
+
+          } else if (Planet == 5){
+            initialize_objects(n, x, y, z, vx, vy, vz, m, r, "Input_tend_Jupiter.csv");
+            vsat = 9.35;  // Jupiter
+
+          } else if (Planet == 6){
+            initialize_objects(n, x, y, z, vx, vy, vz, m, r, "Input_tend_Saturn.csv");
+            vsat = 9.389;  // Saturn
+
+          } else if (Planet == 7){
+            initialize_objects(n, x, y, z, vx, vy, vz, m, r, "Input_tend_Uranus.csv");
+            vsat = 9.71176;  // Uranus
+
+          } else if (Planet == 8){
+            initialize_objects(n, x, y, z, vx, vy, vz, m, r, "Input_tend_Neptun.csv");
+            vsat = 9.78886;  // Uranus
+          } else if (Planet == 9){
+            initialize_objects(n, x, y, z, vx, vy, vz, m, r, "Input_tend_Pluto.csv");
+            vsat = 9.78886;  // Uranus
+          }
+          // const double v0 = 6.179554659505929;
+          // double ve = pow(vx[3]*vx[3]+vy[3]*vy[3]+vz[3]*vz[3], 0.5);
+          // vsat += ve - v0;
+
+          double Faktorxy = optimize_vsat(t, t_end+0.1, dt, x, y, z, vx, vy, vz, n, m, r, Planet, vsat, 1);
+          double Faktorz = 1; //optimize_initial_angle(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, Planet, vsat, Faktorxy);
+          cout << "Faktor z = " << Faktorz <<  endl;
+          cout << "Faktor xy = " << Faktorxy <<  endl;
+          cout << "vsat = " << vsat << endl;
+
+          set_satellite_old(x,y,z,vx,vy,vz,vsat,r[3],Faktorz,Faktorxy, n);
+          // driver(t, t_end*6, dt, x, y, z, vx, vy, vz, n, m, r, rk4_step, command);
+        }
+
+        else if (command == "NewHorizon"){
+          n=11;
+          initialize_objects(n, x, y, z, vx, vy, vz, m, r, "Input_Horizon.csv");
+          n=13;
+          double vsat= pow(vx[3]*vx[3]+vy[3]*vy[3]+vz[3]*vz[3], 0.5) + 3.449;
+          x.resize(n); y.resize(n); z.resize(n); vx.resize(n); vy.resize(n); vz.resize(n); m.resize(n); r.resize(n);
+          double Faktorz = 0.911673; // first z, then xy
+          double Faktorxy = 1.00083;
+          set_satellite_old(x,y,z,vx,vy,vz,vsat,r[3],Faktorz,Faktorxy, 12);
+          Faktorxy = 1.00123; // first xy, then z
+          Faktorz = 0.914429;
+          set_satellite_old(x,y,z,vx,vy,vz,vsat,r[3],Faktorz,Faktorxy, 13);
+          double t_end = 9.48;
+          driver(t, t_end, dt, x, y, z, vx, vy, vz, 13, m, r, rk4_step, command);
+        }
+
         else if (command == "test2"){
+          n=11;
           initialize_objects(n, x, y, z, vx, vy, vz, m, r, "Input_Horizon.csv");
           double vsat = pow(vx[3]*vx[3]+vy[3]*vy[3]+vz[3]*vz[3], 0.5) + 3.4172; //  New Horizon
-          set_satellite_old(x,y,z,vx,vy,vz,vsat,r[3],1,1);
+          set_satellite_old(x,y,z,vx,vy,vz,vsat,r[3],1,1,n);
           cout << vsat << endl;
           double t_end = 1.5;
           double Faktor = optimize_vsat(t, t_end, dt, x, y, z, vx, vy, vz, n, m, r, 5, vsat, 1);

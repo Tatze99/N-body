@@ -1,0 +1,24 @@
+Euler-x: Fit von f = a*x^b
+f(x) = (443.8 \pm 0.9)E-3 * x^((995.36 \pm 0.34)E-3); R^2 (COD) = 1; Chi^2: 5.48E-15
+Euler-v:
+f(x) = (417.36 \pm 0.18)E-3 * x^((998.94 \pm 0.78)E-3); R^2 (COD) = 1; Chi^2: 2.41E-15
+
+RK4-x: Fit von f = a*x^b
+f(x) = (10.5 \pm 0.02)E-4 * x^(3.9640 \pm 0.0006); R^2 (COD) = 1; Chi^2: 2.24E-25
+RK4-v:
+f(x) = (11.14 \pm 0.05)E-5 * x^(3.9132 \pm 0.001); R^2 (COD) = 1; Chi^2: 2.14E-26
+
+RK5-x: Fit von f = a*x^b
+f(x) = (14.94 \pm 0.07)E-6 * x^(4.8168 \pm 0.002); R^2 (COD) = 1; Chi^2: 1.51E-27
+RK5-v:
+f(x) = (5.779 \pm 0.01)E-6 * x^(4.9308 \pm 0.0008); R^2 (COD) = 1; Chi^2: 1.55E-29
+
+LF-x: Fit von f = a*x^b
+f(x) = (28.22 \pm 0.008)E-3 * x^(1.99986 \pm 0.00007); R^2 (COD) = 1; Chi^2: 1.57E-21
+LF-v:
+f(x) = (16.7 \pm 0.04)E-3 * x^(1.9773 \pm 0.0006); R^2 (COD) = 1; Chi^2: 4.92E-20
+
+RK4-x of Cash-Karp: Fit von f = a*x^b
+f(x) = (8.833 \pm 0.015)E-5 * x^(3.9712 \pm 6E-4); R^2 (COD) = 1; Chi^2: 1.49E-27
+RK4-v of Cash-Karp:
+f(x) = (8.13 \pm 0.05)E-6 * x^(3.8864 \pm 0.002); R^2 (COD) = 1; Chi^2: 3.65E-28

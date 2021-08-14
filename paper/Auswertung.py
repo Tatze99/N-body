@@ -17,7 +17,8 @@ Auswertung des N-body Problems
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
-#plt.style.use(['science'])
+
+plt.style.use(['science'])
 rcParams['xtick.direction'] = 'in'
 rcParams['ytick.direction'] = 'in'
 rcParams['legend.fontsize'] = 8
@@ -27,6 +28,7 @@ rcParams['figure.figsize'] = (6,3)
 rcParams['legend.frameon'] ='true'
 rcParams['legend.framealpha'] = 0.74
 plt.rcParams["font.family"] = "Times New Roman"
+col = ['#0C5DA5', '#00B945', '#FF9500', '#FF2C00', '#845B97', '#474747', '#9e9e9e', '#e377c2', '#8c564b', '#17becf', '#bcbd22']
 
 #%% Define functions----------------------------------------
 #%matplotlib inline
@@ -106,42 +108,7 @@ def Laplace_Integral(x,y,z,vx,vy,vz,m,n):
         Laplace[:,2] += cx[:,i]*vy[:,i]-cy[:,i]*vx[:,i]+G*m[i]*z[:,i]/r[:,i]
     return Laplace
 
-#%%
-#Load data for convergence plots
-command = "Convergence/rk4-cash-karp-convergence-x.csv"
-#Daten = np.loadtxt(command+"-convergence.csv",delimiter=';')
-Daten = np.loadtxt(command,delimiter=';')
-h,f = Daten[:,0], Daten[:,1]
 
-#For Euler convergence
-#stepsize = 2*np.logspace(-8,-1, num=16)
-#Error = stepsize
-#Fit = 0.4438*(stepsize**0.99536)
-#Fit = 0.41736*(stepsize**0.99894)
-
-#For RK4 convergence
-stepsize = 4*np.logspace(-4,-1, num=16)
-Error = stepsize**4
-#Fit = 10.5E-4 * (stepsize**3.9640)
-Fit = 11.14E-5 * (stepsize**3.9132)
-
-#For RK5 convergence
-#stepsize = 4*np.logspace(-3,-1, num=16)
-#Error = stepsize**5
-#Fit = 14.94E-6 * (stepsize**4.8168)
-#Fit = 5.779E-6 * (stepsize**4.9308)
-
-#For convergence of RK4-part of Cash-Karp
-stepsize = 7*np.logspace(-4,-1, num=16)
-Error = stepsize**4
-Fit = 88.33E-6 * (stepsize**3.9712)
-#Fit = 8.13E-6 * (stepsize**3.8864)
-
-#For lf convergence
-#stepsize = 4*np.logspace(-7,-1, num=16)
-#Error = stepsize**2
-#Fit = 16.7E-3 * (stepsize**1.9773)
-#Fit = 4.708E-6 * (stepsize**4.832)
 
 # Convergence plot
 plt.figure(dpi=400)
@@ -195,91 +162,6 @@ mass = np.loadtxt("Input.csv",delimiter=';',usecols=[6])
 #Namen = ['Sun', 'Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptun', 'Pluto', 'Sonde']
 Namen = ['Sun', 'Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']
 
-steps = len(Daten[:,0])
-time  = Daten[:,0]
-
-n = int((len(Daten[0,:])-1)/6)    # total number of planets
-#number = 11      # number of planets to display
-number = 10
-if number > n: print("Error, too many planets to display")
-
-# create the variables and assign them their values via a loop
-var_names = ["x", "y", "z","vx", "vy", "vz"]
-for i,name in enumerate(var_names):
-  globals()[name] = Daten[:,i*n+1:(i+1)*n+1]
-
-
-# Plot the trajectories
-plt.figure(dpi=300)
-
-# plt.figure(dpi=300, figsize=(2.5,3))
-plt.plot(x[:,0:number], y[:,0:number],'.',markersize=0.5, label=Namen[0:number])
-#plt.xlim(-33,50)
-#plt.ylim(-35,50)
-plt.xlim(-6,6)
-plt.ylim(-5,5)
-#plt.legend(title='Planets')
-plt.xlabel('$x$ in AU')
-plt.ylabel('$y$ in AU')
-# plt.yticks([])
-# plt.title('Trajectories of the planets for 248 years')
-# plt.savefig("Trajectories2D_"+command+"_Ausschnitt.pdf")
-
-#%%
-for i in range(n):
-    print(np.sqrt(Input[i,0]**2+Input[i,1]**2+Input[i,2]**2))
-
-#%%
-Test = np.loadtxt("Test.csv", delimiter=';')
-plt.plot(Test[:,0], Test[:,1])
-plt.plot(Test[:,0], Test[:,2])
-plt.plot(Test[:,0], Test[:,3])
-#%%
-# Calculate starting velocity of satellite
-var_names2 = ["X", "Y", "Z","VX", "VY", "VZ"]
-for i,name in enumerate(var_names2):
-  globals()[name] = Input_tend[3,i]
-
-ve = np.sqrt(VX**2+VY**2+VZ**2)
-re = 4.2644e-5
-
-xsat = X+VX*re/ve
-ysat = Y+VY*re/ve
-zsat = Z+VZ*re/ve
-
-# vsat = 0
-# for i in range(9): # without satellite
-#     vsat += abs(mass[i]*(1/distance(xsat,x[0,i], ysat, y[0,i], zsat, z[0,i])-1/distance(x[0,i],x[0,9], y[0,i], y[0,9], z[0,i], z[0,9])))
-
-# vsat += mass[9]/(2*r0)
-# vsat = np.sqrt(vsat)*np.sqrt(2*G)
-
-vsat = 9.170599
-
-vxsat = VX*vsat/ve
-vysat = VY*vsat/ve
-vzsat = VZ*vsat/ve
-
-probe_params = [xsat, ysat, zsat, vxsat, vysat, vzsat, 0, 0]
-Input_tend[10,:] = probe_params
-np.savetxt("Input_tend.csv", Input_tend, fmt='%1.20f', delimiter=';')
-print(xsat, ysat, zsat, vxsat, vysat, vzsat)
-
-#%%
-Input_tend = np.loadtxt("Input_tend.csv",delimiter=';')
-np.savetxt("Input_tend.csv", Input_tend, fmt='%1.20f', delimiter=';')
-print(angle(Input_tend[3,0],Input_tend[3,1],Input_tend[3,2],Input_tend[5,0],Input_tend[5,1],Input_tend[5,2]))
-print(Input_tend[3,0],Input_tend[3,1],Input_tend[3,2],Input_tend[5,0],Input_tend[5,1],Input_tend[5,2])
-
-#%%
-k = len(x[:,0])-1
-j = 10
-# Input_tend = Input
-for i in range(j):
-    Input_tend[i,0:6] = [x[k,i], y[k,i], z[k,i], vx[k,i], vy[k,i], vz[k,i]]
-    
-print(angle(x[k,3],y[k,3],z[k,3],x[k,5],y[k,5],z[k,5]))
-# np.savetxt("Input_tend.csv", Input_tend, fmt='%1.20f', delimiter=';')
 
 #%%
 # Plot in phase space
@@ -318,6 +200,7 @@ for i in range(3):
 #ax[0].set_title('Phase space plots')
 
 # plt.savefig("Phase_space_"+command+".pdf", bbox_inches='tight')
+
 #%%
 # Plot the energy
 energy_conversion = 4.47 # e37
@@ -474,6 +357,3 @@ def animate(i):
 
 # call the animator.  blit=True means only re-draw the parts that have changed.
 anim = animation.FuncAnimation(fig, animate, init_func=init,frames=len(x), interval=1, blit=True)
-
-plt.show()
-# anim.save('Test.mp4', writer=writer, dpi=400)

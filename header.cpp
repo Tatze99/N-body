@@ -49,21 +49,21 @@ tuple<vector<double>,vector<double>,vector<double>> acceleration(double t, vecto
   return make_tuple(ax, ay, az);
 }
 
-void set_satellite_old(vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, double vsat, double r, double zfactor, double xyfactor){
+void set_satellite_old(vector<double> &x, vector<double> &y, vector<double> &z, vector<double> &vx, vector<double> &vy, vector<double> &vz, double vsat, double r, double zfactor, double xyfactor, int n){
   double ve = pow(vx[3]*vx[3]+vy[3]*vy[3]+vz[3]*vz[3], 0.5);
 
-  x[10] = x[3] + vx[3]*r/ve;
-  y[10] = y[3] + vy[3]*r/ve;
-  z[10] = z[3] + vz[3]*r/ve;
+  x[n-1] = x[3] + vx[3]*r/ve;
+  y[n-1] = y[3] + vy[3]*r/ve;
+  z[n-1] = z[3] + vz[3]*r/ve;
 
-  vx[10] = vx[3]*vsat/ve;
-  vy[10] = vy[3]*vsat/ve;
-  vz[10] = vz[3]*vsat/ve;
+  vx[n-1] = vx[3]*vsat/ve;
+  vy[n-1] = vy[3]*vsat/ve;
+  vz[n-1] = vz[3]*vsat/ve;
 
   // double alpha = pow(1-(factor*factor-1)*vz[10]*vz[10]/(vx[10]*vx[10]+vy[10]*vy[10]),0.5);
-  vx[10] *= pow(xyfactor,0.5);
-  vy[10] *= pow(xyfactor,0.5);
-  vz[10] *= zfactor;
+  vx[n-1] *= pow(xyfactor,0.5);
+  vy[n-1] *= pow(xyfactor,0.5);
+  vz[n-1] *= zfactor;
   // vx[10] *= alpha;
   // vy[10] *= alpha;
 }
