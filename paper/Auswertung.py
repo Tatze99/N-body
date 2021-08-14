@@ -238,22 +238,7 @@ plt.ylabel('$E$  /  $10^{35}$ J')
 # for i in range(n):
 #     print(0.5*mass[i]*(vx[-1,i]**2+vy[-1,i]**2+vz[-1,i]**2))
     
-#%%
-# Plot the angular momentum 
-ang = angular_momentum(x,y,z,vx,vy,vz,mass,n)
-Lap = Laplace_Integral(x,y,z,vx,vy,vz,mass,n)
 
-plt.figure(dpi=300)
-legend = ['$L_x$', '$L_y$', '$L_z$']
-for i,energy in enumerate(legend):
-    plt.plot(time,ang[:,i],label=legend[i])
-plt.legend()
-
-plt.figure(dpi=300)
-legend = ['Laplacian $x$', 'Laplacian $y$', 'Laplacian $z$']
-for i,energy in enumerate(legend):
-    plt.plot(time,Lap[:,i],label=legend[i])
-plt.legend()
 
 #%%
 # Plot in 3D
@@ -274,86 +259,5 @@ ax.legend(loc='center left', prop={'size': 9}, bbox_to_anchor=(-0.05,+0.5))
 # plt.zlim(-5,0)
 # plt.savefig("Trajectories3D_"+command+".pdf")
 
-#%%
-# Plot Schwerpunkt
-xs, ys, zs = Schwerpunkt(x,y,z,mass, number)
-print(xs[0], ys[0], zs[0])
-print(xs[-1], ys[-1], zs[-1])
-=======
-legend = ['Laplacian $x$', 'Laplacian $y$', 'Laplacian $z$']
-for i,energy in enumerate(legend):
-    plt.plot(time,Lap[:,i],label=legend[i])
-plt.legend()
 
 
-#%%
-# Plot in 3D
-# %matplotlib auto
-%matplotlib inline
-fig = plt.figure(figsize=(15, 6))
-ax = plt.axes(projection='3d')
-
-for i,name in enumerate(Namen):
-    ax.plot(x[:,i], y[:,i], z[:,i], label=Namen[i])
-
-ax.set_title('Trajectories of all planets')
-ax.set_xlabel('$x$  /  AU')
-ax.set_ylabel('$y$  /  AU')
-ax.set_zlabel('$z$  /  AU')
-ax.legend(loc='center left', prop={'size': 9})
-
-#%% Plot probe velocity
-%matplotlib auto
-vel = np.sqrt(vx[:,10]**2+vy[:,10]**2+vz[:,10]**2)
-plt.figure()
-plt.plot(time,vel)
-plt.plot(time_old,vel_old)
-
-#%%
-%matplotlib auto
-col = ['#000000', '#0C5DA5', '#0C5DA5', '#0C5DA5', '#0C5DA5', '#00B945', '#FF9500', '#FF2C00', '#845B97', '#474747', '#9e9e9e']
-from matplotlib import animation
-Writer = animation.writers['ffmpeg']
-writer = Writer(fps=120, metadata=dict(artist='Martin Beyer'), bitrate=-1)
-
-fig = plt.figure(figsize=(6,3))
-ax1 = plt.axes()
-line, = ax1.plot([], [], lw=2)
-plt.xlabel('$x$ in a.u.')
-plt.ylabel('$y$ in a.u.')
-
-for i in range(number):
-    ax1.plot(x[:,i],y[:,i],'-', c=col[i])  
-
-lines = []
-x2 = x[:,:number]
-y2 = y[:,:number]
-for i in range(number):
-    lobj = ax1.plot([],[],'o', label=Namen[i], c=col[i])[0]
-    lines.append(lobj)
-plt.legend(loc='right')
-plt.xlim(-2.1,-1.5)
-plt.ylim(-5,-4)
-
-# plt.xlim(-6,9)
-# plt.ylim(-6,6)
-
-def init():
-    for line in lines:
-        line.set_data([],[])
-    return lines
-
-def animate(i):
-    for lnum,line in enumerate(lines):
-        # index=-i # Standard
-        index = -1
-        # index = round(-0.012*lnum**6)
-        if(i+index > 0):
-            line.set_data(x[i+index:i,lnum], y[i+index:i,lnum]) # set data for each line separately.
-        else:
-            line.set_data(x[:i,lnum], y[:i,lnum])
-
-    return lines
-
-# call the animator.  blit=True means only re-draw the parts that have changed.
-anim = animation.FuncAnimation(fig, animate, init_func=init,frames=len(x), interval=1, blit=True)
