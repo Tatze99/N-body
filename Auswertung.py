@@ -555,7 +555,7 @@ plt.savefig(PDF/"velocity_dependence.pdf")
 #%%
 #Load data for convergence plots
 #Daten = np.loadtxt(command+"-convergence.csv",delimiter=';')
-Daten = np.loadtxt(CSV/"Convergence/rk4-cash-karp-convergence-x.csv",delimiter=';')
+Daten = np.loadtxt(CSV/"Convergence/rk4-convergence-v.csv",delimiter=';')
 h,f = Daten[:,0], Daten[:,1]
 
 #For Euler convergence
@@ -579,7 +579,7 @@ Fit = 11.14E-5 * (stepsize**3.9132)
 #For convergence of RK4-part of Cash-Karp
 stepsize = 7*np.logspace(-4,-1, num=16)
 Error = stepsize**4
-Fit = 88.33E-6 * (stepsize**3.9712)
+Fit = 111.E-6 * (stepsize**3.9712)
 #Fit = 8.13E-6 * (stepsize**3.8864)
 
 #For lf convergence
@@ -589,14 +589,15 @@ Fit = 88.33E-6 * (stepsize**3.9712)
 #Fit = 4.708E-6 * (stepsize**4.832)
 
 # Convergence plot
+rcParams['figure.figsize'] = (6,3)
 plt.figure(dpi=400)
 plt.loglog(h, f, 'o-', label='Behaviour of integrator')
 plt.loglog(stepsize, Error, '--',label='$f(x)=x^4$')
-plt.loglog(stepsize, Fit, '--',label='Fit: $f(x)=88.3\\cdot 10^{-6}\\cdot x^{3.9712}$')
+plt.loglog(stepsize, Fit, '--',label='Fit: $f(x)=111\\cdot 10^{-6}\\cdot x^{3.9132}$')
 plt.legend(prop={'size': 9})
 plt.xlabel('stepsize $h$')
-plt.ylabel('Error in positions')
-#plt.ylabel('Error in velocities')
+# plt.ylabel('Error in positions')
+plt.ylabel('Error in velocities')
 plt.savefig(PDF/"rk4 convergence-v.pdf")
 
 #%%  Plot the solar system with different satellite trajectories (vmin, vmax for every planet)
