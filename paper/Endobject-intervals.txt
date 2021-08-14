@@ -28,6 +28,17 @@ Saturn:		9.59231		9.60577		50a
 Uranus:		6.09282		6.13427		40a
 Neptune:	5.99720		6.02250		30a
 
+Recalculated
+Start		vmin		vmax		max. Dauer
+Mercury:	14.4477		14.4847		100a
+Venus:		11.0100 	11.0517		100a
+Earth:		9.60213		9.64665		100a
+Mars:		7.44096		7.50452		100a
+Jupiter		m:15.198	m:15.2205	100a
+Saturn:		9.59231		9.60186		100a
+Uranus:		5.99639		6.00302		100a
+Neptune:	---		---		100a
+
 Starting object velocities:
 Mercury:	10.3222
 Venus:		 7.3408
