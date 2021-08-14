@@ -555,37 +555,37 @@ plt.savefig(PDF/"velocity_dependence.pdf")
 #%%
 #Load data for convergence plots
 #Daten = np.loadtxt(command+"-convergence.csv",delimiter=';')
-Daten = np.loadtxt(CSV/"Convergence/rk4-convergence-v.csv",delimiter=';')
+Daten = np.loadtxt(CSV/"Convergence/rk4-cash-karp-convergence-v.csv",delimiter=';')
 h,f = Daten[:,0], Daten[:,1]
 
 #For Euler convergence
-#stepsize = 2*np.logspace(-8,-1, num=16)
-#Error = stepsize
+# stepsize = 2*np.logspace(-8,-1, num=16)
+# Error = stepsize
 #Fit = 0.4438*(stepsize**0.99536)
-#Fit = 0.41736*(stepsize**0.99894)
+# Fit = 0.41736*(stepsize**0.99894)
 
 #For RK4 convergence
-stepsize = 4*np.logspace(-4,-1, num=16)
-Error = stepsize**4
+# stepsize = 4*np.logspace(-4,-1, num=16)
+# Error = stepsize**4
 #Fit = 10.5E-4 * (stepsize**3.9640)
-Fit = 11.14E-5 * (stepsize**3.9132)
+# Fit = 11.14E-5 * (stepsize**3.9132)
 
 #For RK5 convergence
-#stepsize = 4*np.logspace(-3,-1, num=16)
-#Error = stepsize**5
+# stepsize = 4*np.logspace(-3,-1, num=16)
+# Error = stepsize**5
 #Fit = 14.94E-6 * (stepsize**4.8168)
-#Fit = 5.779E-6 * (stepsize**4.9308)
+# Fit = 5.779E-6 * (stepsize**4.9308)
 
 #For convergence of RK4-part of Cash-Karp
 stepsize = 7*np.logspace(-4,-1, num=16)
 Error = stepsize**4
-Fit = 111.E-6 * (stepsize**3.9712)
-#Fit = 8.13E-6 * (stepsize**3.8864)
+# Fit = 111.E-6 * (stepsize**3.9712)
+Fit = 8.13E-6 * (stepsize**3.8864)
 
 #For lf convergence
-#stepsize = 4*np.logspace(-7,-1, num=16)
-#Error = stepsize**2
-#Fit = 16.7E-3 * (stepsize**1.9773)
+# stepsize = 4*np.logspace(-7,-1, num=16)
+# Error = stepsize**2
+# Fit = 16.7E-3 * (stepsize**1.9773)
 #Fit = 4.708E-6 * (stepsize**4.832)
 
 # Convergence plot
@@ -593,12 +593,20 @@ rcParams['figure.figsize'] = (6,3)
 plt.figure(dpi=400)
 plt.loglog(h, f, 'o-', label='Behaviour of integrator')
 plt.loglog(stepsize, Error, '--',label='$f(x)=x^4$')
-plt.loglog(stepsize, Fit, '--',label='Fit: $f(x)=111\\cdot 10^{-6}\\cdot x^{3.9132}$')
+
+plt.loglog(stepsize, Fit, '--',label='Fit: $f(x)=8.13\\cdot 10^{-6}\\cdot x^{3.8864}$') # CK RK5
+# plt.loglog(stepsize, Fit, '--',label='Fit: $f(x)=5.78\\cdot 10^{-6}\\cdot x^{4.9308}$') # CK RK5
+# plt.loglog(stepsize, Fit, '--',label='Fit: $f(x)=1.67\\cdot 10^{-2}\\cdot x^{1.9773}$') # leap frog
+# plt.loglog(stepsize, Fit, '--',label='Fit: $f(x)=0.417\\cdot x^{0.9989}$') # euler velocity
+# plt.loglog(stepsize, Fit, '--',label='Fit: $f(x)=111\\cdot 10^{-6}\\cdot x^{3.9132}$') # RK4 velocity
 plt.legend(prop={'size': 9})
 plt.xlabel('stepsize $h$')
 # plt.ylabel('Error in positions')
 plt.ylabel('Error in velocities')
-plt.savefig(PDF/"rk4 convergence-v.pdf")
+# plt.savefig(PDF/"RK4-Cash-Karp-convergence-v.pdf")
+# plt.savefig(PDF/"rk5 convergence-v.pdf")
+# plt.savefig(PDF/"lf convergence-v.pdf")
+# plt.savefig(PDF/"rk4 convergence-v.pdf")
 
 #%%  Plot the solar system with different satellite trajectories (vmin, vmax for every planet)
 Daten = np.loadtxt(CSV/"sat-trajectories-solution.csv",delimiter=';')
@@ -690,6 +698,38 @@ plt.axvline(x=58.914, color='black', lw=0.7)
 # plt.savefig(PDF/"Energy_comparison_Jupiter.pdf")
 
 
+#%%
+Daten_min = np.loadtxt(CSV/"sat-trajectories-to-pluto.csv",delimiter=';')
+Daten_max = np.loadtxt(CSV/"sat-trajectories-to-pluto2.csv",delimiter=';')
+
+n = int((len(Daten_min[0,:])-1)/6)    # total number of planets
+number = n                        # number of planets to display
+
+# create the variables and assign them their values via a loop
+for i,name in enumerate(["x_min", "y_min", "z_min","vx_min", "vy_min", "vz_min"]):
+  globals()[name] = Daten_min[:,i*n+1:(i+1)*n+1]
+for i,name in enumerate(["x_max", "y_max", "z_max","vx_max", "vy_max", "vz_max"]):
+  globals()[name] = Daten_max[:,i*n+1:(i+1)*n+1]
+
+# Plot the trajectories
+rcParams['figure.figsize'] = (6,3)
+plt.figure()
+for i in range(0,10):
+    plt.plot(x_min[:,i], y_min[:,i], label=Namen[i], c=col[10-1-i])
+    
+plt.plot(x_min[:1850,10], y_min[:1850,10],'--', c=col[18-10])
+plt.plot(x_min[:2050,11], y_min[:2050,11],'--', c=col[18-11])
+plt.plot(x_min[:2650,15], y_min[:2650,15],'--', c=col[18-15])
+plt.plot(x_min[:4000,16], y_min[:4000,16],'--', c=col[18-16])
+
+for i in ((12,13,14)):
+    plt.plot(x_max[:4200,i], y_max[:4200,i],'--', c=col[18-i])    
+plt.xlim(-33,63)
+plt.ylim(-32,47)
+plt.xlabel('$x$ in AU')
+plt.ylabel('$y$ in AU')
+plt.legend()
+plt.savefig(PDF/"different_planets.pdf")
 #%%  Animate the planetary trajectories
 %matplotlib auto
 # col = ['#000000', '#0C5DA5', '#0C5DA5', '#0C5DA5', '#0C5DA5', '#00B945', '#FF9500', '#FF2C00', '#845B97', '#474747', '#9e9e9e']
