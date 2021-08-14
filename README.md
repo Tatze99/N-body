@@ -27,7 +27,9 @@
 - *sat*: Ausführung von *calc_sat*
 - *angle*: Ausführung von *Calc_angle*, Übergabe von Umlaufzeiten, Hohmann-Transferzeit und minimaler Geschwindigkeit der Sonde für einen bestimmten Planeten. 
 - *calc_t*: Integration der PLnaten ausgehend von "Input_tend.csv" Datei, wo die Startdaten für den New-Horizons Start stehen.
-- *Swing*: Fürht *optmize_initial_angle* und *optimize_vsat* aus und integriert anschließend mit den optimierten Startparametern die Trajektorie. 
+- *Swing*: Führt *optmize_initial_angle* und *optimize_vsat* aus und integriert anschließend mit den optimierten Startparametern die Trajektorie.
+- *Swing-by*: Berechne eine Trajektorie für einen Swing-by für verschiedene Zielplaneten. Die Geschwindigkeiten wurden durch die Routine *angle* ermittelt.
+- *NewHorizon*: Berechne die Trajektorie der Raumsonde "New Horizon" (originale Startdaten, dann Optimierung)
 
 ### Beschreibung der Input.csv
 - enthält folgende Daten: (x,y,z,vx,vy,vz,m)
