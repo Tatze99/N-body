@@ -155,15 +155,16 @@ plt.ylabel('Error in positions')
 
 #%%
 #Plot the solar system with different satellite trajectories
-command = "sat-trajectories-to-pluto.csv"
+command = "sat-trajectories-to-pluto2.csv"
+#command = "sat-trajectories-solution.csv"
 Daten = np.loadtxt(command,delimiter=';')
-Namen = ['Sun', 'Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptun', 'Pluto', 'Mars-Sonde','Mars-Sonde','Jupiter-Sonde','Saturn-Sonde','Uranus-Sonde','Neptun-Sonde','Pluto-Sonde']
+Namen = ['Sun', 'Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptun', 'Pluto', 'Merkur-Sonde','Venus-Sonde','Erde-Sonde','Mars-Sonde','Jupiter-Sonde','Saturn-Sonde','Uranus-Sonde','Neptun-Sonde']
 
 steps = len(Daten[:,0])
 time  = Daten[:,0]
 
 n = int((len(Daten[0,:])-1)/6)    # total number of planets
-number = 16
+number = 17
 #number = 11
 if number > n: print("Error, too many planets to display")
 
@@ -175,12 +176,10 @@ for i,name in enumerate(var_names):
 # Plot the trajectories
 plt.figure(dpi=400)
 plt.plot(x[:,0:number], y[:,0:number],'.',markersize=0.5, label=Namen[0:number])
-#plt.xlim(-32,45)
-#plt.ylim(-5,46)
-plt.xlim(-32,45)
-plt.ylim(-32,50)
-#plt.xlim(-6,6)
-#plt.ylim(-5,5)
+#plt.xlim(-32,50)
+#plt.ylim(-32,50)
+plt.xlim(-45,55)
+plt.ylim(-40,50)
 #plt.legend(title='Planets')
 plt.xlabel('$x$ in AU')
 plt.ylabel('$y$ in AU')
@@ -415,10 +414,10 @@ for i,name in enumerate(Namen):
     ax.plot(x[:,i], y[:,i], z[:,i], label=Namen[i])
 
 ax.set_title('Trajectories of all planets')
-ax.set_xlabel('$x$ in a.u.')
-ax.set_ylabel('$y$ in a.u.')
-ax.set_zlabel('$z$ in a.u.')
-ax.legend()
+ax.set_xlabel('$x$  /  AU')
+ax.set_ylabel('$y$  /  AU')
+ax.set_zlabel('$z$  /  AU')
+ax.legend(loc='center left', prop={'size': 9})
 
 #%% Plot probe velocity
 %matplotlib auto
